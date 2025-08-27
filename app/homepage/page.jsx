@@ -255,9 +255,15 @@ const RewardProgress = ({ stats }) => {
                       }}
                     ></div>
                     {/* Current level indicator */}
-                    <div className="absolute w-[24px] h-[24px] top-0.5 left-[3px] bg-[#ffd700] rounded-full border-2 border-[#b8860b] flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_3px_rgba(255,215,0,0.25)]">
+                    <div className="absolute w-[23px] h-[24px] top-0.3 left-[-1px] bg-[#ffd700] rounded-full border-0.5 border-[#b8860b] flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_3px_rgba(255,215,0,0.25)]">
                       <div className="[font-family:'Poppins',Helvetica] font-semibold text-[#815c23] text-[12px] tracking-[0.02px] leading-[normal]">
                         {pointsData.currentLevel}
+                      </div>
+                    </div>
+                    {/* Next level indicator - MOVED & FIXED */}
+                    <div className="absolute w-[23px] h-[24px] top-0.3 right-[-1px] bg-[#ffd700] rounded-full border-0.5 border-[#b8860b] flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_3px_rgba(255,215,0,0.25)]">
+                      <div className="[font-family:'Poppins',Helvetica] font-semibold text-[#815c23] text-[12px] tracking-[0.02px] leading-[normal]">
+                        3
                       </div>
                     </div>
                   </div>
@@ -265,11 +271,14 @@ const RewardProgress = ({ stats }) => {
               </div>
 
               <p className="absolute top-1 left-1/2 -translate-x-1/2  opacity-80 [font-family:'Poppins',Helvetica] font-semibold text-transparent text-[12px] tracking-[0.02px] leading-[normal]">
-                <span className="text-[#685512] tracking-[0]">
+                <span className="text-white">
+                  <span role="img" aria-label="star">
+                    ⭐
+                  </span>{" "}
                   {pointsData.currentPoints}
                 </span>
 
-                <span className="text-[#8d741b80] tracking-[0]">
+                <span className="text-gray-400">
                   /{pointsData.targetPoints}
                 </span>
               </p>
@@ -290,23 +299,11 @@ const RewardProgress = ({ stats }) => {
             </header>
           </div>
         </div>
-
-        <div className="absolute w-[24px] h-[24px] top-[78.5px] right-[20px] bg-[#ffd700] rounded-full border-2 border-[#b8860b] flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_3px_rgba(255,215,0,0.25)]">
-          <div className="[font-family:'Poppins',Helvetica] font-semibold text-[#815c23] text-[12px] tracking-[0.02px] leading-[normal]">
-            3
-          </div>
-        </div>
-
-        <img
-          className="absolute w-3 mt-1 h-[11px] top-[81px] left-[125px]"
-          alt="Star icon"
-          src="https://c.animaapp.com/FQEXnMXW/img/vector.svg"
-        />
+        {/* The misplaced circle and star icon have been removed from here */}
       </div>
     </div>
   );
 };
-
 const XpTierTracker = ({ stats }) => {
   const [isXPModalOpen, setIsXPModalOpen] = useState(false);
 
