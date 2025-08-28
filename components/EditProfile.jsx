@@ -59,6 +59,8 @@ export const EditProfile = () => {
   const validateField = (field, value) => {
     const errors = {};
 
+    const trimmedValue = value ? value.trim() : '';
+
     if (field === 'firstName' || field === 'lastName') {
       const fieldName = field === 'firstName' ? 'First name' : 'Last name';
 
@@ -89,14 +91,31 @@ export const EditProfile = () => {
       } else if (value.length > 15) {
         errors[field] = 'Mobile number must be 15 characters or less';
       } else if (!/^\+?[0-9\s\-\(\)]+$/.test(value)) {
-        errors[field] = 'Mobile number can only contain numbers, spaces, hyphens, parentheses, and plus sign';
+        errors[field] = 'Mobile number can only contain numbers';
       }
     }
 
+
+
+    if (field === 'lastName') {
+      if (!trimmedValue) {
+        errors[field] = 'Last name is required';
+      } else if (trimmedValue.length > 10) {
+        errors[field] = 'Last name must be 10 characters or less';
+      } else if (!/^[a-zA-Z\s'-]+$/.test(trimmedValue)) {
+        errors[field] = 'Last name can only contain letters, spaces, hyphens, and apostrophes';
+      }
+    }
+
+    // Social Tag validation
     if (field === 'socialTag') {
-      if (value && value.length > 20) {
+      if (!trimmedValue) {
+        errors[field] = 'Social Tag is required';
+      } else if (trimmedValue.length < 3) {
+        errors[field] = 'Social Tag must be at least 3 characters';
+      } else if (trimmedValue.length > 20) {
         errors[field] = 'Social Tag must be 20 characters or less';
-      } else if (value && !/^[a-zA-Z0-9_]+$/.test(value)) {
+      } else if (!/^[a-zA-Z0-9_]+$/.test(trimmedValue)) {
         errors[field] = 'Social Tag can only contain letters, numbers, and underscores';
       }
     }
@@ -264,7 +283,7 @@ export const EditProfile = () => {
             />
             <div className="absolute w-[45px] h-[45px] bottom-0 right-0">
               <div className="relative w-[43px] h-[45px]">
-                <div className="w-[43px] h-[43px] bg-darkgray-2 rounded-[21.73px] border-[5px] border-solid border-darkgray-1" />
+                <div className="w-[43px] h-[43px] bg-gray-800 rounded-[21.73px] border-[5px] border-solid border-gray-900" />
 
                 {/* Hidden file input for avatar upload */}
                 <input
@@ -278,7 +297,7 @@ export const EditProfile = () => {
                 <button
                   type="button" // Important: prevent form submission
                   onClick={triggerFileInput}
-                  className="absolute inset-0 flex items-center justify-center font-medium text-xl [font-family:'Poppins',Helvetica] text-white tracking-[0] leading-[normal] cursor-pointer"
+                  className="absolute inset-0 flex items-center justify-center font-medium text-xl [font-family:'Poppins',Helvetica] mb-1 text-white tracking-[0] leading-[normal] cursor-pointer"
                   aria-label="Change profile picture"
                 >
                   📸
@@ -292,7 +311,7 @@ export const EditProfile = () => {
           <div className="w-full">
             <label
               htmlFor="firstName"
-              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] mb-2"
+              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]"
             >
               First Name
             </label>
@@ -308,18 +327,19 @@ export const EditProfile = () => {
                 maxLength="30"
                 required
               />
-              {fieldErrors.firstName && (
-                <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
-                  {fieldErrors.firstName}
-                </div>
-              )}
+
             </div>
+            {fieldErrors.firstName && (
+              <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
+                {fieldErrors.firstName}
+              </div>
+            )}
           </div>
 
           <div className="w-full">
             <label
               htmlFor="lastName"
-              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] mb-2"
+              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] "
             >
               Last Name
             </label>
@@ -334,18 +354,20 @@ export const EditProfile = () => {
                 placeholder="Enter your last name"
                 maxLength="30"
               />
-              {fieldErrors.lastName && (
-                <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
-                  {fieldErrors.lastName}
-                </div>
-              )}
+
             </div>
+            {fieldErrors.lastName && (
+              <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
+
+                {fieldErrors.lastName}
+              </div>
+            )}
           </div>
 
           <div className="w-full">
             <label
               htmlFor="emailAddress"
-              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] mb-3"
+              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] "
             >
               Email Address
             </label>
@@ -361,18 +383,20 @@ export const EditProfile = () => {
                 maxLength="50"
                 required
               />
-              {fieldErrors.email && (
-                <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
-                  {fieldErrors.email}
-                </div>
-              )}
+
             </div>
+            {fieldErrors.email && (
+              <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
+
+                {fieldErrors.email}
+              </div>
+            )}
           </div>
 
           <div className="w-full">
             <label
               htmlFor="phoneNumber"
-              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] mb-3"
+              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] "
             >
               Phone Number
             </label>
@@ -388,18 +412,20 @@ export const EditProfile = () => {
                 maxLength="15"
                 required
               />
-              {fieldErrors.mobile && (
-                <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
-                  {fieldErrors.mobile}
-                </div>
-              )}
+
             </div>
+            {fieldErrors.mobile && (
+              <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
+
+                {fieldErrors.mobile}
+              </div>
+            )}
           </div>
 
           <div className="w-full">
             <label
               htmlFor="socialTag"
-              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] mb-3"
+              className="block [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal] "
             >
               Social Tag
             </label>
@@ -414,15 +440,16 @@ export const EditProfile = () => {
                 placeholder="Enter your social tag (e.g., gamerpro)"
                 maxLength="20"
               />
-              {fieldErrors.socialTag && (
-                <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
-                  {fieldErrors.socialTag}
-                </div>
-              )}
+
             </div>
+            {fieldErrors.socialTag && (
+              <div className="mt-1 text-red-400 text-xs [font-family:'Poppins',Helvetica]">
+                {fieldErrors.socialTag}
+              </div>
+            )}
           </div>
 
-          {error && <p className="text-red-500 text-center text-sm -mt-2">{error}</p>}
+          {error && <p className="text-red-400 text-center text-sm -mt-2">{error}</p>}
 
           <div className="w-full pt-4 space-y-3">
             <button

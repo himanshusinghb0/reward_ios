@@ -8,6 +8,23 @@ import { HomeIndicator } from "../../components/HomeIndicator"; //
 import { WelcomeOffer } from "../../components/WelcomeOffer";
 import { XPPointsModal } from "../../components/XPPointsModal";
 import { RaceModal } from "../../components/RaceModel";
+const LabelBackground = () => (
+  <svg width="51" height="22" viewBox="0 0 51 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="51" height="22" rx="4" fill="#F1B24A" />
+  </svg>
+);
+
+// 2. This component now takes `current` and `total` props to display dynamic text.
+const UndoActionLabel = ({ current, total }) => (
+  <div className="relative flex items-center justify-center">
+    {/* The background is placed first */}
+    <LabelBackground />
+    {/* The dynamic text is placed on top of it using absolute positioning */}
+    <p className="absolute text-white text-[12px] font-normal [font-family:'Poppins',Helvetica] whitespace-nowrap">
+      {current}/{total} left
+    </p>
+  </div>
+);
 
 export const Frame = () => {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -43,6 +60,7 @@ export const Frame = () => {
       src: "https://c.animaapp.com/DfFsihWg/img/group-4@2x.png",
       alt: "Refresh",
       position: "left-24",
+      label: { current: 4, total: 5 },
     },
     {
       id: 3,
@@ -60,12 +78,22 @@ export const Frame = () => {
         aria-label="Action buttons"
       >
         {actionButtons.map((button) => (
+          // 3. The button is now a `relative` container for the `absolute` label
           <button
             key={button.id}
-            className={`${button.position} absolute w-[62px] h-[62px] top-0 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full`}
+            className={`${button.position}  absolute w-[62px] h-[62px] top-0 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full`}
             aria-label={button.alt}
           >
             <img className="w-full h-full" alt={button.alt} src={button.src} />
+
+            {/* Conditionally render the label if `hasLabel` is true */}
+            {button.label && (
+              <div className="absolute bottom-[-10px] left-2/4 -translate-x-1/2 z-10">
+                <UndoActionLabel
+                  current={button.label.current}
+                  total={button.label.total} />
+              </div>
+            )}
           </button>
         ))}
       </section>
@@ -92,19 +120,19 @@ export const Frame = () => {
           {/* Game content section */}
           <section className="absolute w-[302px] h-[303px] top-[102px] left-[18px]">
             <img
-              className="absolute w-[300px] h-[300px] top-[3px] left-0 aspect-[1]"
+              className="absolute w-[300px] h-[300px] top-[18px] left-0 aspect-[1]"
               alt="Orbitfall game artwork showing colorful spaceships and cosmic elements"
               src="https://c.animaapp.com/DfFsihWg/img/image-3930@2x.png"
             />
 
             <img
-              className="absolute w-[210px] h-10 top-[15px] left-11 aspect-[5.2]"
+              className="absolute w-[210px] h-10 top-[30px] left-11 aspect-[5.2]"
               alt="Orbitfall game logo"
               src="https://c.animaapp.com/DfFsihWg/img/image-3931@2x.png"
             />
 
             {/* View count badge */}
-            <div className="absolute w-[74px] h-[25px] top-0 left-[228px]">
+            <div className="absolute w-[74px] h-[25px] top-[-8] left-[240px]">
               <div className="relative w-[72px] h-[25px] bg-[#ffffff4f] rounded-[5.32px] backdrop-blur-[2.66px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(2.66px)_brightness(100%)]">
                 <img
                   className="absolute w-[13px] h-2.5 top-2 left-[7px]"
@@ -130,42 +158,36 @@ export const Frame = () => {
           </header>
         </div>
       </article>
-
-      {/* Bottom earnings section */}
       <>
-        <footer className="absolute w-[335px] h-[51px] top-[429px] left-0 rounded-[0px_0px_10px_10px] overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,0.5)_0%,rgba(113,106,231,0.5)_100%)]">
-          <div className="relative w-[300px] h-10 top-[5px] left-3">
-            <p className="absolute top-0 left-0 [font-family:'Poppins',Helvetica] font-normal text-white text-[13px] tracking-[0] leading-[normal]">
-              <span className="font-light">Complete Only 10 Tasks to </span>
-
-              <span className="font-semibold">
-                Earn upto 100
-                .&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;
-                <br />
-                10
-              </span>
+        <footer className="absolute w-[335px] h-[51px] top-[429px] left-0 rounded-[0px_0px_10px_10px] overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,0.4)_0%,rgba(113,106,231,0.4)_100%)] flex items-center justify-between px-3">
+          <div className="flex flex-col text-white [font-family:'Poppins',Helvetica]">
+            <p className="text-[13px] leading-tight font-light">
+              Complete Only 10 Tasks
             </p>
-
-            <img
-              className="absolute w-[18px] h-5 top-px left-[265px] aspect-[0.97]"
-              alt="Currency symbol"
-              src="https://c.animaapp.com/DfFsihWg/img/image-3937@2x.png"
-            />
-
-            <img
-              className="absolute w-[22px] h-5 top-[21px] left-[15px]"
-              alt="Reward icon"
-              src="https://c.animaapp.com/DfFsihWg/img/pic.svg"
-            />
+            <div className="flex items-center gap-x-1.5 text-sm font-semibold">
+              <span>Earn upto 100</span>
+              <img
+                className="w-5 h-5"
+                alt="Currency symbol"
+                src="https://c.animaapp.com/DfFsihWg/img/image-3937@2x.png"
+              />
+              <span>& 50</span>
+              <img
+                className="w-5 h-5"
+                alt="Reward icon"
+                src="https://c.animaapp.com/DfFsihWg/img/pic.svg"
+              />
+              <span className="font-semibold">points</span>
+            </div>
           </div>
-          {/* --- ICON BUTTON ADDED HERE --- */}
+
           <button
             onClick={toggleTooltip}
-            className="absolute w-8 h-8 top-[12px] right-[-4px] z-20 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded-tr-lg  rounded-bl-lg overflow-hidden "
+            className="absolute w-8 h-8 top-[9px] right-[-2px] z-20 cursor-pointer hover:opacity-80 transition-opacity duration-200 rounded-tl-lg  rounded-bl-lg overflow-hidden "
             aria-label="More information"
           >
 
-            <svg width="33" height="34" viewBox="0 0 33 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="32" height="33" viewBox="0 0 33 34" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M0 0L25 0C29.4183 0 33 3.58172 33 8V34H8C3.58172 34 0 30.4183 0 26L0 0Z" fill="#6E6069" />
               <path fillRule="evenodd" clipRule="evenodd" d="M26.8949 16.8292C26.8949 19.7148 25.7823 22.4821 23.802 24.5225C21.8216 26.5629 19.1356 27.7092 16.3349 27.7092C13.5342 27.7092 10.8482 26.5629 8.86786 24.5225C6.88747 22.4821 5.7749 19.7148 5.7749 16.8292C5.7749 13.9437 6.88747 11.1763 8.86786 9.1359C10.8482 7.0955 13.5342 5.94922 16.3349 5.94922C19.1356 5.94922 21.8216 7.0955 23.802 9.1359C25.7823 11.1763 26.8949 13.9437 26.8949 16.8292ZM17.6549 11.3892C17.6549 11.7499 17.5158 12.0958 17.2683 12.3509C17.0207 12.6059 16.685 12.7492 16.3349 12.7492C15.9848 12.7492 15.6491 12.6059 15.4015 12.3509C15.154 12.0958 15.0149 11.7499 15.0149 11.3892C15.0149 11.0285 15.154 10.6826 15.4015 10.4276C15.6491 10.1725 15.9848 10.0292 16.3349 10.0292C16.685 10.0292 17.0207 10.1725 17.2683 10.4276C17.5158 10.6826 17.6549 11.0285 17.6549 11.3892ZM15.0149 15.4692C14.6648 15.4692 14.3291 15.6125 14.0815 15.8676C13.834 16.1226 13.6949 16.4685 13.6949 16.8292C13.6949 17.1899 13.834 17.5358 14.0815 17.7909C14.3291 18.0459 14.6648 18.1892 15.0149 18.1892V22.2692C15.0149 22.6299 15.154 22.9758 15.4015 23.2309C15.6491 23.4859 15.9848 23.6292 16.3349 23.6292H17.6549C18.005 23.6292 18.3407 23.4859 18.5883 23.2309C18.8358 22.9758 18.9749 22.6299 18.9749 22.2692C18.9749 21.9085 18.8358 21.5626 18.5883 21.3076C18.3407 21.0525 18.005 20.9092 17.6549 20.9092V16.8292C17.6549 16.4685 17.5158 16.1226 17.2683 15.8676C17.0207 15.6125 16.685 15.4692 16.3349 15.4692H15.0149Z" fill="white" fillOpacity="0.6" />
             </svg>
@@ -179,9 +201,8 @@ export const Frame = () => {
             className="absolute top-[480px] right-[-12px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl animate-fade-in"
           >
             <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal">
-
-              <div className="text-center  text-gray-200">
-                As a new user, you can undo as many times as needed.
+              <div className="text-center text-gray-200">
+                As a new user, you can undo as many times as needed.
               </div>
             </div>
             <div className="absolute top-[-8px] right-[25px] w-4 h-4 bg-black/95 transform rotate-45"></div>
@@ -255,13 +276,13 @@ const RewardProgress = ({ stats }) => {
                       }}
                     ></div>
                     {/* Current level indicator */}
-                    <div className="absolute w-[23px] h-[24px] top-0.3 left-[-1px] bg-[#ffd700] rounded-full border-0.5 border-[#b8860b] flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_3px_rgba(255,215,0,0.25)]">
+                    <div className="absolute w-[23px] h-[24px] top-0.3 left-[-1px] bg-[#ffd700] rounded-full border-0.5 border-[#b8860b] flex items-center justify-center ">
                       <div className="[font-family:'Poppins',Helvetica] font-semibold text-[#815c23] text-[12px] tracking-[0.02px] leading-[normal]">
                         {pointsData.currentLevel}
                       </div>
                     </div>
                     {/* Next level indicator - MOVED & FIXED */}
-                    <div className="absolute w-[23px] h-[24px] top-0.3 right-[-1px] bg-[#ffd700] rounded-full border-0.5 border-[#b8860b] flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.35),0_0_0_3px_rgba(255,215,0,0.25)]">
+                    <div className="absolute w-[23px] h-[24px] top-0.3 right-[-1px] bg-[#ffd700] rounded-full border-0.5 border-[#b8860b] flex items-center justify-center ">
                       <div className="[font-family:'Poppins',Helvetica] font-semibold text-[#815c23] text-[12px] tracking-[0.02px] leading-[normal]">
                         3
                       </div>
@@ -270,9 +291,17 @@ const RewardProgress = ({ stats }) => {
                 </div>
               </div>
 
-              <p className="absolute top-1 left-1/2 -translate-x-1/2  opacity-80 [font-family:'Poppins',Helvetica] font-semibold text-transparent text-[12px] tracking-[0.02px] leading-[normal]">
+              <p className="absolute top-1 left-1/2 -translate-x-1/2 opacity-80 [font-family:'Poppins',Helvetica] font-semibold text-transparent text-[12px] tracking-[0.02px] leading-[normal]">
                 <span className="text-white">
-                  <span role="img" aria-label="star">
+                  <span
+                    role="img"
+                    aria-label="star"
+                    className="inline-block relative"
+                    style={{
+                      filter: 'drop-shadow(0 0 2px rgba(255, 215, 0, 0.5))',
+                      transform: 'translateY(-1px)'
+                    }}
+                  >
                     ⭐
                   </span>{" "}
                   {pointsData.currentPoints}
@@ -389,7 +418,7 @@ const XpTierTracker = ({ stats }) => {
           {progressData.levels.map((level, index) => (
             <div
               key={level}
-              className={`h-3.5 font-normal text-white leading-[14px] whitespace-nowrap absolute -top-px [font-family:'Poppins',Helvetica] text-sm tracking-[0] ${index === 0
+              className={`h-3.5 font-light text-[#FFFFFF] leading-[14px] whitespace-nowrap absolute -top-px [font-family:'Poppins',Helvetica] text-[13px] tracking-[0] ${index === 0
                 ? "left-0"
                 : index === 1
                   ? "left-[114px]"
@@ -684,74 +713,11 @@ const MainContentSection = () => {
     <div className="flex flex-col w-full max-w-[375px] mx-auto items-center gap-6 pt-36 px-4 relative">
       {dashboardData?.stats && <RewardProgress stats={dashboardData.stats} />}
       {dashboardData?.stats && <XpTierTracker stats={dashboardData.stats} />}
+
       <div className="flex flex-col items-start gap-4 relative w-full">
-        <div className="flex w-full items-center justify-between">
-          <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
-            Most Played
-          </div>
-          <div className="[font-family:'Poppins',Helvetica] font-medium text-[#8b92de] text-base tracking-[0] leading-[normal]">
-            See All
-          </div>
-        </div>
-        <div className="flex h-[110px] items-start gap-3 w-full overflow-x-auto scrollbar-hide -mx-4 px-4">
-          {mostPlayedGames.map((game) => (
-            <div
-              key={game.id}
-              className="items-start inline-flex flex-col gap-1.5 relative flex-[0_0_auto] cursor-pointer hover:scale-105 transition-transform duration-200"
-            >
-              <div
-                className={`relative w-[72px] h-[72px] rounded-full`}
-                style={{
-                  border: `2px solid ${game.borderColor}`,
-                  boxShadow: `0 0 0 1px rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.3), 0 0 8px ${game.borderColor}40`,
-                  background: `url(${game.borderImage})`,
-                  backgroundSize: "100% 100%",
-                }}
-              >
-                <div
-                  className={`relative w-16 h-16 top-1 left-1 rounded-[32px] shadow-inner ${game.bgGradient
-                    ? `bg-[${game.bgGradient}]`
-                    : game.bgImage
-                      ? `bg-[url(${game.bgImage})] bg-cover bg-[50%_50%]`
-                      : "bg-[#00000033]"
-                    }`}
-                >
-                  <img
-                    className={`absolute ${game.id === 1
-                      ? "w-16 h-[61px] top-[3px] left-0 aspect-[1.05]"
-                      : game.id === 2
-                        ? "w-10 h-[44px] top-[10px] left-3 aspect-[0.89] object-cover"
-                        : game.id === 3
-                          ? "w-[67px] h-[58px] top-1.5 left-0"
-                          : game.id === 4
-                            ? "w-16 h-[49px] top-[15px] left-0 aspect-[1.3] object-cover"
-                            : game.id === 5
-                              ? "w-[68px] h-[42px] top-[11px] left-0"
-                              : "w-12 h-[54px] top-1.5 left-3 aspect-[0.88]"
-                      }`}
-                    alt="Image"
-                    src={game.image}
-                  />
-                </div>
-              </div>
-              <div className="relative w-[72px] [font-family:'Poppins',Helvetica] font-medium text-white text-xs text-center tracking-[0] leading-4 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
-                {game.name}
-              </div>
-              {game.isNew && (
-                <div className="absolute w-11 h-4 top-[59px] left-3.5 rounded overflow-hidden bg-[linear-gradient(90deg,rgba(98,58,167,1)_0%,rgba(209,151,248,1)_100%)]">
-                  <div className="absolute w-[33px] -top-px left-[5px] [font-family:'Poppins',Helvetica] font-semibold text-white text-xs text-center tracking-[0] leading-4 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
-                    New
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col items-start gap-4 relative w-full">
-        <div className="flex w-full items-center justify-between">
-          <p className="text-white [font-family:'Poppins',Helvetica] font-semibold text-xl tracking-[0] leading-[normal] text-nowrap ">
-            Fast Fun, Real Rewards!
+        <div className="flex w-full items-center ml-4 justify-between ">
+          <p className="text-[#F4F3FC] [font-family:'Poppins',Helvetica] font-semibold text-xl tracking-[0] leading-[normal] text-nowrap ">
+            💸Fast Fun, Real Rewards!💸
           </p>
         </div>
 
@@ -759,11 +725,74 @@ const MainContentSection = () => {
         <div className="relative w-full overflow-visible">
           <WelcomeOffer />
         </div>
-
+        <div className="flex flex-col items-start gap-4 relative w-full">
+          <div className="flex w-full items-center justify-between">
+            <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
+              Most Played
+            </div>
+            <div className="[font-family:'Poppins',Helvetica] font-medium text-[#8b92de] text-base tracking-[0] leading-[normal]">
+              See All
+            </div>
+          </div>
+          <div className="flex h-[110px] items-start gap-3 w-full overflow-x-auto scrollbar-hide -mx-4 px-4">
+            {mostPlayedGames.map((game) => (
+              <div
+                key={game.id}
+                className="items-start inline-flex flex-col gap-1.5 relative flex-[0_0_auto] cursor-pointer hover:scale-105 transition-transform duration-200"
+              >
+                <div
+                  className={`relative w-[72px] h-[72px] rounded-full`}
+                  style={{
+                    border: `2px solid ${game.borderColor}`,
+                    boxShadow: `0 0 0 1px rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.3), 0 0 8px ${game.borderColor}40`,
+                    background: `url(${game.borderImage})`,
+                    backgroundSize: "100% 100%",
+                  }}
+                >
+                  <div
+                    className={`relative w-16 h-16 top-1 left-1 rounded-[32px] shadow-inner ${game.bgGradient
+                      ? `bg-[${game.bgGradient}]`
+                      : game.bgImage
+                        ? `bg-[url(${game.bgImage})] bg-cover bg-[50%_50%]`
+                        : "bg-[#00000033]"
+                      }`}
+                  >
+                    <img
+                      className={`absolute ${game.id === 1
+                        ? "w-16 h-[61px] top-[3px] left-0 aspect-[1.05]"
+                        : game.id === 2
+                          ? "w-10 h-[44px] top-[10px] left-3 aspect-[0.89] object-cover"
+                          : game.id === 3
+                            ? "w-[67px] h-[58px] top-1.5 left-0"
+                            : game.id === 4
+                              ? "w-16 h-[49px] top-[15px] left-0 aspect-[1.3] object-cover"
+                              : game.id === 5
+                                ? "w-[68px] h-[42px] top-[11px] left-0"
+                                : "w-12 h-[54px] top-1.5 left-3 aspect-[0.88]"
+                        }`}
+                      alt="Image"
+                      src={game.image}
+                    />
+                  </div>
+                </div>
+                <div className="relative w-[72px] [font-family:'Poppins',Helvetica] font-medium text-white text-xs text-center tracking-[0] leading-4 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
+                  {game.name}
+                </div>
+                {game.isNew && (
+                  <div className="absolute w-11 h-4 top-[59px] left-3.5 rounded overflow-hidden bg-[linear-gradient(90deg,rgba(98,58,167,1)_0%,rgba(209,151,248,1)_100%)]">
+                    <div className="absolute w-[33px] -top-px left-[5px] [font-family:'Poppins',Helvetica] font-semibold text-white text-xs text-center tracking-[0] leading-4 overflow-hidden text-ellipsis [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]">
+                      New
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
         <Frame />
       </div>
-      <div className="flex flex-col w-full items-start gap-4 relative">
-        <div className="flex w-full items-center justify-between">
+      <div className="flex flex-col w-full items-start gap-4  relative">
+        <div className="flex w-full items-center mt-6 justify-between">
           <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
             Non- Gaming Offers
           </div>

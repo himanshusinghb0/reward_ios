@@ -176,7 +176,7 @@ export default function MyProfile() {
 
         <main className="flex flex-col w-[375px] items-center gap-6 absolute top-[110px] -left-px">
           {/* ---------------- Profile Section ---------------- */}
-          <section className="flex flex-col w-[335px] items-center gap-2">
+          <section className="flex flex-col w-[335px] items-center ">
             {/* Avatar + Edit holder */}
             <div className="relative">
               {/* Avatar */}
@@ -219,47 +219,47 @@ export default function MyProfile() {
             </div>
 
             {/* JACK_52: Clean vertical stack — Name, VIP badge/level */}
-            <h2 className="font-semibold text-white text-xl text-center truncate max-w-[300px]">
+            <h2 className="font-semibold text-[#FEFEFE] text-[22px] mt-2 text-center truncate max-w-[300px] ">
               {((profile?.firstName || "Player") + " " + (profile?.lastName || "")).trim()}
             </h2>
 
-            <div className="flex  items-center justify-center gap-">
+            <div className="flex  items-center  mt-1">
               <img
                 src="/badge.png"
                 alt="Badge"
-                className="w-14 h-14 pt-2 flex-shrink-0 object-contain"
+                className="w-14 h-14  flex-shrink-0 object-contain"
               />
-              <span className="text-[#fefefe] pb-2  text-lg pr-2  font-medium">
+              <span className="text-[#FEFEFE] pb-5  text-lg pr-2  font-normal">
                 {vipStatus?.level ? vipStatus.level.charAt(0).toUpperCase() + vipStatus.level.slice(1).toLowerCase() : "Bronze"} Badge
               </span>
             </div>
 
             {/* Contact section with improved spacing */}
-            <div className="flex flex-col items-center gap-2 -mt-3">
-              <div className="flex items-center gap-3 text-gray-300 text-sm leading-5">
+            <div className="flex flex-col items-center gap-2 -mt-3 ">
+              <div className="flex items-center gap-2 text-[#FEFEFE] text-sm leading-5">
                 <Image
-                  width={16}
-                  height={16}
+                  width={5}
+                  height={5}
                   alt="Mail"
                   src="https://c.animaapp.com/V1uc3arn/img/image-3958@2x.png"
-                  className="w-4 h-4 flex-shrink-0"
+                  className="w-[22px] h-[17px] flex-shrink-0"
                 />
-                <span className="truncate max-w-[160px]">
+                <span className=" text-[#FEFEFE] max-w-[160px] text-lg font-normal">
                   {profile?.email || "youremail@domain.com"}
                 </span>
-                <span className="opacity-60 mx-1">|</span>
-                <span className="truncate max-w-[100px]">{profile?.mobile || "+01 234 567 89"}</span>
+                <span className="opacity-60  text-[#FEFEFE] text-lg font-normal mx-1">|</span>
+                <span className=" text-[#FEFEFE] text-lg font-normal max-w-[100px]">{profile?.mobile || "+01 234 567 89"}</span>
               </div>
 
-              <div className="flex items-center gap-3 text-gray-300 text-sm leading-5">
+              <div className="flex items-center gap-1  text-gray-300 text-sm leading-5">
                 <Image
                   width={32}
                   height={32}
-                  className="w-6 h-6 object-cover flex-shrink-0"
+                  className="w-[34px] h-[22px] object-cover flex-shrink-0"
                   alt="Flag"
                   src="https://c.animaapp.com/V1uc3arn/img/image-3956@2x.png"
                 />
-                <span className="tracking-wide font-medium">{profile?.socialTag || "GamePro"}</span>
+                <span className="tracking-wide font-normal text-lg text-[#FEFEFE]">{profile?.socialTag || "GamePro"}</span>
               </div>
             </div>
           </section>
@@ -268,16 +268,16 @@ export default function MyProfile() {
           <section className="flex flex-col items-start gap-2.5 pl-5 pr-0 w-full">
             <div className="relative w-[335px]">
               <div
-                className="relative h-[134px] rounded-[12px] overflow-hidden"
+                className="relative h-[134px] rounded-[12px] pt-30 overflow-hidden"
                 style={{
                   backgroundImage:
                     "url(https://c.animaapp.com/V1uc3arn/img/blank-button03@2x.png)",
                   backgroundSize: "cover",
                 }}
               >
-                <div className="absolute top-[10px] left-4">
-                  <div className="text-white  text-xl">My Earnings</div>
-                  <div className="flex items-center gap-2">
+                <div className="absolute top-[10px] mt-3 ml-5">
+                  <div className="text-[#FFFFFF] text-[14px]">My Earnings</div>
+                  <div className="flex items-center  gap-2 ml-5">
                     <div className="font-semibold text-white text-2xl">
                       {stats?.balance ?? 0}
                     </div>
@@ -290,7 +290,7 @@ export default function MyProfile() {
                   </div>
                 </div>
 
-                <div className="absolute top-[39px] left-[103px] flex items-center gap-2">
+                <div className="absolute top-[39px]  mt-1 left-[103px] flex items-center ml-3 gap-2">
                   <div className="font-semibold text-white text-2xl">
                     {stats?.xp ?? 0}
                   </div>
@@ -443,7 +443,7 @@ export default function MyProfile() {
               <Image
                 width={334}
                 height={127}
-                className="w-[334px] h-[127px]"
+                className="w-[334px] h-[140px]"
                 alt="VIP background"
                 src="https://c.animaapp.com/V1uc3arn/img/race.svg"
               />
@@ -463,7 +463,7 @@ export default function MyProfile() {
                 </div>
                 <button
                   onClick={handleVipUpgrade}
-                  className="px-3 py-1.5 bg-[#ffdd8f] rounded-xl hover:opacity-90 [font-family:'Poppins',Helvetica] font-semibold text-[#736de8] text-[13px] tracking-[0] leading-[normal]"
+                  className="w-fit px-4 py-2 bg-[#ffdd8f] rounded-xl hover:opacity-90 transition-transform active:scale-95 [font-family:'Poppins',Helvetica] font-semibold text-[#736de8] text-[13px] tracking-[0] leading-[normal]"
                 >
                   Check Plans
                 </button>
@@ -567,7 +567,7 @@ export default function MyProfile() {
               {leadershipGames.map((game) => (
                 <article key={game.id} className="relative w-40 h-[281px]">
                   <div
-                    className="absolute w-40 h-[180px] top-0 left-0 bg-cover bg-center rounded-[20px] blur-[2px]"
+                    className="absolute w-40 h-[180px] top-0 left-0 bg-cover bg-center rounded-[20px]"
                     style={{
                       backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.31) 0%, rgba(0,0,0,0.65) 88%), url(${game.image})`,
                     }}
