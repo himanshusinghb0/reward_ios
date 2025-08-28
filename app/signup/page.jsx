@@ -244,12 +244,14 @@ const SignUp = () => {
     router.push('/login');
   };
   return (
-    <div className="min-h-screen w-full bg-[#272052] overflow-x-hidden">
+    <div className="fixed inset-0 bg-[#272052] overflow-x-hidden">
       <div
-        className="relative w-full min-h-screen bg-[#272052] flex justify-center"
+        className="relative  h-full w-full max-w-screen bg-[#272052] flex justify-center"
         data-model-id="1322:2980"
       >
-        <div className="relative w-[375px] min-h-screen bg-[#272052] overflow-y-auto"
+        <div
+          className="relative w-full max-w-[375px] h-full overflow-y-auto  bg-[#272052] overflow-x-hidden"
+          style={{ overscrollBehavior: 'contain' }}
         >
           <div className="absolute w-[470px] h-[883px] -top-32 -left-3.5">
             <div className="absolute w-[358px] h-[358px] top-0 left-7 bg-[#af7de6] rounded-[179px] blur-[250px]" />

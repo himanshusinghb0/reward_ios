@@ -903,7 +903,7 @@ const MainContentSection = () => {
         </div>
       </div>
       <div className="flex flex-col w-full items-start gap-4 relative">
-        <div className="h-36 rounded-[20px] overflow-hidden bg-[linear-gradient(51deg,rgba(88,41,171,1)_0%,rgba(59,41,171,1)_100%)] overflow-x-scroll relative w-full">
+        <div className="h-36 rounded-[20px] overflow-hidden bg-[linear-gradient(51deg,rgba(88,41,171,1)_0%,rgba(59,41,171,1)_100%)]  relative w-full">
           <div className="relative w-[371px] h-[198px] -top-4 left-2">
             <div className="top-[81px] left-1 font-normal absolute [font-family:'Poppins',Helvetica] text-white text-base tracking-[0] leading-6 whitespace-nowrap">
               Take Part & Win
