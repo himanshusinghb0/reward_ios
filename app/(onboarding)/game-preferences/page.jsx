@@ -70,16 +70,16 @@ export default function GamePreferencesSelection() {
 
   return (
     <div className='relative w-full h-screen bg-[#272052] overflow-hidden flex flex-col'>
-      <div className='absolute w-[542px] h-[542px] top-0 left-0 bg-[#af7de6] rounded-full blur-[250px]' />
+      <div className='w-[542px] h-[542px] top-0 left-0 bg-[#af7de6] rounded-full blur-[250px] fixed' />
 
       <div className='relative z-10 px-6 pt-20 font-poppins'>
-        <h1 className='text-white text-4xl font-light leading-tight mb-4'>
+        <h1 className='text-[#FFFFFF] text-4xl font-normal leading-tight mb-8'>
           What types of games do you enjoy playing?
         </h1>
-        <p className='text-white/70 text-base font-light'>Select up to 3</p>
+        <p className='text-white/70 text-[16px] font-light mb-10 ml-1'>Select up to 3</p>
       </div>
 
-      <div className='relative z-10 flex-1 flex flex-col justify-center px-6 space-y-6'>
+      <div className='relative z-10 pb-20   flex-1  overflow-y-auto  items-center px-6 space-y-6'>
         {isLoading && (
           <p className='text-white text-center font-poppins'>
             Loading game options...
@@ -120,7 +120,7 @@ export default function GamePreferencesSelection() {
                       </svg>
                     </div>
                   ) : (
-                    <div className='w-5 h-5 border-2 border-gray-300 rounded' />
+                    <div className='w-5 h-5 mt-0.5 border-2 border-gray-300 rounded' />
                   )}
 
                   <span

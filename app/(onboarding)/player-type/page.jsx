@@ -56,7 +56,7 @@ export default function PlayerTypeSelection() {
         </p>
       </div>
 
-      <div className='relative z-10 flex-1 flex flex-col justify-center px-6 space-y-6'>
+      <div className='relative z-10 flex-1 flex flex-col justify-center px-6 space-y-6 mb-6 '>
         {isLoading && (
           <p className='text-white text-center font-poppins'>
             Loading options...
