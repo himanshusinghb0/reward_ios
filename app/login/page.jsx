@@ -181,11 +181,11 @@ export default function LoginPage() {
               </div>
             </button>
 
-            <div className="absolute w-[316px] top-[369px] left-[246px] flex flex-col gap-2">
-              <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
+            <div className="absolute w-[316px] top-[369px] left-[246px]  mt-5 flex flex-col ">
+              <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
                 Email/ Phone Number
               </label>
-              <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
+              <div className="relative w-[314px] h-[55px] rounded-[12px] mb-1 border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                 <Image
                   className="absolute w-[17px] h-[17px] top-5 left-5"
                   alt="Email icon"
@@ -203,35 +203,27 @@ export default function LoginPage() {
                 />
               </div>
               {error.emailOrMobile && (
-                <p className="text-red-400 text-xs mt-1">
+                <p className="text-red-400 text-xs  mb-1 ml-2 ">
                   {error.emailOrMobile}
                 </p>
               )}
             </div>
 
-            <div className="absolute w-[316px] top-[473px] left-[246px] flex flex-col gap-2">
+
+
+            <div className="absolute w-[316px] top-[473px] left-[246px] flex flex-col mt-4">
               <div className="flex justify-between items-center">
-                <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
+                <label className="[font-family:'Poppins',Helvetica] font-medium mb-[1px] text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
                   Password
                 </label>
-                <button
-                  className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[11.3px] tracking-[0] leading-[normal] cursor-pointer"
-                  onClick={handleForgotPassword}
-                  type="button"
-                >
-                  Forgot Password?
-                </button>
               </div>
+
               <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                 <div className="absolute w-[17px] h-[17px] top-5 left-5">
-                  <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-                    <path
-                      d="M4 7V5C4 2.5 5.5 1 8 1C10.5 1 12 2.5 12 5V7M8 10C8.5 10 9 10.5 9 11C9 11.5 8.5 12 8 12C7.5 12 7 11.5 7 11C7 10.5 7.5 10 8 10ZM3 7H13C13.5 7 14 7.5 14 8V14C14 14.5 13.5 15 13 15H3C2.5 15 2 14.5 2 14V8C2 7.5 2.5 7 3 7Z"
-                      stroke="#d3d3d3"
-                      strokeWidth="1"
-                      fill="none"
-                    />
+                  <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.3901 2.90445L18.0398 2.26388C18.2122 2.09156 18.309 1.85785 18.309 1.61416C18.309 1.37046 18.2122 1.13675 18.0398 0.964436C17.8675 0.792119 17.6338 0.695312 17.3901 0.695312C17.1464 0.695313 16.9127 0.792119 16.7404 0.964436L15.4593 2.25473L12.8695 4.84446L7.09524 10.6096C6.14907 9.98535 5.00485 9.73454 3.88431 9.90578C2.76377 10.077 1.74668 10.6581 1.03013 11.5365C0.313576 12.4148 -0.0514261 13.5279 0.0058485 14.66C0.0631231 15.7921 0.538597 16.8626 1.34014 17.6641C2.14168 18.4657 3.21222 18.9412 4.34432 18.9984C5.47642 19.0557 6.58948 18.6907 7.46783 17.9742C8.34617 17.2576 8.92726 16.2405 9.0985 15.12C9.26974 13.9994 9.01894 12.8552 8.39469 11.909L13.5101 6.78447L15.4501 8.73364C15.5354 8.81836 15.6366 8.88545 15.7479 8.93107C15.8591 8.97669 15.9783 8.99995 16.0985 8.99953C16.2187 8.9991 16.3377 8.975 16.4486 8.92859C16.5596 8.88218 16.6603 8.81439 16.745 8.72906C16.8297 8.64374 16.8968 8.54257 16.9424 8.43132C16.988 8.32007 17.0113 8.20092 17.0109 8.08068C17.0104 7.96044 16.9863 7.84146 16.9399 7.73054C16.8935 7.61962 16.8257 7.51892 16.7404 7.4342L14.8004 5.49418L16.0998 4.20389L16.7404 4.84446C16.8251 4.92978 16.9258 4.99758 17.0367 5.04399C17.1477 5.0904 17.2666 5.1145 17.3869 5.11493C17.5071 5.11535 17.6263 5.09209 17.7375 5.04647C17.8488 5.00085 17.9499 4.93376 18.0353 4.84904C18.1206 4.76432 18.1884 4.66362 18.2348 4.55269C18.2812 4.44177 18.3053 4.32279 18.3057 4.20255C18.3062 4.08231 18.2829 3.96317 18.2373 3.85192C18.1917 3.74067 18.1246 3.63949 18.0398 3.55417L17.3901 2.90445ZM4.57872 17.1709C4.03575 17.1709 3.50497 17.0099 3.05351 16.7082C2.60205 16.4065 2.25018 15.9778 2.04239 15.4761C1.83461 14.9745 1.78024 14.4225 1.88617 13.89C1.9921 13.3574 2.25356 12.8683 2.6375 12.4843C3.02143 12.1004 3.5106 11.8389 4.04314 11.733C4.57567 11.6271 5.12766 11.6814 5.6293 11.8892C6.13094 12.097 6.5597 12.4489 6.86135 12.9004C7.16301 13.3518 7.32402 13.8826 7.32402 14.4256C7.32402 15.1537 7.03478 15.8519 6.51994 16.3668C6.0051 16.8816 5.30682 17.1709 4.57872 17.1709Z" fill="#A4A4A4" />
                   </svg>
+
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -261,15 +253,26 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
-              {error.password && (
-                <p className="text-red-400 text-xs mt-1">
-                  {error.password}
-                </p>
-              )}
-            </div>
 
+              <div className="flex justify-between items-center w-full mt-1">
+                <div className="flex-1">
+                  {error.password && (
+                    <p className="text-red-400 text-xs   ml-2">
+                      {error.password}
+                    </p>
+                  )}
+                </div>
+                <button
+                  className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[11.3px] tracking-[0] leading-[normal] ml-2 cursor-pointer hover:text-neutral-300 transition-colors"
+                  onClick={handleForgotPassword}
+                  type="button"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            </div>
             {error.form && (
-              <div className="absolute top-[565px] left-[246px] w-[316px] text-center text-red-400 text-xs [font-family:'Poppins',Helvetica]">
+              <div className="absolute top-[360px] left-[246px] w-[316px] text-center text-red-400 text-xs [font-family:'Poppins',Helvetica]">
                 {error.form}
               </div>
             )}
@@ -295,7 +298,7 @@ export default function LoginPage() {
             />
 
             <Image
-              className="absolute w-28 h-[123px] top-[131px] left-[215px] object-cover"
+              className="absolute w-28 h-[123px] top-[131px] left-[205px] object-cover"
               alt="Coins"
               src="https://c.animaapp.com/2Y7fJDnh/img/coins-1.png"
               width={112}
@@ -305,9 +308,10 @@ export default function LoginPage() {
             <Image
               className="absolute w-[138px] h-24 top-36 left-[328px] object-cover"
               alt="Element"
-              src="https://c.animaapp.com/2Y7fJDnh/img/2211-w030-n003-510b-p1-510--converted--02-2.png"
+              src="/greenjems.png"
               width={138}
               height={96}
+
             />
 
             <div className="flex flex-col w-[303px] items-start gap-[30px] absolute top-[755px] left-[252px]">
@@ -431,7 +435,7 @@ export default function LoginPage() {
             </div>
 
             <Image
-              className="absolute w-[312px] h-[70px] top-[589px] left-[247px]"
+              className="absolute w-[312px] h-[70px] top-[602px] left-[247px]"
               alt="CAPTCHA verification"
               src="https://c.animaapp.com/2Y7fJDnh/img/image-4040@2x.png"
               width={312}
