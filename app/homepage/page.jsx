@@ -357,7 +357,7 @@ const XpTierTracker = ({ stats }) => {
       className="flex flex-col items-center relative"
       data-model-id="4001:7762"
     >
-      <section className="relative w-[335px] h-[169px] bg-black rounded-[10px] border border-solid border-neutral-700">
+      <section className="relative w-[335px] h-[155px] bg-black rounded-[10px] border border-solid border-neutral-700">
         <div className="absolute w-[304px] h-6 top-[84px] left-3.5">
           <div className="relative w-full h-6">
             {/* Progress bar background */}
@@ -715,9 +715,9 @@ const MainContentSection = () => {
       {dashboardData?.stats && <XpTierTracker stats={dashboardData.stats} />}
 
       <div className="flex flex-col items-start gap-4 relative w-full">
-        <div className="flex w-full items-center ml-4 justify-between ">
-          <p className="text-[#F4F3FC] [font-family:'Poppins',Helvetica] font-semibold text-xl tracking-[0] leading-[normal] text-nowrap ">
-            💸Fast Fun, Real Rewards!💸
+        <div className="flex w-full items-center mr-7 justify-between ">
+          <p className="text-[#F4F3FC] [font-family:'Poppins',Helvetica] font-semibold text-[19px] tracking-[0] leading-[normal] text-nowrap ">
+            💸💸Fast Fun, Real Rewards!💸💸
           </p>
         </div>
 

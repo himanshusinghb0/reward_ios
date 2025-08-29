@@ -244,17 +244,17 @@ const SignUp = () => {
     router.push('/login');
   };
   return (
-    <div className="min-h-screen w-full bg-[#272052] overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#272052] overflow-x-hidden ">
       <div
-        className="relative w-full min-h-screen bg-[#272052] flex justify-center"
+        className="relative w-full min-h-screen bg-[#272052] flex  justify-center"
         data-model-id="1322:2980"
       >
-        <div className="relative w-[375px] min-h-screen bg-[#272052] overflow-y-auto"
+        <div className="relative w-[375px] min-h-screen bg-[#272052] overflow-x-hidden overflow-y-auto"
         >
-          <div className="absolute w-[470px] h-[883px] -top-32 -left-3.5">
+          <div className="absolute  w-full h-[883px] -top-32 -left-3.5">
             <div className="absolute w-[358px] h-[358px] top-0 left-7 bg-[#af7de6] rounded-[179px] blur-[250px]" />
 
-            <div className="absolute w-[470px] h-[312px] top-[374px] left-0">
+            <div className="absolute w-[470px] h-[312px] top-[374px] left-4">
               <Image
                 className="absolute w-[83px] h-[125px] top-[-22px] left-3.5"
                 alt="Front shapes"
@@ -283,7 +283,7 @@ const SignUp = () => {
             </div>
 
             <Image
-              className="absolute w-[21px] h-[22px] top-[189px] left-[338px]"
+              className="absolute w-[21px] h-[22px] top-[187px] left-[334px]"
               alt="Gem"
               src="https://c.animaapp.com/bkGH9LUL/img/gem-1@2x.png"
               width={21}
@@ -292,13 +292,13 @@ const SignUp = () => {
 
             <form
               onSubmit={handleSubmit}
-              className="w-[314px] absolute top-[274px] left-[50px] flex flex-col items-start gap-5 pb-20"
+              className="w-[314px] absolute top-[274px] left-[40px] flex flex-col items-start gap-5 pb-20"
             >
-              <div className="relative self-stretch w-full flex-[0_0_auto] flex flex-col items-start gap-3">
-                <label className="relative self-stretch mt-[-1.00px] [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
+              <div className="flex flex-col">
+                <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
                   First Name <span className="text-red-500">*</span>
                 </label>
-                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/2 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
+                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                   <Image
                     className="absolute w-[17px] h-[17px] top-5 left-5"
                     alt="User icon"
@@ -313,15 +313,22 @@ const SignUp = () => {
                     className="absolute top-[17px] left-[58px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] tracking-[0] leading-[normal] bg-transparent border-none outline-none w-[240px]"
                     placeholder="Enter your first name"
                     required
+                    aria-label="First Name"
                   />
                 </div>
+                {error.firstname && (
+                  <p className="text-red-400 text-xs mt-1 ml-2">
+                    {error.firstname}
+                  </p>
+                )}
               </div>
-              {error.firstname && <p className="text-red-400 text-xs -mt-3">{error.firstname}</p>}
-              <div className="relative self-stretch w-full flex-[0_0_auto] flex flex-col items-start gap-3">
-                <label className="relative self-stretch mt-[-1.00px] [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
+
+              {/* Last Name Field */}
+              <div className="flex flex-col">
+                <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
                   Last Name <span className="text-red-500">*</span>
                 </label>
-                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/2 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
+                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                   <Image
                     className="absolute w-[17px] h-[17px] top-5 left-5"
                     alt="User icon"
@@ -336,19 +343,26 @@ const SignUp = () => {
                     className="absolute top-[17px] left-[58px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] tracking-[0] leading-[normal] bg-transparent border-none outline-none w-[240px]"
                     placeholder="Enter your last name"
                     required
+                    aria-label="Last Name"
                   />
                 </div>
+                {error.lastname && (
+                  <p className="text-red-400 text-xs mt-1 ml-2">
+                    {error.lastname}
+                  </p>
+                )}
               </div>
-              {error.lastname && <p className="text-red-400 text-xs -mt-3">{error.lastname}</p>}
-              <div className="relative self-stretch w-full flex-[0_0_auto] flex flex-col items-start gap-3">
-                <label className="relative self-stretch mt-[-1.00px] [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
+
+              {/* Email Field */}
+              <div className="flex flex-col">
+                <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
                   Email <span className="text-red-500">*</span>
                 </label>
-                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/2 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
+                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                   <Image
                     className="absolute w-[17px] h-[17px] top-5 left-5"
                     alt="Email icon"
-                    src="https://c.animaapp.com/bkGH9LUL/img/vector-2.svg"
+                    src="https://c.animaapp.com/2Y7fJDnh/img/vector.svg" // Using the correct email icon from your login example
                     width={17}
                     height={17}
                   />
@@ -359,17 +373,21 @@ const SignUp = () => {
                     className="absolute top-[17px] left-[58px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] tracking-[0] leading-[normal] bg-transparent border-none outline-none w-[240px]"
                     placeholder="Enter your email"
                     required
+                    aria-label="Email"
                   />
                 </div>
+                {error.email && (
+                  <p className="text-red-400 text-xs mt-1 ml-2">
+                    {error.email}
+                  </p>
+                )}
               </div>
-              {error.email && <p className="text-red-400 text-xs -mt-3">{error.email}</p>}
 
-
-              <div className="relative self-stretch w-full flex-[0_0_auto] flex flex-col items-start gap-3">
-                <label className="relative self-stretch mt-[-1.00px] [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
-                  Mobile Number <span className="text-red-500">*</span>
+              <div className="flex flex-col">
+                <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
+                  Mobile Number <span className="text-red-400">*</span>
                 </label>
-                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/2 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
+                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                   <Image
                     className="absolute w-[17px] h-[17px] top-5 left-5"
                     alt="Phone icon"
@@ -380,8 +398,9 @@ const SignUp = () => {
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="absolute top-[17px] left-[50px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] bg-transparent border-none outline-none w-[50px] disabled:opacity-50"
+                    className="absolute top-1/2 -translate-y-1/2 left-[50px] appearance-none [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] bg-transparent border-none outline-none pr-2 disabled:opacity-50"
                     disabled={isOtpSent || isMobileVerified}
+                    aria-label="Country code"
                   >
                     <option value="+91" className="bg-[#272052] text-[#d3d3d3]">+91</option>
                     <option value="+1" className="bg-[#272052] text-[#d3d3d3]">+1</option>
@@ -393,38 +412,45 @@ const SignUp = () => {
                     value={formData.mobile}
                     onChange={(e) => handleInputChange("mobile", e.target.value.replace(/\D/g, ''))}
                     maxLength={10}
-                    className="absolute top-[17px] left-[105px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] tracking-[0] leading-[normal] bg-transparent border-none outline-none w-[190px] disabled:opacity-50"
-                    // placeholder="Enter mobile number"
+                    className="absolute top-[17px] left-[105px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] tracking-[0] leading-[normal] bg-transparent border-none outline-none w-[100px] disabled:opacity-50"
+                    placeholder="Mobile Num"
                     required
                     disabled={isOtpSent || isMobileVerified}
+                    aria-label="Mobile number"
                   />
                   {!isOtpSent && !isMobileVerified && formData.mobile.length > 0 && (
                     <button
                       type="button"
                       onClick={handleSendOtp}
                       disabled={isLoading}
-                      className="absolute right-4 top-[10px] h-[35px] px-4 rounded-lg bg-gradient-to-r from-[#a18aff] to-[#6d4aff] text-white text-sm font-semibold shadow-md disabled:opacity-50 transition-all"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 h-[35px] px-3 rounded-lg bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] text-white text-[14px] font-semibold shadow-md disabled:opacity-50 transition-all"
                     >
                       {isLoading ? 'Sending...' : 'Send OTP'}
                     </button>
                   )}
                   {isMobileVerified && (
-                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-400 text-sm font-semibold flex items-center">✓ Verified</div>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-400 text-sm font-semibold flex items-center">✓ Verified</div>
                   )}
                 </div>
-                {error.mobile && <p className="text-red-400 text-xs -mt-3">{error.mobile}</p>}
+                {error.mobile && (
+                  <p className="text-red-400 text-xs mt-1 ml-2">
+                    {error.mobile}
+                  </p>
+                )}
               </div>
 
 
               {isOtpSent && !isMobileVerified && (
-                <div className="w-full flex flex-col items-center gap-6 mt-8 mb-4">
-                  <p className="text-white text-xl font-semibold text-center mb-2">
-                    We have sent verification code to your phone number
-                  </p>
-                  <p className="text-[#bdb7e3] text-base font-medium text-center mb-4">
+                <div className="w-full flex flex-col items-center gap-4 pt-3">
+                  <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg text-center">
+                    We have sent a verification code to your phone number
+                  </h3>
+                  <p className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-sm text-center">
                     Verify it's you
                   </p>
-                  <div className="flex justify-center gap-4 mb-6">
+
+                  {/* OTP Input Boxes */}
+                  <div className="flex justify-center gap-3 pt-2">
                     {formData.otp.map((data, index) => (
                       <input
                         key={index}
@@ -436,94 +462,108 @@ const SignUp = () => {
                         onFocus={e => e.target.select()}
                         ref={el => otpInputs.current[index] = el}
                         disabled={isMobileVerified}
-                        className={`w-16 h-16 text-center text-3xl font-bold text-white bg-gradient-to-b from-[#a18aff] to-[#6d4aff] rounded-xl border-2 ${error.otp ? 'border-red-500' : 'border-transparent'} focus:border-[#9098f2] focus:outline-none transition-all disabled:opacity-50`}
+                        className={`w-14 h-14 text-center text-2xl font-semibold text-white bg-black/10 backdrop-blur-sm rounded-xl border ${error.otp ? 'border-red-500' : 'border-gray-600'} focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors disabled:opacity-50`}
+                        aria-label={`OTP Digit ${index + 1}`}
                       />
                     ))}
                   </div>
-                  {error.otp && <p className="text-red-400 text-xs mb-2">{error.otp}</p>}
-                  <button
-                    type="button"
-                    onClick={handleVerifyOtp}
-                    disabled={isLoading || formData.otp.join('').length < 4}
-                    className="w-full h-12 rounded-lg bg-gradient-to-b from-[#a18aff] to-[#6d4aff] text-white text-lg font-semibold shadow-md disabled:opacity-50"
-                  >
-                    {isLoading ? 'Verifying...' : 'Verify'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={countdown > 0 || isResending}
-                    className="mt-2 text-[#9098f2] text-sm font-semibold disabled:text-gray-500"
-                  >
-                    {isResending ? 'Sending...' : (countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code')}
-                  </button>
+
+                  {error.otp && <p className="text-red-400 text-xs text-center">{error.otp}</p>}
+
+                  {/* Action Buttons */}
+                  <div className="w-full flex flex-col items-center gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      disabled={isLoading || formData.otp.join('').length < 4}
+                      className="w-full h-12 rounded-xl  bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] text-white  text-lg font-semibold shadow-md disabled:opacity-50 transition-opacity"
+                    >
+                      {isLoading ? 'Verifying...' : 'Verify'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={countdown > 0 || isResending}
+                      className="text-[#9098f2] text-sm font-semibold disabled:text-gray-500 transition-colors"
+                    >
+                      {isResending ? 'Sending...' : (countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code')}
+                    </button>
+                  </div>
                 </div>
               )}
-
-              <div className="flex flex-col items-start gap-1.5 relative self-stretch w-full flex-[0_0_auto]">
-                <label className="relative self-stretch mt-[-1.00px] [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
+              <div className="flex flex-col">
+                <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
                   Password <span className="text-red-500">*</span>
                 </label>
-                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/2 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
+                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                   <div className="absolute w-[17px] h-[17px] top-5 left-5">
-                    <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-                      <path d="M4 7V5C4 2.5 5.5 1 8 1C10.5 1 12 2.5 12 5V7M8 10C8.5 10 9 10.5 9 11C9 11.5 8.5 12 8 12C7.5 12 7 11.5 7 11C7 10.5 7.5 10 8 10ZM3 7H13C13.5 7 14 7.5 14 8V14C14 14.5 13.5 15 13 15H3C2.5 15 2 14.5 2 14V8C2 7.5 2.5 7 3 7Z" stroke="#d3d3d3" strokeWidth="1" fill="none" />
+                    <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M17.3901 2.90445L18.0398 2.26388C18.2122 2.09156 18.309 1.85785 18.309 1.61416C18.309 1.37046 18.2122 1.13675 18.0398 0.964436C17.8675 0.792119 17.6338 0.695312 17.3901 0.695312C17.1464 0.695313 16.9127 0.792119 16.7404 0.964436L15.4593 2.25473L12.8695 4.84446L7.09524 10.6096C6.14907 9.98535 5.00485 9.73454 3.88431 9.90578C2.76377 10.077 1.74668 10.6581 1.03013 11.5365C0.313576 12.4148 -0.0514261 13.5279 0.0058485 14.66C0.0631231 15.7921 0.538597 16.8626 1.34014 17.6641C2.14168 18.4657 3.21222 18.9412 4.34432 18.9984C5.47642 19.0557 6.58948 18.6907 7.46783 17.9742C8.34617 17.2576 8.92726 16.2405 9.0985 15.12C9.26974 13.9994 9.01894 12.8552 8.39469 11.909L13.5101 6.78447L15.4501 8.73364C15.5354 8.81836 15.6366 8.88545 15.7479 8.93107C15.8591 8.97669 15.9783 8.99995 16.0985 8.99953C16.2187 8.9991 16.3377 8.975 16.4486 8.92859C16.5596 8.88218 16.6603 8.81439 16.745 8.72906C16.8297 8.64374 16.8968 8.54257 16.9424 8.43132C16.988 8.32007 17.0113 8.20092 17.0109 8.08068C17.0104 7.96044 16.9863 7.84146 16.9399 7.73054C16.8935 7.61962 16.8257 7.51892 16.7404 7.4342L14.8004 5.49418L16.0998 4.20389L16.7404 4.84446C16.8251 4.92978 16.9258 4.99758 17.0367 5.04399C17.1477 5.0904 17.2666 5.1145 17.3869 5.11493C17.5071 5.11535 17.6263 5.09209 17.7375 5.04647C17.8488 5.00085 17.9499 4.93376 18.0353 4.84904C18.1206 4.76432 18.1884 4.66362 18.2348 4.55269C18.2812 4.44177 18.3053 4.32279 18.3057 4.20255C18.3062 4.08231 18.2829 3.96317 18.2373 3.85192C18.1917 3.74067 18.1246 3.63949 18.0398 3.55417L17.3901 2.90445ZM4.57872 17.1709C4.03575 17.1709 3.50497 17.0099 3.05351 16.7082C2.60205 16.4065 2.25018 15.9778 2.04239 15.4761C1.83461 14.9745 1.78024 14.4225 1.88617 13.89C1.9921 13.3574 2.25356 12.8683 2.6375 12.4843C3.02143 12.1004 3.5106 11.8389 4.04314 11.733C4.57567 11.6271 5.12766 11.6814 5.6293 11.8892C6.13094 12.097 6.5597 12.4489 6.86135 12.9004C7.16301 13.3518 7.32402 13.8826 7.32402 14.4256C7.32402 15.1537 7.03478 15.8519 6.51994 16.3668C6.0051 16.8816 5.30682 17.1709 4.57872 17.1709Z" fill="#A4A4A4" />
                     </svg>
+
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handleInputChange("password", e.target.value)}
                     className="absolute top-[17px] left-[58px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] tracking-[0] leading-[normal] bg-transparent border-none outline-none w-[200px]"
+                    placeholder="Enter your password"
                     required
+                    aria-label="Password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-[17px] right-[20px] w-[17px] h-[17px]"
+                    className="absolute top-5 right-5 w-5 h-5 text-gray-400"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <svg width="17" height="17" viewBox="0 0 20 20" fill="none" className="w-full h-full">
                         <path d="M10 12c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
                         <path d="M10 4C5.5 4 1.73 7.11 1 10c.73 2.89 4.5 6 9 6s8.27-3.11 9-6c-.73-2.89-4.5-6-9-6z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
-                        <line x1="3" y1="3" x2="17" y2="17" stroke="#d3d3d3" strokeWidth="1.2" strokeLinecap="round" />
                       </svg>
                     ) : (
+
                       <svg width="17" height="17" viewBox="0 0 20 20" fill="none" className="w-full h-full">
                         <path d="M10 12c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
                         <path d="M10 4C5.5 4 1.73 7.11 1 10c.73 2.89 4.5 6 9 6s8.27-3.11 9-6c-.73-2.89-4.5-6-9-6z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
+                        <line x1="3" y1="3" x2="17" y2="17" stroke="#d3d3d3" strokeWidth="1.2" strokeLinecap="round" />
                       </svg>
                     )}
                   </button>
                 </div>
+                {error.password && (
+                  <p className="text-red-400 text-xs mt-1 ml-2">
+                    {error.password}
+                  </p>
+                )}
               </div>
-              {error.password && <p className="text-red-400 text-xs">{error.password}</p>}
 
-
-              <div className="flex flex-col items-start gap-1.5 relative self-stretch w-full flex-[0_0_auto]">
-                <label className="relative self-stretch mt-[-1.00px] [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
+              {/* Confirm Password Field */}
+              <div className="flex flex-col">
+                <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
                   Confirm Password <span className="text-red-500">*</span>
                 </label>
-                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/2 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
+                <div className="relative w-[314px] h-[55px] rounded-[12px] border border-gray-600 bg-black/10 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-colors">
                   <div className="absolute w-[17px] h-[17px] top-5 left-5">
-                    <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-                      <path d="M4 7V5C4 2.5 5.5 1 8 1C10.5 1 12 2.5 12 5V7M8 10C8.5 10 9 10.5 9 11C9 11.5 8.5 12 8 12C7.5 12 7 11.5 7 11C7 10.5 7.5 10 8 10ZM3 7H13C13.5 7 14 7.5 14 8V14C14 14.5 13.5 15 13 15H3C2.5 15 2 14.5 2 14V8C2 7.5 2.5 7 3 7Z" stroke="#d3d3d3" strokeWidth="1" fill="none" />
+                    <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M17.3901 2.90445L18.0398 2.26388C18.2122 2.09156 18.309 1.85785 18.309 1.61416C18.309 1.37046 18.2122 1.13675 18.0398 0.964436C17.8675 0.792119 17.6338 0.695312 17.3901 0.695312C17.1464 0.695313 16.9127 0.792119 16.7404 0.964436L15.4593 2.25473L12.8695 4.84446L7.09524 10.6096C6.14907 9.98535 5.00485 9.73454 3.88431 9.90578C2.76377 10.077 1.74668 10.6581 1.03013 11.5365C0.313576 12.4148 -0.0514261 13.5279 0.0058485 14.66C0.0631231 15.7921 0.538597 16.8626 1.34014 17.6641C2.14168 18.4657 3.21222 18.9412 4.34432 18.9984C5.47642 19.0557 6.58948 18.6907 7.46783 17.9742C8.34617 17.2576 8.92726 16.2405 9.0985 15.12C9.26974 13.9994 9.01894 12.8552 8.39469 11.909L13.5101 6.78447L15.4501 8.73364C15.5354 8.81836 15.6366 8.88545 15.7479 8.93107C15.8591 8.97669 15.9783 8.99995 16.0985 8.99953C16.2187 8.9991 16.3377 8.975 16.4486 8.92859C16.5596 8.88218 16.6603 8.81439 16.745 8.72906C16.8297 8.64374 16.8968 8.54257 16.9424 8.43132C16.988 8.32007 17.0113 8.20092 17.0109 8.08068C17.0104 7.96044 16.9863 7.84146 16.9399 7.73054C16.8935 7.61962 16.8257 7.51892 16.7404 7.4342L14.8004 5.49418L16.0998 4.20389L16.7404 4.84446C16.8251 4.92978 16.9258 4.99758 17.0367 5.04399C17.1477 5.0904 17.2666 5.1145 17.3869 5.11493C17.5071 5.11535 17.6263 5.09209 17.7375 5.04647C17.8488 5.00085 17.9499 4.93376 18.0353 4.84904C18.1206 4.76432 18.1884 4.66362 18.2348 4.55269C18.2812 4.44177 18.3053 4.32279 18.3057 4.20255C18.3062 4.08231 18.2829 3.96317 18.2373 3.85192C18.1917 3.74067 18.1246 3.63949 18.0398 3.55417L17.3901 2.90445ZM4.57872 17.1709C4.03575 17.1709 3.50497 17.0099 3.05351 16.7082C2.60205 16.4065 2.25018 15.9778 2.04239 15.4761C1.83461 14.9745 1.78024 14.4225 1.88617 13.89C1.9921 13.3574 2.25356 12.8683 2.6375 12.4843C3.02143 12.1004 3.5106 11.8389 4.04314 11.733C4.57567 11.6271 5.12766 11.6814 5.6293 11.8892C6.13094 12.097 6.5597 12.4489 6.86135 12.9004C7.16301 13.3518 7.32402 13.8826 7.32402 14.4256C7.32402 15.1537 7.03478 15.8519 6.51994 16.3668C6.0051 16.8816 5.30682 17.1709 4.57872 17.1709Z" fill="#A4A4A4" />
                     </svg>
                   </div>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
-                    onChange={(e) =>
-                      handleInputChange("confirmPassword", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
                     className="absolute top-[17px] left-[58px] [font-family:'Poppins',Helvetica] font-medium text-[#d3d3d3] text-[14.3px] tracking-[0] leading-[normal] bg-transparent border-none outline-none w-[200px]"
+                    placeholder="Confirm your password"
                     required
+                    aria-label="Confirm Password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute top-[17px] right-[20px] w-[17px] h-[17px]"
+
+                    className="absolute top-5 right-5 w-5 h-5 text-gray-400"
                     aria-label={
                       showConfirmPassword ? "Hide password" : "Show password"
                     }
@@ -532,19 +572,23 @@ const SignUp = () => {
                       <svg width="17" height="17" viewBox="0 0 20 20" fill="none" className="w-full h-full">
                         <path d="M10 12c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
                         <path d="M10 4C5.5 4 1.73 7.11 1 10c.73 2.89 4.5 6 9 6s8.27-3.11 9-6c-.73-2.89-4.5-6-9-6z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
-                        <line x1="3" y1="3" x2="17" y2="17" stroke="#d3d3d3" strokeWidth="1.2" strokeLinecap="round" />
                       </svg>
                     ) : (
+
                       <svg width="17" height="17" viewBox="0 0 20 20" fill="none" className="w-full h-full">
                         <path d="M10 12c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
                         <path d="M10 4C5.5 4 1.73 7.11 1 10c.73 2.89 4.5 6 9 6s8.27-3.11 9-6c-.73-2.89-4.5-6-9-6z" stroke="#d3d3d3" strokeWidth="1.2" fill="none" />
+                        <line x1="3" y1="3" x2="17" y2="17" stroke="#d3d3d3" strokeWidth="1.2" strokeLinecap="round" />
                       </svg>
                     )}
                   </button>
                 </div>
+                {error.confirmPassword && (
+                  <p className="text-red-400 text-xs mt-1 ml-2">
+                    {error.confirmPassword}
+                  </p>
+                )}
               </div>
-              {error.confirmPassword && <p className="text-red-400 text-xs">{error.confirmPassword}</p>}
-
               {/* Error Message Display */}
               {error.form && (
                 <div className="w-full text-center">
@@ -577,7 +621,7 @@ const SignUp = () => {
               </button>
 
               {/* Sign In Link */}
-              <div className="w-full text-center mt-8">
+              <div className="w-full text-center mt-6">
                 <p className="[font-family:'Poppins',Helvetica] font-medium text-sm tracking-[0] leading-[normal]">
                   <span className="text-white">Already have an account? </span>
                   <button
@@ -590,7 +634,7 @@ const SignUp = () => {
               </div>
             </form>
 
-            <div className="absolute w-[305px] h-[65px] top-[179px] left-[50px]">
+            <div className="absolute w-[305px] h-[65px] top-[179px] left-[45px]">
               <p className="absolute top-11 left-0 [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-sm tracking-[0] leading-[normal]">
                 Create account to earn &amp; withdraw money
               </p>
