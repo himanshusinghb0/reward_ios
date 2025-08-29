@@ -37,11 +37,11 @@ export default function Home() {
         disabled={isNavigating}
         className="absolute z-20 touch-manipulation active:scale-95 transition-transform duration-100 hover:opacity-80 disabled:opacity-50"
         style={{
-          right: "18px",
-          bottom: "262px",
-          width: "60px", // Increased touch target
-          height: "60px", // Increased touch target
-          background: "transparent",
+          right: "4px",
+          bottom: "185px",
+          width: "90px", // Increased touch target
+          height: "200px", // Increased touch target
+          // background: "transparent",
           borderRadius: "50%",
           WebkitTapHighlightColor: "transparent", // Remove tap highlight
         }}

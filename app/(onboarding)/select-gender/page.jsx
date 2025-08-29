@@ -53,13 +53,8 @@ export default function GenderSelection() {
         </p>
       </div>
 
-      <div className='relative z-10 flex-1 flex flex-col justify-center px-6 space-y-6'>
-        {isLoading && (
-          <p className="text-white text-center font-poppins">Loading options...</p>
-        )}
-        {error && (
-          <p className="text-red-400 text-center font-poppins">{error}</p>
-        )}
+      <div className='relative z-10 flex-1 flex flex-col mt-30  px-6 space-y-6'>
+
 
         {!isLoading && !error && genderOptions.map((option) => {
           const isSelected = gender === option.id; // Use `option.id` from API
@@ -87,6 +82,14 @@ export default function GenderSelection() {
             </button>
           );
         })}
+      </div>
+      <div className='relative z-10 flex-1 flex flex-col mb-80 px-6 space-y-6'>
+        {isLoading && (
+          <p className="text-white text-center font-poppins">Loading options...</p>
+        )}
+        {error && (
+          <p className="text-red-400 text-center font-poppins">{error}</p>
+        )}
       </div>
     </div>
   );

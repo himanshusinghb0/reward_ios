@@ -144,7 +144,7 @@ export const XPPointsModal = ({ isOpen, onClose }) => {
             id="xp-points-description"
             className="absolute w-[284px] top-3 left-0 [font-family:'Poppins',Helvetica] font-light text-white text-sm text-center tracking-[0] leading-5"
           >
-           Play more, level up, and multiply your rewards with XP Points.
+            Play more, level up, and multiply your rewards with XP Points.
           </p>
         </div>
 
@@ -231,25 +231,23 @@ export const XPPointsModal = ({ isOpen, onClose }) => {
                       style={{ width: item.width }}
                     >
                       <div
-                        className={`absolute top-1.5 [font-family:'Poppins',Helvetica] font-medium text-white text-[15.3px] tracking-[0] leading-[16.5px] whitespace-nowrap ${
-                          index === 0
-                            ? "left-2.5"
-                            : index === 1
-                              ? "left-[7px]"
-                              : "left-[9px]"
-                        }`}
+                        className={`absolute top-1.5 [font-family:'Poppins',Helvetica] font-medium text-white text-[15.3px] tracking-[0] leading-[16.5px] whitespace-nowrap ${index === 0
+                          ? "left-2.5"
+                          : index === 1
+                            ? "left-[7px]"
+                            : "left-[9px]"
+                          }`}
                       >
                         {item.points}
                       </div>
 
                       <img
-                        className={`absolute w-[18px] h-[19px] top-[5px] aspect-[0.97] ${
-                          index === 0
-                            ? "left-[22px]"
-                            : index === 1
-                              ? "left-[21px]"
-                              : "left-[29px]"
-                        }`}
+                        className={`absolute w-[18px] h-[19px] top-[5px] aspect-[0.97] ${index === 0
+                          ? "left-[22px]"
+                          : index === 1
+                            ? "left-[21px]"
+                            : "left-[29px]"
+                          }`}
                         alt=""
                         src={item.icon}
                         aria-hidden="true"

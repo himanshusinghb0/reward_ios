@@ -122,7 +122,7 @@ export default function AgeSelection() {
                     key={option.id}
                     onClick={() => handleWheelClick(index)}
                     className={`flex items-center justify-center cursor-pointer transition-all duration-200 ${selectedIndex === index
-                      ? 'bg-white rounded-lg mx-4 shadow-lg transform scale-105'
+                      ? 'bg-white rounded-lg mx-1  shadow-lg transform scale-105'
                       : 'bg-transparent hover:bg-white/10'
                       }`}
                     style={{
