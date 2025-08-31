@@ -151,6 +151,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("authToken", token);
       localStorage.setItem("onboardingComplete", "true");
+
       console.log("✅ User + Token + OnboardingFlag saved to localStorage");
     } catch (err) {
       console.error("❌ Failed to save to localStorage", err);

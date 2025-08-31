@@ -111,7 +111,7 @@ export default function LoginPage() {
         className="bg-[#272052] flex h-screen flex-row justify-center w-full "
         data-model-id="363:24235"
       >
-        <div className="bg-[#272052]  overflow-hidden w-full pl-2 ">
+        <div className="bg-[#272052]  overflow-hidden  w-full pl-2 ">
           <div className="relative w-[904px] h-[1221px] -top-32 left-[-215px] ">
             <div className="absolute w-[358px] h-[358px] top-0 left-[229px] bg-[#af7de6] rounded-[179px] blur-[250px]" />
 
@@ -121,7 +121,7 @@ export default function LoginPage() {
 
                 <div className="absolute w-[397px] h-[397px] top-[619px] left-0 rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(196,86,71,1)_0%,rgba(210,90,99,0)_100%)] opacity-[0.58]" />
 
-                <div className="absolute w-[377px] h-[803px] top-[68px] left-[213px] rounded-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
+                <div className="absolute w-[440px] h-[803px] top-[68px] left-[208px] rounded-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
 
                 <div className="absolute w-[397px] h-[397px] top-0 left-[507px] rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(179,121,223,1)_0%,rgba(54,0,96,0)_100%)] opacity-[0.58]" />
               </div>

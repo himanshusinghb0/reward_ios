@@ -12,6 +12,10 @@ export default function AppLoader() {
     const hasCompletedOnboarding =
       localStorage.getItem("onboardingComplete") === "true";
     const onboardingInProgressData = localStorage.getItem("onboarding-storage");
+    const permissionsAccepted =
+      localStorage.getItem("permissionsAccepted") === "true";
+    const locationCompleted =
+      localStorage.getItem("locationCompleted") === "true";
 
     if (storedUserString) {
       try {
@@ -21,6 +25,19 @@ export default function AppLoader() {
         } else {
           setLoadingMessage("Resuming your session...");
         }
+
+        if (!permissionsAccepted) {
+          router.replace("/permissions");
+          return; // Stop further execution
+        }
+
+        // Condition 2: Accepted permissions, but has not completed the location step.
+        if (!locationCompleted) {
+          router.replace("/location");
+          return; // Stop further execution
+        }
+
+        return;
       } catch (e) {
         setLoadingMessage("Resuming your session...");
       }

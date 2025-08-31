@@ -39,6 +39,7 @@ export default function LocationPage() {
           updateLocationSettings(user.mobile, "granted", "while_using"),
           updateLocation({ latitude, longitude }, token)
         ]);
+        localStorage.setItem("locationCompleted", "true");
 
         // Navigate to the next page on success
         router.push("/homepage");
