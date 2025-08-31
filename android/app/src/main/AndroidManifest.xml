@@ -33,6 +33,13 @@
                <category android:name="android.intent.category.DEFAULT" />
                <category android:name="android.intent.category.BROWSABLE" />
                <data android:scheme="@string/custom_url_scheme" />
+                <data 
+                    android:scheme="com.jackson.app"
+                    android:host="reset-password" />
+                <data 
+                    android:scheme="https"
+                    android:host="rewardsapi.hireagent.co"
+                    android:pathPrefix="/reset-password" />
            </intent-filter>
 
         </activity>
