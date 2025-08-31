@@ -1,15 +1,57 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
+const nonGamingOffers = [
+  {
+    id: 1,
+    name: "Albert- Mobile Banking",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3982@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
+    bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
+    earnAmount: "Earn upto 100",
+  },
+  {
+    id: 2,
+    name: "Chime- Mobile Banking",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3980@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-73-1@2x.png",
+    bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-1@2x.png",
+    earnAmount: "Earn upto 100",
+  },
+  {
+    id: 3,
+    name: "Albert- Mobile Banking",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3982@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
+    bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
+    earnAmount: "Earn upto 100",
+  },
+];
 
 export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
   const { token } = useAuth();
   const [userGames, setUserGames] = useState([]);
   const [userStats, setUserStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const scrollTimeoutRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(1);
+  const totalCards = nonGamingOffers.length;
+
+  // --- CONFIGURATION CONSTANTS ---
+  // The horizontal distance each side card is pushed from the center.
+  // This value is tweaked to create the perfect overlap and "cut off" effect within the 335px container.
+  const HORIZONTAL_SPREAD = 120;
+
+
+
+
+
+
 
   // API functions
   const fetchUserGames = async () => {
@@ -51,7 +93,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
     try {
       const response = await fetch(`${BASE_URL}/api/game/start`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'x-auth-token': token,
         },
@@ -70,7 +112,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
     try {
       const response = await fetch(`${BASE_URL}/api/game/score`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'x-auth-token': token,
         },
@@ -89,7 +131,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
     try {
       const response = await fetch(`${BASE_URL}/api/game/complete`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'x-auth-token': token,
         },
@@ -184,7 +226,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
         "https://c.animaapp.com/3mn7waJw/img/unsplash-bi91nrppe38-2@2x.png",
       overlayImage: "https://c.animaapp.com/3mn7waJw/img/image-3930@2x.png",
       score: "20",
-      bonus: "+50.5",
+      bonus: "+50",
       coinIcon: "https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png",
       picIcon: "https://c.animaapp.com/3mn7waJw/img/pic-8.svg",
     },
@@ -228,7 +270,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       overlayImage:
         "https://c.animaapp.com/3mn7waJw/img/png-transparent-mobile-legends-bang-bang-desktop-mobile-phones-a@2x.png",
       score: "8",
-      bonus: "+2.5",
+      bonus: "+2",
       coinIcon: "https://c.animaapp.com/3mn7waJw/img/image-3937-8@2x.png",
       picIcon: "https://c.animaapp.com/3mn7waJw/img/pic-11.svg",
     },
@@ -244,8 +286,8 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       image:
         "https://c.animaapp.com/3mn7waJw/img/unsplash-bi91nrppe38-7@2x.png",
       overlayImage: "https://c.animaapp.com/3mn7waJw/img/image-4@2x.png",
-      score: "2",
-      bonus: "+5",
+      score: "2.4",
+      bonus: "+15",
       coinIcon: "https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png",
       picIcon: "https://c.animaapp.com/3mn7waJw/img/pic-12.svg",
       scoreWidth: "w-[70px]",
@@ -258,8 +300,8 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       image:
         "https://c.animaapp.com/3mn7waJw/img/unsplash-bi91nrppe38-7@2x.png",
       overlayImage: "https://c.animaapp.com/3mn7waJw/img/image-4@2x.png",
-      score: "2",
-      bonus: "+1.5",
+      score: "2.8",
+      bonus: "+12",
       coinIcon: "https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png",
       picIcon: "https://c.animaapp.com/3mn7waJw/img/pic-13.svg",
       scoreWidth: "w-[70px]",
@@ -287,7 +329,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
         "https://c.animaapp.com/3mn7waJw/img/unsplash-bi91nrppe38-7@2x.png",
       overlayImage: "https://c.animaapp.com/3mn7waJw/img/image-4@2x.png",
       score: "0.8",
-      bonus: "+5",
+      bonus: "+25",
       coinIcon: "https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png",
       picIcon: "https://c.animaapp.com/3mn7waJw/img/pic-15.svg",
       scoreWidth: "w-[70px]",
@@ -298,7 +340,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
   const filterGamesBySearch = (games, query) => {
     if (!query || query.trim() === "") return games;
     const searchTerm = query.toLowerCase().trim();
-    return games.filter(game => 
+    return games.filter(game =>
       game.name.toLowerCase().includes(searchTerm) ||
       game.genre.toLowerCase().includes(searchTerm)
     );
@@ -315,33 +357,15 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
     return gameName.includes(searchTerm);
   });
 
-  const nonGamingOffers = [
-    {
-      id: 1,
-      name: "Albert- Mobile Banking",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3981@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
-      bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
-      earnAmount: "Earn upto 100",
-    },
-    {
-      id: 2,
-      name: "Chime- Mobile Banking",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3980@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-73-1@2x.png",
-      bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-1@2x.png",
-      earnAmount: "Earn upto 100",
-      provider: "BitLabs",
-    },
-    {
-      id: 3,
-      name: "Albert- Mobile Banking",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3982@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
-      bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
-      earnAmount: "Earn upto 100",
-    },
-  ];
+
+
+  // Helper to format title with a line break before the last word
+  const formatTitle = (title) => {
+    const words = title.split(' ');
+    if (words.length <= 1) return title;
+    const lastWord = words.pop();
+    return <>{words.join(' ')}<br />{lastWord}</>;
+  };
 
   const renderGameItem = (game, showBorder = true) => (
     <div
@@ -388,7 +412,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
         )}
 
         <div className="flex-col w-[139px] items-start flex relative">
-          <div className="relative self-stretch mb-1 [font-family:'Poppins',Helvetica] font-bold text-white text-base tracking-[0] leading-tight">
+          <div className="relative self-stretch mb-1 [font-family:'Poppins',Helvetica] font-bold text-[#FFFFFF] text-base tracking-[0] leading-tight">
             {game.name}
           </div>
           <div className="relative self-stretch mb-1 [font-family:'Poppins',Helvetica] font-normal text-white text-xs tracking-[0] leading-tight">
@@ -444,32 +468,37 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       </div>
 
       <div
-        className={`relative ${game.scoreWidth || "w-[70px]"} h-[55px] rounded-[10px] overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)]`}
+        className={`relative ${game.scoreWidth || "w-[65px]"} h-[55px] rounded-[10px] overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)]`}
       >
-        <div className="top-2 left-[3px] text-base leading-5 absolute [font-family:'Poppins',Helvetica] font-medium text-white tracking-[0] whitespace-nowrap">
-          {game.score.includes(".") ? game.score : ` ${game.score}`}
+        <div className="flex items-center justify-center gap-1 mt-2 relative">
+          <div className="top-2 left-[3px] text-base leading-5 [font-family:'Poppins',Helvetica] font-medium text-white tracking-[0] whitespace-nowrap">
+            {game.score.includes(".") ? game.score : ` ${game.score}`}
+          </div>
+          <Image
+            className=" w-[19px] h-[19px] top-[9px] left-[43px]"
+            alt="Coin"
+            src={game.coinIcon}
+            width={19}
+            height={19}
+          />
         </div>
-        <Image
-          className="absolute w-[19px] h-[19px] top-[9px] left-[43px]"
-          alt="Coin"
-          src={game.coinIcon}
-          width={19}
-          height={19}
-        />
-        <div className="top-[33px] left-1.5 text-xs leading-4 absolute [font-family:'Poppins',Helvetica] font-medium text-white tracking-[0] whitespace-nowrap">
-          {game.bonus}
+        <div className="flex items-center justify-center gap-1 mt-1 relative">
+
+          <div className="top-[34px] left-[6px] text-[12px] leading-4  [font-family:'Poppins',Helvetica] font-medium text-[#FFFFFF] tracking-[0] whitespace-nowrap">
+            {game.bonus}
+          </div>
+          <Image
+            className=" w-[17px] h-[13px] top-[34px]  mr-[3x] left-[39px]"
+            alt="Pic"
+            src={game.picIcon}
+            width={17}
+            height={13}
+          />
         </div>
-        <Image
-          className="absolute w-[17px] h-[13px] top-[34px] left-[45px]"
-          alt="Pic"
-          src={game.picIcon}
-          width={17}
-          height={13}
-        />
       </div>
 
       {game.hasStatusDot && (
-        <div className="absolute w-2 h-2 top-[26px] left-[261px] bg-[#8b92de] rounded" />
+        <div className="absolute w-[8px] h-[8px] top-[30px] left-[248px] bg-[#8B92DF] rounded" />
       )}
     </div>
   );
@@ -576,14 +605,14 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
           </div>
         </div>
       )}
-      
 
-      <div className="flex flex-col w-[335px] h-[455px] items-start gap-4 relative">
+
+      <div className="flex flex-col w-[335px] h-[455px] items-start gap-[16px] relative">
         <div className="flex flex-col h-[532px] items-start gap-2.5 self-stretch w-full mb-[-77.00px] relative overflow-x-scroll">
           <div className="w-[334px] h-[455px] rounded-[20px] overflow-hidden bg-[linear-gradient(103deg,rgba(121,32,207,1)_0%,rgba(205,73,153,1)_80%)] relative overflow-x-scroll">
             <div className="relative w-[334px] h-[455px]">
               <div className="absolute w-[334px] h-[91px] top-0 left-0">
-                <div className="top-8 left-20 font-bold text-xl leading-6 absolute [font-family:'Poppins',Helvetica] text-white tracking-[0] whitespace-nowrap">
+                <div className="top-8 left-20 font-bold text-xl leading-6 absolute [font-family:'Poppins',Helvetica] text-[#FFFFFF] tracking-[0] whitespace-nowrap">
                   My Account Overview
                 </div>
                 <Image
@@ -603,34 +632,44 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 </div>
                 <div className="absolute w-36 h-[20px] top-[38px] left-[5px] bg-[#ffffff40] rounded-[10px]">
                   <div className="w-[60%] h-full bg-[linear-gradient(90deg,rgba(255,221,143,1)_0%,rgba(255,183,77,1)_100%)] rounded-[10px]"></div>
-                  <div className="absolute w-6 h-6 bg-white rounded-full top-[-3px] border-[3px] border-[#FFB74D]" style={{left: 'calc(60% - 12px)'}}></div>
+                  <div className="absolute w-6 h-6 bg-white rounded-full top-[-3px] border-[3px] border-[#FFB74D]" style={{ left: 'calc(60% - 12px)' }}></div>
                 </div>
-                <div className="w-[78px] top-0 left-[226px] absolute h-14 rounded-[8px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)]">
-                  <div className="relative h-14 flex flex-col justify-center items-center px-2">
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="font-medium text-base leading-5 [font-family:'Poppins',Helvetica] text-white tracking-[0]">
-                        {userStats ? userStats.xp : "1000"}
+                <div className="relative w-[70px] h-[55px] left-[226px] top-1 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
+                  {/* Main container for the two columns */}
+                  <div className="flex items-center justify-center gap-x-1">
+
+                    {/* Column 1: Values (Right-aligned) */}
+                    <div className="flex flex-col items-end">
+                      <div className="text-[16px] font-semibold text-white [font-family:'Poppins',Helvetica]">
+                        100
                       </div>
-                      <Image
-                        className="w-[16px] h-[16px]"
-                        alt="Coin"
-                        src="https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png"
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="font-medium text-xs [font-family:'Poppins',Helvetica] text-white tracking-[0]">
-                        +{userStats ? Math.floor(userStats.xp * 0.5) : "500"}
+                      <div className="text-[14px] font-semibold text-white [font-family:'Poppins',Helvetica]">
+                        +50
                       </div>
-                      <Image
-                        className="w-[16px] h-[16px]"
-                        alt="XP"
-                        src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
-                        width={16}
-                        height={16}
-                      />
                     </div>
+
+                    {/* Column 2: Icons (Left-aligned) */}
+                    <div className="flex flex-col items-start gap-y-[1.2px]">
+                      {/* Icon Wrapper for consistent sizing */}
+                      <div className="w-[18px] h-[19px] flex items-center justify-center">
+                        <Image
+                          alt="Coin"
+                          src="https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png"
+                          width={18}
+                          height={19}
+                        />
+                      </div>
+                      {/* Icon Wrapper for consistent sizing */}
+                      <div className="w-5 h-5 flex items-center justify-center">
+                        <Image
+                          alt="XP"
+                          src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
+                          width={17}
+                          height={14}
+                        />
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               </div>
@@ -641,34 +680,44 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 </div>
                 <div className="absolute w-[177px] h-[20px] top-[68px] left-[5px] bg-[#ffffff40] rounded-[10px]">
                   <div className="w-[25%] h-full bg-[linear-gradient(90deg,rgba(255,221,143,1)_0%,rgba(255,183,77,1)_100%)] rounded-[10px]"></div>
-                  <div className="absolute w-6 h-6 bg-white rounded-full top-[-3px] border-[3px] border-[#FFB74D]" style={{left: 'calc(25% - 12px)'}}></div>
+                  <div className="absolute w-6 h-6 bg-white rounded-full top-[-3px] border-[3px] border-[#FFB74D]" style={{ left: 'calc(25% - 12px)' }}></div>
                 </div>
-                <div className="w-[78px] top-[7px] left-[226px] absolute h-14 rounded-[8px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)]">
-                  <div className="relative h-14 flex flex-col justify-center items-center px-2">
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="font-medium text-base leading-5 [font-family:'Poppins',Helvetica] text-white tracking-[0]">
-                        {userStats ? userStats.balance : "100"}
+                <div className="relative w-[70px] h-[55px] left-[226px] top-1 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
+                  {/* Main container for the two columns */}
+                  <div className="flex items-center justify-center gap-x-1">
+
+                    {/* Column 1: Values (Right-aligned) */}
+                    <div className="flex flex-col items-end">
+                      <div className="text-[16px] font-semibold text-white [font-family:'Poppins',Helvetica]">
+                        200
                       </div>
-                      <Image
-                        className="w-[16px] h-[16px]"
-                        alt="Coin"
-                        src="https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png"
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="font-medium text-xs [font-family:'Poppins',Helvetica] text-white tracking-[0]">
-                        +{userStats ? Math.floor(userStats.balance * 0.5) : "50"}
+                      <div className="text-[14px] font-semibold text-white [font-family:'Poppins',Helvetica]">
+                        +15
                       </div>
-                      <Image
-                        className="w-[16px] h-[16px]"
-                        alt="XP"
-                        src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
-                        width={16}
-                        height={16}
-                      />
                     </div>
+
+                    {/* Column 2: Icons (Left-aligned) */}
+                    <div className="flex flex-col items-start gap-y-[1.2px]">
+                      {/* Icon Wrapper for consistent sizing */}
+                      <div className="w-[18px] h-[19px] flex items-center justify-center">
+                        <Image
+                          alt="Coin"
+                          src="https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png"
+                          width={18}
+                          height={19}
+                        />
+                      </div>
+                      {/* Icon Wrapper for consistent sizing */}
+                      <div className="w-5 h-5 flex items-center justify-center">
+                        <Image
+                          alt="XP"
+                          src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
+                          width={17}
+                          height={14}
+                        />
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               </div>
@@ -679,34 +728,44 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 </div>
                 <div className="absolute w-[177px] h-[20px] top-[68px] left-[5px] bg-[#ffffff40] rounded-[10px]">
                   <div className="w-[10%] h-full bg-[linear-gradient(90deg,rgba(255,221,143,1)_0%,rgba(255,183,77,1)_100%)] rounded-[10px]"></div>
-                  <div className="absolute w-6 h-6 bg-white rounded-full top-[-3px] border-[3px] border-[#FFB74D]" style={{left: 'calc(10% - 12px)'}}></div>
+                  <div className="absolute w-6 h-6 bg-white rounded-full top-[-3px] border-[3px] border-[#FFB74D]" style={{ left: 'calc(10% - 12px)' }}></div>
                 </div>
-                <div className="w-[78px] top-2 left-[226px] absolute h-14 rounded-[8px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)]">
-                  <div className="relative h-14 flex flex-col justify-center items-center px-2">
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="font-medium text-base leading-5 [font-family:'Poppins',Helvetica] text-white tracking-[0]">
-                        10
+                <div className="relative w-[70px] h-[55px] left-[226px] top-1 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
+                  {/* Main container for the two columns */}
+                  <div className="flex items-center justify-center gap-x-1">
+
+                    {/* Column 1: Values (Right-aligned) */}
+                    <div className="flex flex-col items-end">
+                      <div className="text-[16px] font-semibold text-white [font-family:'Poppins',Helvetica]">
+                        100
                       </div>
-                      <Image
-                        className="w-[16px] h-[16px]"
-                        alt="Coin"
-                        src="https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png"
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="font-medium text-xs [font-family:'Poppins',Helvetica] text-white tracking-[0]">
+                      <div className="text-[14px] font-semibold text-white [font-family:'Poppins',Helvetica]">
                         +5
                       </div>
-                      <Image
-                        className="w-[16px] h-[16px]"
-                        alt="XP"
-                        src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
-                        width={16}
-                        height={16}
-                      />
                     </div>
+
+                    {/* Column 2: Icons (Left-aligned) */}
+                    <div className="flex flex-col items-start gap-y-[1.2px]">
+                      {/* Icon Wrapper for consistent sizing */}
+                      <div className="w-[18px] h-[19px] flex items-center justify-center">
+                        <Image
+                          alt="Coin"
+                          src="https://c.animaapp.com/3mn7waJw/img/image-3937-12@2x.png"
+                          width={18}
+                          height={19}
+                        />
+                      </div>
+                      {/* Icon Wrapper for consistent sizing */}
+                      <div className="w-5 h-5 flex items-center justify-center">
+                        <Image
+                          alt="XP"
+                          src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
+                          width={17}
+                          height={14}
+                        />
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               </div>
@@ -717,11 +776,11 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 <div className="relative w-[87px] h-[30px]">
                   <div className="relative h-[29px] rounded-3xl bg-[linear-gradient(180deg,rgba(158,173,247,0.4)_0%,rgba(113,106,231,0.4)_100%)] flex items-center justify-center px-2">
                     <div className="flex items-center gap-1">
-                      <div className="font-semibold text-lg leading-[normal] [font-family:'Poppins',Helvetica] text-white tracking-[0]">
+                      <div className="font-semibold text-[18px] leading-[normal] [font-family:'Poppins',Helvetica] text-[#FFFFFF] tracking-[0] top-2 left-10">
                         {userStats ? userStats.xp + userStats.balance : "1200"}
                       </div>
                       <Image
-                        className="w-[20px] h-[20px]"
+                        className="w-[23px] h-[23px] top-[5px] left-[48]"
                         alt="Coin"
                         src="https://c.animaapp.com/3mn7waJw/img/image-3937-4@2x.png"
                         width={20}
@@ -736,11 +795,11 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 <div className="relative w-[87px] h-[30px]">
                   <div className="relative w-20 h-[29px] rounded-3xl bg-[linear-gradient(180deg,rgba(158,173,247,0.4)_0%,rgba(113,106,231,0.4)_100%)] flex items-center justify-center px-2">
                     <div className="flex items-center gap-1">
-                      <div className="font-semibold text-lg leading-[normal] [font-family:'Poppins',Helvetica] text-white tracking-[0]">
+                      <div className="font-semibold text-[18px] leading-[normal] [font-family:'Poppins',Helvetica] text-[#FFFFFF] tracking-[0] top-2 left-10">
                         {userStats ? userStats.balance : "600"}
                       </div>
                       <Image
-                        className="w-[18px] h-[18px]"
+                        className="w-[23px] h-[18px] top-[5px] left-[48]"
                         alt="XP"
                         src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
                         width={18}
@@ -751,7 +810,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 </div>
               </div>
 
-              <div className="absolute top-[89px] left-5 [font-family:'Poppins',Helvetica] font-normal text-white text-base tracking-[0] leading-6 whitespace-nowrap">
+              <div className="absolute top-[89px] left-5 [font-family:'Poppins',Helvetica] font-normal text-[#FFFFFF] text-[16px] tracking-[0] leading-6 whitespace-nowrap">
                 Total Earnings:
               </div>
             </div>
@@ -759,7 +818,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
         </div>
       </div>
 
-      
+
 
       <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto]">
         <div className="flex flex-col w-[335px] items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
@@ -775,12 +834,12 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       <div className="relative w-[335px] h-[100px] bg-[#360875] rounded-[10px] overflow-hidden">
         <div className="relative h-[99px] top-px bg-[url(https://c.animaapp.com/3mn7waJw/img/clip-path-group-3@2x.png)] bg-[100%_100%]">
           <div className="flex flex-col w-[205px] h-12 items-start absolute top-[25px] left-[116px]">
-            <div className="flex flex-col items-start pt-0 pb-2 px-0 relative self-stretch w-full flex-[0_0_auto] mb-[-8.00px]">
+            <div className="flex flex-col items-start pt-0 pb-2 px-0 relative self-stretch w-full flex-[0_0_auto] mt-[2.4px]">
               <p className="relative w-fit mt-[-1.00px] [font-family:'Poppins',Helvetica] font-normal text-white text-sm tracking-[0] leading-4 whitespace-nowrap">
                 Watch an ad to get a
               </p>
               <div className="relative w-fit ml-[-0.50px] [text-shadow:0px_4px_8px_#1a002f40] [-webkit-text-stroke:0.5px_transparent] [-webkit-background-clip:text] bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(245,245,245,1)_100%)] bg-clip-text [-webkit-text-fill-color:transparent] [text-fill-color:transparent] [font-family:'Poppins',Helvetica] font-semibold text-transparent text-[28px] tracking-[0] leading-8 whitespace-nowrap">
-                Free booster
+                5 XP
               </div>
             </div>
           </div>
@@ -805,126 +864,58 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
         </div>
       </div>
 
-      <div className="flex flex-col w-full items-start gap-4 relative">
-        <div className="flex w-full items-center justify-between">
-          <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
+      <div className="w-[335px] h-[255px] mx-auto flex flex-col items-center">
+        <div className="w-full h-[24px] px-4 mb-2.5 mr-1">
+          <h2 className="font-['Poppins',Helvetica] text-[16px]  mr-1 font-semibold leading-normal tracking-[0] text-[#FFFFFF]">
             Non- Gaming Offers
-          </div>
+          </h2>
         </div>
+
+        {/* 
+        This is the card viewport. It is NOT scrollable.
+        - `relative` is for positioning the absolute cards inside.
+        - `overflow-hidden` clips the cards that move outside the bounds.
+      */}
         <div className="relative w-full h-[220px] overflow-hidden">
-          <div className="w-full h-[220px] flex justify-center">
-            <div className="relative w-full max-w-[375px] h-[220px]">
-              <div className="absolute w-full h-[161px] top-[22px] left-0">
-                {nonGamingOffers.slice(0, 2).map((offer, index) => (
-                  <div
-                    key={offer.id}
-                    className={`absolute w-[44%] ${
-                      index === 0
-                        ? "h-40 top-px left-0"
-                        : "h-[161px] top-0 right-0"
-                    }`}
-                  >
-                    <img
-                      className={`${
-                        index === 0
-                          ? "w-[80%] h-40 top-0 left-0"
-                          : "w-[80%] h-40 top-px right-0"
-                      } absolute object-cover`}
-                      alt="Rectangle"
-                      src={offer.bgImage}
-                    />
-                    <img
-                      className={`w-full h-[57px] ${
-                        index === 0
-                          ? "top-[103px] left-0"
-                          : "top-[104px] left-0"
-                      } absolute object-cover`}
-                      alt="Rectangle"
-                      src={offer.bottomBg}
-                    />
-                    <div
-                      className={`absolute ${
-                        index === 0
-                          ? "top-[111px] left-[11px]"
-                          : "top-28 left-[11px]"
-                      } [font-family:'Poppins',Helvetica] font-semibold text-white text-base text-center tracking-[0] leading-5`}
-                    >
-                      {offer.name.split(" ").map((word, i) => (
-                        <span key={i}>
-                          {word}
-                          {i === 0 && <br />}
-                          {i > 0 && i < offer.name.split(" ").length - 1 && " "}
-                        </span>
-                      ))}
-                    </div>
-                    <img
-                      className={`absolute ${
-                        index === 0
-                          ? "w-[62%] h-[102px] top-px left-[3px] aspect-[1.01]"
-                          : "w-[62%] h-[104px] top-0 right-[5%] aspect-[1.01]"
-                      }`}
-                      alt="Image"
-                      src={offer.image}
-                    />
-                    <div
-                      className={`w-24 h-[23px] ${
-                        index === 0
-                          ? "top-[72px] left-2.5"
-                          : "top-[73px] left-11"
-                      } rounded absolute overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)]`}
-                    >
-                      <div className="absolute top-[3px] left-1.5 [font-family:'Poppins',Helvetica] font-medium text-white text-[10.2px] tracking-[0] leading-[normal]">
-                        {offer.earnAmount}
-                      </div>
-                      <img
-                        className="absolute w-[11px] h-3 top-1.5 left-[78px] aspect-[0.97]"
-                        alt="Image"
-                        src="https://c.animaapp.com/xCaMzUYh/img/image-3937-1@2x.png"
-                      />
-                    </div>
+          {nonGamingOffers.map((offer, index) => {
+            const offset = index - activeIndex;
+
+            const cardStyle = {
+              transform: `translateX(calc(-50% + ${offset * HORIZONTAL_SPREAD}px)) scale(${offset === 0 ? 1 : 0.75})`,
+              zIndex: totalCards - Math.abs(offset),
+              opacity: offset === 0 ? 1 : 0.7,
+              transition: 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            };
+
+            return (
+              <div
+                key={offer.id}
+                // The ONLY way to change the active card is by clicking.
+                onClick={() => setActiveIndex(index)}
+                className="absolute top-0 left-1/2 cursor-pointer"
+                style={cardStyle}
+              >
+                {/* Card content - using your provided styles */}
+                <div className="relative h-[220px] w-[165px]">
+                  <img className="absolute inset-0 h-full w-full" alt="" src={offer.bgImage} />
+                  <img className="absolute bottom-0 h-[57px] w-full object-cover" alt="" src={offer.bottomBg} />
+                  <div className="absolute bottom-2 left-0 right-0 text-center font-['Poppins',Helvetica] text-base font-semibold leading-5 tracking-[0] text-white">
+                    {formatTitle(offer.name)}
                   </div>
-                ))}
-              </div>
-              <img
-                className="h-[220px] absolute w-[44%] top-0 left-1/2 -translate-x-1/2 object-cover z-10"
-                alt="Rectangle"
-                src="https://c.animaapp.com/xCaMzUYh/img/rectangle-73-1@2x.png"
-              />
-              <img
-                className="absolute w-[44%] h-[57px] top-[163px] left-1/2 -translate-x-1/2 object-cover z-10"
-                alt="Rectangle"
-                src="https://c.animaapp.com/xCaMzUYh/img/rectangle-74-1@2x.png"
-              />
-              <div className="absolute top-[172px] left-1/2 -translate-x-1/2 [font-family:'Poppins',Helvetica] font-semibold text-white text-base text-center tracking-[0] leading-5 z-20">
-                Chime- Mobile
-                <br />
-                Banking
-              </div>
-              <div className="absolute w-[61px] h-6 top-[130px] left-1/2 -translate-x-1/2 z-20">
-                <div className="absolute top-0 left-0 [font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
-                  BitLabs
+                  <img className="absolute top-20px left-1/2 h-[153px] w-[164px] -translate-x-1/2 object-full rounded-[10px]" alt={`${offer.name} app preview`} src={offer.image} />
+                  <div className="absolute top-[127px] left-1/2 flex h-[29px] w-[120px] -translate-x-1/2 items-center justify-center rounded-[10px] bg-gradient-to-b from-[#9EADF7] to-[#716AE7]">
+                    <span className="font-['Poppins',Helvetica] text-[13px] font-medium leading-normal tracking-[0] text-white">
+                      {offer.earnAmount}
+                    </span>
+                    <img className="ml-1.5 h-[15px] w-[15px]" alt="$" src="https://c.animaapp.com/xCaMzUYh/img/image-3937-2@2x.png" />
+                  </div>
                 </div>
               </div>
-              <img
-                className="absolute w-[33%] h-[153px] top-px left-1/2 -translate-x-1/2 aspect-[0.81] object-contain z-20"
-                alt="Image"
-                src="https://c.animaapp.com/xCaMzUYh/img/image-3980@2x.png"
-              />
-              <div className="w-[32%] h-[29px] top-[127px] left-1/2 -translate-x-1/2 rounded-[10px] absolute overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] z-20">
-                <div className="absolute top-1 left-2 [font-family:'Poppins',Helvetica] font-medium text-white text-[13px] tracking-[0] leading-[normal]">
-                  Earn upto 100
-                </div>
-                <img
-                  className="w-[15px] h-[15px] top-[7px] left-[99px] absolute aspect-[0.97]"
-                  alt="Image"
-                  src="https://c.animaapp.com/xCaMzUYh/img/image-3937-2@2x.png"
-                />
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
-      
+
       {/* Extra spacing to ensure content isn't hidden behind navigation */}
       <div className="h-[150px]"></div>
     </div>

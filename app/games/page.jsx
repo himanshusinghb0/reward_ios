@@ -32,7 +32,7 @@ export default function GamesPage() {
       <div className="absolute top-[37px] left-5 font-normal text-white text-[10px] leading-3 z-10 [font-family:'Poppins',Helvetica]">
         App Version: V0.0.1
       </div>
-      
+
       <div className="flex flex-col w-[375px] items-start gap-2 px-5 py- absolute top-[54px] left-0">
         <div className="flex h-12 items-center justify-between relative self-stretch w-full rounded-[32px]">
           <div className="w-[164px] font-semibold text-white text-xl tracking-[0] leading-5 relative [font-family:'Poppins',Helvetica]">
@@ -82,7 +82,7 @@ export default function GamesPage() {
 
       <GameListSection searchQuery={searchQuery} showSearch={showSearch} />
       <AccountOverviewSection />
-      
+
       <HomeIndicator activeTab="games" />
     </div>
   );

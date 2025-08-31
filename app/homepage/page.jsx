@@ -8,6 +8,66 @@ import { HomeIndicator } from "../../components/HomeIndicator"; //
 import { WelcomeOffer } from "../../components/WelcomeOffer";
 import { XPPointsModal } from "../../components/XPPointsModal";
 import { RaceModal } from "../../components/RaceModel";
+const nonGamingOffers = [
+  {
+    id: 1,
+    name: "Albert- Mobile Banking",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3982@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
+    bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
+    earnAmount: "Earn upto 100",
+  },
+  {
+    id: 2,
+    name: "Chime- Mobile Banking",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3980@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-73-1@2x.png",
+    bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-1@2x.png",
+    earnAmount: "Earn upto 100",
+  },
+  {
+    id: 3,
+    name: "Albert- Mobile Banking",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3982@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
+    bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
+    earnAmount: "Earn upto 100",
+  },
+];
+
+const surveyProviders = [
+  {
+    id: 1,
+    name: "Ayet Studios",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3979@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-2@2x.png",
+  },
+  {
+    id: 2,
+    name: "BitLabs",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3974@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-73-3@2x.png",
+  },
+  {
+    id: 3,
+    name: "CPX Research",
+    image: "https://c.animaapp.com/xCaMzUYh/img/image-3977@2x.png",
+    bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-2@2x.png",
+  },
+];
+
+const formatTitle = (title) => {
+  const words = title.split(' ');
+  if (words.length <= 1) return title;
+  const lastWord = words.pop();
+  return <>{words.join(' ')}<br />{lastWord}</>;
+};
+const formatTitles = (title) => {
+  const words = title.split(' ');
+  if (words.length <= 1) return title;
+  const lastWord = words.pop();
+  return <>{words.join(' ')}<br />{lastWord}</>;
+};
 const LabelBackground = () => (
   <svg width="51" height="22" viewBox="0 0 51 22" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="51" height="22" rx="4" fill="#F1B24A" />
@@ -198,7 +258,7 @@ export const Frame = () => {
         {showTooltip && (
           <div
             ref={tooltipRef}
-            className="absolute top-[480px] right-[-12px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl animate-fade-in"
+            className="absolute top-[476px] right-[-11px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl animate-fade-in"
           >
             <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal">
               <div className="text-center text-gray-200">
@@ -552,6 +612,17 @@ const MainContentSection = () => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isRaceModalOpen, setIsRaceModalOpen] = useState(false);
   const tooltipRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(1);
+  const totalCards = nonGamingOffers.length;
+  const totalsCards = surveyProviders.length;;
+  const [activesIndex, setActivesIndex] = useState(1); // Using your variable name
+  const HORIZONTALS_SPREAD = 120
+
+  // --- CONFIGURATION CONSTANTS ---
+  // The horizontal distance each side card is pushed from the center.
+  // This value is tweaked to create the perfect overlap and "cut off" effect within the 335px container.
+  const HORIZONTAL_SPREAD = 120;
+
 
   const toggleTooltip = () => {
     setShowTooltip(!showTooltip);
@@ -649,54 +720,9 @@ const MainContentSection = () => {
     },
   ];
 
-  const nonGamingOffers = [
-    {
-      id: 1,
-      name: "Albert- Mobile Banking",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3981@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
-      bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
-      earnAmount: "Earn upto 100",
-    },
-    {
-      id: 2,
-      name: "Chime- Mobile Banking",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3980@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-73-1@2x.png",
-      bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-1@2x.png",
-      earnAmount: "Earn upto 100",
-      provider: "BitLabs",
-    },
-    {
-      id: 3,
-      name: "Albert- Mobile Banking",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3982@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74@2x.png",
-      bottomBg: "https://c.animaapp.com/xCaMzUYh/img/rectangle-76@2x.png",
-      earnAmount: "Earn upto 100",
-    },
-  ];
 
-  const surveyProviders = [
-    {
-      id: 1,
-      name: "Ayet Studios",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3979@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-2@2x.png",
-    },
-    {
-      id: 2,
-      name: "BitLabs",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3974@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-73-3@2x.png",
-    },
-    {
-      id: 3,
-      name: "CPX Research",
-      image: "https://c.animaapp.com/xCaMzUYh/img/image-3977@2x.png",
-      bgImage: "https://c.animaapp.com/xCaMzUYh/img/rectangle-74-2@2x.png",
-    },
-  ];
+
+
 
   // SKELETON LOADER FOR THE MAIN CONTENT
   if (isLoading) {
@@ -791,117 +817,56 @@ const MainContentSection = () => {
         </div>
         <Frame />
       </div>
-      <div className="flex flex-col w-full items-start gap-4  relative">
-        <div className="flex w-full items-center mt-6 justify-between">
-          <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
+
+      <div className="w-[335px] h-[255px] mx-auto  mt-6 flex flex-col items-center">
+        <div className="w-full h-[24px] px-4 mb-2.5 mr-4">
+          <h2 className="font-['Poppins',Helvetica] text-[16px]   font-semibold leading-normal tracking-[0] text-[#FFFFFF]">
             Non- Gaming Offers
-          </div>
+          </h2>
         </div>
+
+        {/* 
+        This is the card viewport. It is NOT scrollable.
+        - `relative` is for positioning the absolute cards inside.
+        - `overflow-hidden` clips the cards that move outside the bounds.
+      */}
         <div className="relative w-full h-[220px] overflow-hidden">
-          <div className="w-full h-[220px] flex justify-center">
-            <div className="relative w-full max-w-[375px] h-[220px]">
-              <div className="absolute w-full h-[161px] top-[22px] left-0">
-                {nonGamingOffers.slice(0, 2).map((offer, index) => (
-                  <div
-                    key={offer.id}
-                    className={`absolute w-[44%] ${index === 0
-                      ? "h-40 top-px left-0"
-                      : "h-[161px] top-0 right-0"
-                      }`}
-                  >
-                    <img
-                      className={`${index === 0
-                        ? "w-[80%] h-40 top-0 left-0"
-                        : "w-[80%] h-40 top-px right-0"
-                        } absolute object-cover`}
-                      alt="Rectangle"
-                      src={offer.bgImage}
-                    />
-                    <img
-                      className={`w-full h-[57px] ${index === 0
-                        ? "top-[103px] left-0"
-                        : "top-[104px] left-0"
-                        } absolute object-cover`}
-                      alt="Rectangle"
-                      src={offer.bottomBg}
-                    />
-                    <div
-                      className={`absolute ${index === 0
-                        ? "top-[111px] left-[11px]"
-                        : "top-28 left-[11px]"
-                        } [font-family:'Poppins',Helvetica] font-semibold text-white text-base text-center tracking-[0] leading-5`}
-                    >
-                      {offer.name.split(" ").map((word, i) => (
-                        <span key={i}>
-                          {word}
-                          {i === 0 && <br />}
-                          {i > 0 && i < offer.name.split(" ").length - 1 && " "}
-                        </span>
-                      ))}
-                    </div>
-                    <img
-                      className={`absolute ${index === 0
-                        ? "w-[62%] h-[102px] top-px left-[3px] aspect-[1.01]"
-                        : "w-[62%] h-[104px] top-0 right-[5%] aspect-[1.01]"
-                        }`}
-                      alt="Image"
-                      src={offer.image}
-                    />
-                    <div
-                      className={`w-24 h-[23px] ${index === 0
-                        ? "top-[72px] left-2.5"
-                        : "top-[73px] left-11"
-                        } rounded absolute overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)]`}
-                    >
-                      <div className="absolute top-[3px] left-1.5 [font-family:'Poppins',Helvetica] font-medium text-white text-[10.2px] tracking-[0] leading-[normal]">
-                        {offer.earnAmount}
-                      </div>
-                      <img
-                        className="absolute w-[11px] h-3 top-1.5 left-[78px] aspect-[0.97]"
-                        alt="Image"
-                        src="https://c.animaapp.com/xCaMzUYh/img/image-3937-1@2x.png"
-                      />
-                    </div>
+          {nonGamingOffers.map((offer, index) => {
+            const offset = index - activeIndex;
+
+            const cardStyle = {
+              transform: `translateX(calc(-50% + ${offset * HORIZONTAL_SPREAD}px)) scale(${offset === 0 ? 1 : 0.75})`,
+              zIndex: totalCards - Math.abs(offset),
+              opacity: offset === 0 ? 1 : 0.7,
+              transition: 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            };
+
+            return (
+              <div
+                key={offer.id}
+                // The ONLY way to change the active card is by clicking.
+                onClick={() => setActiveIndex(index)}
+                className="absolute top-0 left-1/2 cursor-pointer"
+                style={cardStyle}
+              >
+                {/* Card content - using your provided styles */}
+                <div className="relative h-[220px] w-[165px]">
+                  <img className="absolute inset-0 h-full w-full" alt="" src={offer.bgImage} />
+                  <img className="absolute bottom-0 h-[57px] w-full object-cover" alt="" src={offer.bottomBg} />
+                  <div className="absolute bottom-2 left-0 right-0 text-center font-['Poppins',Helvetica] text-base font-semibold leading-5 tracking-[0] text-white">
+                    {formatTitle(offer.name)}
                   </div>
-                ))}
-              </div>
-              <img
-                className="h-[220px] absolute w-[44%] top-0 left-1/2 -translate-x-1/2 object-cover z-10"
-                alt="Rectangle"
-                src="https://c.animaapp.com/xCaMzUYh/img/rectangle-73-1@2x.png"
-              />
-              <img
-                className="absolute w-[44%] h-[57px] top-[163px] left-1/2 -translate-x-1/2 object-cover z-10"
-                alt="Rectangle"
-                src="https://c.animaapp.com/xCaMzUYh/img/rectangle-74-1@2x.png"
-              />
-              <div className="absolute top-[172px] left-1/2 -translate-x-1/2 [font-family:'Poppins',Helvetica] font-semibold text-white text-base text-center tracking-[0] leading-5 z-20">
-                Chime- Mobile
-                <br />
-                Banking
-              </div>
-              <div className="absolute w-[61px] h-6 top-[130px] left-1/2 -translate-x-1/2 z-20">
-                <div className="absolute top-0 left-0 [font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
-                  BitLabs
+                  <img style={{ imageRendering: 'crisp-edges' }} className="absolute top-20px left-1/2 h-[153px] w-[164px] -translate-x-1/2 object-full rounded-[10px]" alt={`${offer.name} app preview`} src={offer.image} />
+                  <div className="absolute top-[127px] left-1/2 flex h-[29px] w-[120px] -translate-x-1/2 items-center justify-center rounded-[10px] bg-gradient-to-b from-[#9EADF7] to-[#716AE7]">
+                    <span className="font-['Poppins',Helvetica] text-[13px] font-medium leading-normal tracking-[0] text-white">
+                      {offer.earnAmount}
+                    </span>
+                    <img className="ml-1.5 h-[15px] w-[15px]" alt="$" src="https://c.animaapp.com/xCaMzUYh/img/image-3937-2@2x.png" />
+                  </div>
                 </div>
               </div>
-              <img
-                className="absolute w-[33%] h-[153px] top-px left-1/2 -translate-x-1/2 aspect-[0.81] object-contain z-20"
-                alt="Image"
-                src="https://c.animaapp.com/xCaMzUYh/img/image-3980@2x.png"
-              />
-              <div className="w-[32%] h-[29px] top-[127px] left-1/2 -translate-x-1/2 rounded-[10px] absolute overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] z-20">
-                <div className="absolute top-1 left-2 [font-family:'Poppins',Helvetica] font-medium text-white text-[13px] tracking-[0] leading-[normal]">
-                  Earn upto 100
-                </div>
-                <img
-                  className="w-[15px] h-[15px] top-[7px] left-[99px] absolute aspect-[0.97]"
-                  alt="Image"
-                  src="https://c.animaapp.com/xCaMzUYh/img/image-3937-2@2x.png"
-                />
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
       <div className="flex flex-col w-full h-[127px] items-start gap-4 relative">
@@ -971,68 +936,59 @@ const MainContentSection = () => {
           onClose={() => setIsRaceModalOpen(false)}
         />
       </div>
-      <div className="flex flex-col w-full items-start gap-4 relative">
+      <div className="flex w-full flex-col  my-1 items-start gap-3 relative">
         <div className="flex w-full items-center justify-between">
-          <p className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
+          <p className="[font-family:'Poppins',Helvetica] text-[16px] font-semibold leading-[normal] tracking-[0] text-[#FFFFFF]">
             Get Paid to do Surveys
           </p>
         </div>
-        <div className="relative w-full h-[190px] overflow-hidden">
-          <div className="w-full h-[190px] flex justify-center">
-            <div className="relative w-full max-w-[375px] h-[190px]">
-              <div className="absolute w-full h-40 top-[11px] left-0">
-                {surveyProviders
-                  .filter((_, index) => index !== 1)
-                  .map((provider, index) => (
-                    <div
-                      key={provider.id}
-                      className={`absolute w-[35%] h-40 top-0 ${index === 0 ? "left-0" : "right-0"
-                        } bg-[url(${provider.bgImage})] bg-cover bg-[50%_50%]`}
-                    >
-                      <div
-                        className={`absolute ${index === 0
-                          ? "top-[97px] left-[21px]"
-                          : "top-[90px] left-[37px]"
-                          } [font-family:'Poppins',Helvetica] font-semibold text-white text-base text-center tracking-[0] leading-5`}
-                      >
-                        {provider.name.split(" ").map((word, i) => (
-                          <span key={i}>
-                            {word}
-                            {i === 0 && <br />}
-                            {i > 0 &&
-                              i < provider.name.split(" ").length - 1 &&
-                              " "}
-                          </span>
-                        ))}
-                      </div>
-                      <img
-                        className={`absolute ${index === 0
-                          ? "w-[65px] h-[65px] top-6 left-[18px] aspect-[1]"
-                          : "w-[70px] h-[51px] top-[31px] left-[41px] aspect-[1.37]"
-                          }`}
-                        alt="Image"
-                        src={provider.image}
-                      />
-                    </div>
-                  ))}
-              </div>
-              <img
-                className="h-[190px] absolute w-[44%] top-0 left-1/2 -translate-x-1/2 object-cover z-10"
-                alt="Rectangle"
-                src="https://c.animaapp.com/xCaMzUYh/img/rectangle-73-3@2x.png"
-              />
-              <div className="absolute w-[61px] h-6 top-[123px] left-1/2 -translate-x-1/2 z-20">
-                <div className="absolute top-0 left-0 [font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
-                  BitLabs
+
+        {/* The Carousel itself */}
+        <div className="relative flex h-[190px] rounded-[10px] w-full items-center justify-center overflow-hidden">
+          {surveyProviders.map((provider, index) => {
+            // 5. FIX: All variable names now match the state and constants defined above.
+            //    (activesIndex, HORIZONTALS_SPREAD, totalsCards)
+            const offset = index - activesIndex;
+
+            const cardStyle = {
+              transform: `translateX(calc(-50% + ${offset * HORIZONTALS_SPREAD
+                }px)) scale(${offset === 0 ? 1 : 0.85})`,
+              zIndex: totalsCards - Math.abs(offset),
+              opacity: offset === 0 ? 1 : 0.6,
+              transition: "all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)",
+            };
+
+            return (
+              <div
+                key={provider.id}
+                onClick={() => setActivesIndex(index)}
+                className="absolute top-0 left-1/2 cursor-pointer"
+                style={cardStyle}
+              >
+                <div className="relative h-[190px] w-[165px]">
+                  <img
+                    className="absolute inset-0 h-full w-full rounded-2xl object-cover"
+                    alt={`${provider.name} background`}
+                    src={provider.bgImage}
+                  />
+                  <div className="absolute top-[123px] left-1/2 w-full -translate-x-1/2 text-center font-['Poppins',Helvetica] font-semibold leading-tight text-[16px] tracking-[0] text-[#FFFFFF]">
+                    {/* Break name into multiple lines if it contains spaces */}
+                    {provider.name.split(" ").map((word, i) => (
+                      <span key={i}>
+                        {word}
+                        {provider.name.includes(" ") && i === 0 && <br />}
+                      </span>
+                    ))}
+                  </div>
+                  <img
+                    className="absolute top-[39px] left-1/2 h-auto w-20 max-h-[78px] -translate-x-1/2 object-contain"
+                    alt={`${provider.name} logo`}
+                    src={provider.image}
+                  />
                 </div>
               </div>
-              <img
-                className="absolute w-20 h-[78px] top-[39px] left-1/2 -translate-x-1/2 aspect-[1.03] object-contain z-20"
-                alt="Image"
-                src="https://c.animaapp.com/xCaMzUYh/img/image-3974@2x.png"
-              />
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
       <div className="flex flex-col w-full items-start gap-4 relative">

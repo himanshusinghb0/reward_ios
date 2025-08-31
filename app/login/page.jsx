@@ -300,7 +300,7 @@ export default function LoginPage() {
             <Image
               className="absolute w-28 h-[123px] top-[131px] left-[205px] object-cover"
               alt="Coins"
-              src="https://c.animaapp.com/2Y7fJDnh/img/coins-1.png"
+              src="/coinss.png"
               width={112}
               height={123}
             />

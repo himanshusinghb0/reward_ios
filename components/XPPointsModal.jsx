@@ -56,7 +56,7 @@ export const XPPointsModal = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 flex justify-center px-4  mt-5 z-50 "
       onClick={onClose}
     >
       <div
@@ -260,6 +260,6 @@ export const XPPointsModal = ({ isOpen, onClose }) => {
           </div>
         </section>
       </div>
-    </div>
+    </div >
   );
 };

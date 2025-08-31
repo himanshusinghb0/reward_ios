@@ -5,19 +5,19 @@ import { useRouter, usePathname } from "next/navigation";
 export const HomeIndicator = ({ activeTab }) => {
   const router = useRouter();
   const pathname = usePathname();
-  
+
   // Auto-detect active tab based on current pathname if not explicitly provided
   const getActiveTab = () => {
     if (activeTab) return activeTab;
-    
+
     if (pathname === "/homepage") return "home";
     if (pathname === "/games") return "games";
     if (pathname === "/wallet") return "wallet";
     if (pathname === "/cash-coach") return "cash";
-    
+
     return "home"; // default fallback
   };
-  
+
   const currentActiveTab = getActiveTab();
 
   const navigationItems = [
@@ -76,7 +76,7 @@ export const HomeIndicator = ({ activeTab }) => {
     >
       {/* Background overlay covering only bottom half */}
       <div className="absolute bottom-0 left-0 right-0 bg-black w-full h-[78px]"></div>
-      
+
       <div className="relative h-[120px] -top-px z-10">
         <div
           className="absolute w-[135px] h-[5px] top-[115px] left-[120px] bg-white rounded-[100px]"
@@ -86,13 +86,8 @@ export const HomeIndicator = ({ activeTab }) => {
 
         <div className="absolute w-full max-w-[375px] h-20 top-9 left-1/2 transform -translate-x-1/2">
           <div className="relative h-[113px] -top-5">
-            <img
-              className="absolute w-full h-[103px] top-2.5 left-0"
-              alt=""
-              src="https://c.animaapp.com/Tbz6Qwwg/img/botton-nav@2x.png"
-              role="presentation"
-              aria-hidden="true"
-            />
+
+            <div className=" absolute w-full h-[60px] top-2.5 left-0 bg-[#000000] "></div>
 
             <button
               className="flex flex-col w-[60px] items-center gap-2 absolute top-[39px] left-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-lg p-1"
@@ -132,7 +127,7 @@ export const HomeIndicator = ({ activeTab }) => {
                 alt=""
                 src="/game.png"
                 role="presentation"
-                // style={{ filter: 'bri', background: 'transparent' }}
+              // style={{ filter: 'bri', background: 'transparent' }}
               />
 
               <span className={`relative self-stretch [font-family:'Poppins',Helvetica] font-normal text-[10px] text-center tracking-[-0.17px] leading-[normal] ${currentActiveTab === "games" ? "text-white" : "text-[#ffffffb2]"}`}>
@@ -149,7 +144,7 @@ export const HomeIndicator = ({ activeTab }) => {
             </button>
 
             <button
-              className="flex flex-col w-[62px] items-center gap-[12.4px] absolute top-0 left-40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-lg p-1"
+              className="flex flex-col w-[62px] items-center gap-[12.4px] absolute top-[-10px] left-40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-lg p-1"
               onClick={() => handleTabClick("more", null)}
               aria-label="More options"
               tabIndex={0}
