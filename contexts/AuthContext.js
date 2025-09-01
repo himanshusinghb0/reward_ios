@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
         const token = parsableUrl.searchParams.get("token");
 
         // --- Case 1: Handle Password Reset ---
-        if (path === "/reset-password") {
+        if (path === "/reset-password" && token) {
           console.log("🔑 Handling password reset link...");
           router.push(`/reset-password?token=${token}`);
         }
