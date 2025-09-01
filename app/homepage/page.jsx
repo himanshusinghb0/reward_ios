@@ -741,7 +741,7 @@ const MainContentSection = () => {
       {dashboardData?.stats && <XpTierTracker stats={dashboardData.stats} />}
 
       <div className="flex flex-col items-start gap-4 relative w-full">
-        <div className="flex w-full items-center mr-7 justify-between ">
+        <div className="flex w-full items-center ml-[5px] justify-between ">
           <p className="text-[#F4F3FC] [font-family:'Poppins',Helvetica] font-semibold text-[19px] tracking-[0] leading-[normal] text-nowrap ">
             💸💸Fast Fun, Real Rewards!💸💸
           </p>
