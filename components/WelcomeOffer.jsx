@@ -165,7 +165,7 @@ export const WelcomeOffer = () => {
       {showTooltip && (
         <div
           ref={tooltipRef}
-          className="absolute top-[38px] right-[-4px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl"
+          className="absolute top-[35px] right-[-3px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl"
         >
           <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal">
             <div className="text-[#ffe664] font-semibold mb-1 text-center">

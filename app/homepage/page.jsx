@@ -258,7 +258,7 @@ export const Frame = () => {
         {showTooltip && (
           <div
             ref={tooltipRef}
-            className="absolute top-[476px] right-[-11px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl animate-fade-in"
+            className="absolute top-[472px] right-[-8px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl animate-fade-in"
           >
             <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal">
               <div className="text-center text-gray-200">
@@ -741,7 +741,7 @@ const MainContentSection = () => {
       {dashboardData?.stats && <XpTierTracker stats={dashboardData.stats} />}
 
       <div className="flex flex-col items-start gap-4 relative w-full">
-        <div className="flex w-full items-center ml-[5px] justify-between ">
+        <div className="flex w-full items-center ml-[5.5px] justify-between ">
           <p className="text-[#F4F3FC] [font-family:'Poppins',Helvetica] font-semibold text-[19px] tracking-[0] leading-[normal] text-nowrap ">
             💸💸Fast Fun, Real Rewards!💸💸
           </p>
