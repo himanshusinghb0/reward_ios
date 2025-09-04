@@ -94,7 +94,7 @@ export default function AgeSelection() {
         </p>
       </div>
 
-      <div className='absolute inset-0 w-full flex items-center justify-center'>
+      <div className='absolute inset-0 w-full flex items-center mt-50 justify-center'>
         <div className='relative w-full mx-4'>
           {isLoading && (
             <div className='text-white text-lg text-center p-4'>Loading...</div>

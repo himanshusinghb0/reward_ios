@@ -258,14 +258,14 @@ export const Frame = () => {
         {showTooltip && (
           <div
             ref={tooltipRef}
-            className="absolute top-[472px] right-[-8px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl animate-fade-in"
+            className="absolute top-[472px] right-[-8px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl border border-gray-600/50 animate-fade-in"
           >
             <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal">
               <div className="text-center text-gray-200">
                 As a new user, you can undo as many times as needed.
               </div>
             </div>
-            <div className="absolute top-[-8px] right-[25px] w-4 h-4 bg-black/95 transform rotate-45"></div>
+            <div className="absolute top-[-8px] right-[25px] w-4 h-4 bg-black/95 border-t border-l border-gray-600/50 transform rotate-45"></div>
           </div>
         )}
       </>
@@ -1030,18 +1030,18 @@ const MainContentSection = () => {
         {showTooltip && (
           <div
             ref={tooltipRef}
-            className="absolute top-[34px]  -right-[10px] z-50 w-[340px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 pt-3 pb-2 shadow-2xl animate-fade-in"
+            className="absolute top-[34px] -right-[10px] z-50 w-[340px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 pt-3 pb-2 shadow-2xl border border-gray-600/50 animate-fade-in"
           >
             <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal">
               <div className="text-[#95f2ec] font-semibold mb-1 text-center">
                 30 Days Streak
               </div>
               <div className="text-center text-gray-200">
-                Complete at least 1 task per day to climb. Missing a day resets you to the last milestone.
+                Complete at least 1 task per day to climb. Missing a day resets you to the last milestone.
 
               </div>
             </div>
-            <div className="absolute top-[-8px] right-[25px] w-4 h-4 bg-black/95 transform rotate-45"></div>
+            <div className="absolute top-[-8px] right-[25px] w-4 h-4 bg-black/95 border-t border-l border-gray-600/50 transform rotate-45"></div>
           </div>
         )}
       </div>

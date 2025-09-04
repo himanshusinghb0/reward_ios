@@ -108,26 +108,26 @@ export default function LoginPage() {
       {isRedirecting && <LoadingOverlay message="Redirecting to secure login..." />}
 
       <div
-        className="bg-[#272052] flex h-screen flex-row justify-center w-full "
+        className="bg-[#272052] flex h-full flex-row justify-center w-full overflow-y-auto overflow-x-hidden scroll-smooth"
         data-model-id="363:24235"
       >
-        <div className="bg-[#272052]  overflow-hidden  w-full pl-2 ">
-          <div className="relative w-[904px] h-[1221px] -top-32 left-[-215px] ">
+        <div className="bg-[#272052] w-full flex justify-center ">
+          <div className="relative w-[904px] h-[800px] -top-32">
             <div className="absolute w-[358px] h-[358px] top-0 left-[229px] bg-[#af7de6] rounded-[179px] blur-[250px]" />
 
-            <div className="absolute w-[904px] h-[1037px] top-[184px] left-0">
-              <div className="relative h-[1037px]">
-                <div className="absolute w-[397px] h-[397px] top-[640px] left-[430px] rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(179,121,223,1)_0%,rgba(54,0,96,0)_100%)] opacity-[0.58]" />
+            <div className="absolute w-[904px] h-[650px] top-[184px] left-0">
+              <div className="relative h-[650px]">
+                <div className="absolute w-[397px] h-[397px] top-[350px] left-[430px] rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(179,121,223,1)_0%,rgba(54,0,96,0)_100%)] opacity-[0.58]" />
 
-                <div className="absolute w-[397px] h-[397px] top-[619px] left-0 rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(196,86,71,1)_0%,rgba(210,90,99,0)_100%)] opacity-[0.58]" />
+                <div className="absolute w-[397px] h-[397px] top-[330px] left-0 rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(196,86,71,1)_0%,rgba(210,90,99,0)_100%)] opacity-[0.58]" />
 
-                <div className="absolute w-[440px] h-[803px] top-[68px] left-[208px] rounded-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
+                <div className="absolute w-[440px] h-[700px] top-[88px]  rounded-tl-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
 
                 <div className="absolute w-[397px] h-[397px] top-0 left-[507px] rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(179,121,223,1)_0%,rgba(54,0,96,0)_100%)] opacity-[0.58]" />
               </div>
             </div>
 
-            <div className="absolute w-[470px] h-[197px] top-[358px] left-[201px]">
+            <div className="absolute w-[470px] h-[197px] top-[358px] left-1/2 transform -translate-x-1/2">
               <Image
                 className="absolute w-[83px] h-[125px] -top-1.5 left-3.5"
                 alt="Front shapes"
@@ -168,7 +168,7 @@ export default function LoginPage() {
             </div>
           </button> */}
             <button
-              className="absolute w-[316px] h-[50px] top-[685px] left-[246px] cursor-pointer disabled:opacity-50"
+              className="absolute w-[316px] h-[50px] top-[685px] left-1/2 transform -translate-x-1/2 cursor-pointer disabled:opacity-50"
               onClick={handleSignIn}
               disabled={isSubmitting} // Disable button while submitting
               type="button"
@@ -181,7 +181,7 @@ export default function LoginPage() {
               </div>
             </button>
 
-            <div className="absolute w-[316px] top-[369px] left-[246px]  mt-5 flex flex-col ">
+            <div className="absolute w-[316px] top-[369px] left-1/2 transform -translate-x-1/2 mt-5 flex flex-col">
               <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
                 Email/ Phone Number
               </label>
@@ -211,7 +211,7 @@ export default function LoginPage() {
 
 
 
-            <div className="absolute w-[316px] top-[473px] left-[246px] flex flex-col mt-4">
+            <div className="absolute w-[316px] top-[473px] left-1/2 transform -translate-x-1/2 flex flex-col mt-4">
               <div className="flex justify-between items-center">
                 <label className="[font-family:'Poppins',Helvetica] font-medium mb-[1px] text-neutral-400 text-[14.3px] tracking-[0] leading-[normal]">
                   Password
@@ -272,12 +272,12 @@ export default function LoginPage() {
               </div>
             </div>
             {error.form && (
-              <div className="absolute top-[360px] left-[246px] w-[316px] text-center text-red-400 text-xs [font-family:'Poppins',Helvetica]">
+              <div className="absolute top-[360px] left-1/2 transform -translate-x-1/2 w-[316px] text-center text-red-400 text-xs [font-family:'Poppins',Helvetica]">
                 {error.form}
               </div>
             )}
 
-            <div className="absolute w-[216px] h-[65px] top-[289px] left-[302px]">
+            <div className="absolute w-[216px] h-[65px] top-[289px] left-1/2 transform -translate-x-1/2">
               <p className="absolute top-11 left-0 [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-sm tracking-[0] leading-[normal]">
                 welcome back we missed you
               </p>
@@ -290,7 +290,7 @@ export default function LoginPage() {
 
 
             <Image
-              className="absolute w-[52px] h-[43px] top-[315px] left-[519px]"
+              className="absolute w-[52px] h-[43px] top-[288px] left-[75%]"
               alt="Gem"
               src="https://c.animaapp.com/2Y7fJDnh/img/gem-1.png"
               width={52}
@@ -298,7 +298,7 @@ export default function LoginPage() {
             />
 
             <Image
-              className="absolute w-28 h-[123px] top-[131px] left-[205px] object-cover"
+              className="absolute w-28 h-[123px] top-[131px] left-0 object-cover"
               alt="Coins"
               src="/coinss.png"
               width={112}
@@ -306,15 +306,14 @@ export default function LoginPage() {
             />
 
             <Image
-              className="absolute w-[138px] h-24 top-36 left-[328px] object-cover"
+              className="absolute w-[138px] h-24 top-[131px] left-[120px] object-cover"
               alt="Element"
               src="/greenjems.png"
               width={138}
               height={96}
-
             />
 
-            <div className="flex flex-col w-[303px] items-start gap-[30px] absolute top-[755px] left-[252px]">
+            <div className="flex flex-col w-[303px] items-start gap-[30px] absolute top-[755px] left-1/2 transform -translate-x-1/2">
               <div className="flex flex-col items-center gap-[18px] relative self-stretch w-full flex-[0_0_auto]">
                 <div className="relative w-[305px] h-[17px] mr-[-2.00px]">
                   <div className="absolute top-0 left-[116px] [font-family:'Poppins',Helvetica] font-medium text-[#b5b5b5] text-[11.2px] tracking-[0] leading-[normal]">
@@ -435,7 +434,7 @@ export default function LoginPage() {
             </div>
 
             <Image
-              className="absolute w-[312px] h-[70px] top-[602px] left-[247px]"
+              className="absolute w-[312px] h-[70px] top-[602px] left-1/2 transform -translate-x-1/2"
               alt="CAPTCHA verification"
               src="https://c.animaapp.com/2Y7fJDnh/img/image-4040@2x.png"
               width={312}

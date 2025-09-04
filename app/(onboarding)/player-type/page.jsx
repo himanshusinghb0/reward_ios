@@ -44,54 +44,67 @@ export default function PlayerTypeSelection() {
   }
 
   return (
-    <div className='relative w-full h-screen bg-[#272052] overflow-hidden flex flex-col'>
-      <div className='absolute w-[542px] h-[542px] top-0 left-0 bg-[#af7de6] rounded-full blur-[250px]' />
+    <div className='relative w-screen h-screen bg-[#272052] overflow-hidden'>
+      {/* Background blur effect */}
+      <div className='absolute w-[300px] h-[300px] top-10 left-1/2 transform -translate-x-1/2 bg-[#af7de6] rounded-full blur-[150px] opacity-50' />
 
-      <div className='relative z-10 px-6 pt-20 font-poppins'>
-        <h1 className='text-white text-4xl font-light leading-tight mb-4'>
-          Which of these sounds most like you?
-        </h1>
-        <p className='text-white/70 text-base font-light'>
-          Select one to help us match the right games & rewards.
-        </p>
-      </div>
+      {/* Main container with flex center alignment */}
+      <div className='relative w-full max-w-[375px] h-full mx-auto flex flex-col items-center justify-center px-6 py-8'>
+        <div className='w-full max-w-sm flex flex-col items-center justify-center space-y-8'>
 
-      <div className='relative z-10 flex-1 flex flex-col justify-center px-6 space-y-6 mb-6 '>
-        {isLoading && (
-          <p className='text-white text-center font-poppins'>
-            Loading options...
-          </p>
-        )}
-        {error && <p className='text-red-400 text-center font-poppins'>{error}</p>}
+          {/* Header section */}
+          <div className='text-center font-poppins'>
+            <h1 className='text-white text-4xl font-light leading-tight mb-4'>
+              Which of these sounds most like you?
+            </h1>
+            <p className='text-white/70 text-base mb-1 font-light'>
+              Select one to help us match the right games & rewards.
+            </p>
+          </div>
 
-        {!isLoading &&
-          !error &&
-          gameHabitOptions.map((option) => {
-            const isSelected = gameHabit === option.id // Use `option.id` from API
-            return (
-              <button
-                key={option.id} // Use `option.id` as the key
-                onClick={() => handleSelectGameHabit(option.id)} // Pass `option.id`
-                className='relative w-full h-16 group focus:outline-none'
-              >
-                <div
-                  className={`absolute inset-x-0 top-0 h-18 bg-[#D8D5E9] rounded-full transition-transform duration-300 ${isSelected ? 'scale-105' : ''
-                    }`}
-                />
-                <div
-                  className={`absolute inset-x-0 top-0 h-16 p-5 rounded-full transition-all duration-300 flex items-center justify-center bg-white group-hover:translate-y-0.5 ${isSelected ? 'scale-105 shadow-lg shadow-[#AF7DE6]/50' : ''
-                    }`}
-                >
-                  <span
-                    className={`text-base font-semibold font-poppins tracking-wide transition-colors duration-200 ${isSelected ? 'text-[#272052]' : 'text-[#2D2D2D]'
-                      }`}
+          {/* Main content - player type options */}
+          <div className='w-full space-y-4'>
+            {isLoading && (
+              <div className='flex items-center justify-center py-8'>
+                <p className='text-white text-center font-poppins text-sm'>
+                  Loading options...
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className='flex items-center justify-center py-8'>
+                <p className='text-red-400 text-center font-poppins text-sm'>{error}</p>
+              </div>
+            )}
+
+            {!isLoading &&
+              !error &&
+              gameHabitOptions.map((option) => {
+                const isSelected = gameHabit === option.id
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => handleSelectGameHabit(option.id)}
+                    className='relative w-full h-14 group focus:outline-none'
                   >
-                    {option.label}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
+                    <div
+                      className={`absolute inset-x-0 top-0 h-16 bg-[#D8D5E9] rounded-full transition-transform duration-300 ${isSelected ? 'scale-105' : ''}`}
+                    />
+                    <div
+                      className={`absolute inset-x-0 top-0 h-14 px-5 rounded-full transition-all duration-300 flex items-center justify-center bg-white group-hover:translate-y-0.5 ${isSelected ? 'scale-105 shadow-lg shadow-[#AF7DE6]/50' : ''}`}
+                    >
+                      <span
+                        className={`text-sm font-semibold font-poppins tracking-wide transition-colors duration-200 text-center ${isSelected ? 'text-[#272052]' : 'text-[#2D2D2D]'}`}
+                      >
+                        {option.label}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+          </div>
+        </div>
       </div>
     </div>
   )

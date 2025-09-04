@@ -144,15 +144,15 @@ export default function MyProfile() {
 
   // ---- Render ----
   return (
-    <div className="min-h-screen bg-black flex justify-center">
-      <div className="relative w-[375px] min-h-screen bg-black pb-8">
+    <div className="min-h-screen overflow-x-hidden bg-black flex justify-center">
+      <div className="relative w-full max-w-md min-h-screen bg-black pb-8">
         {/* App version */}
-        <div className="absolute top-[37px] left-5 font-normal text-white text-[10px] leading-3">
+        <div className="absolute top-[37px] left-4 sm:left-5 font-normal text-white text-[10px] leading-3">
           App Version: V0.0.1
         </div>
 
         {/* Header */}
-        <header className="flex flex-col w-[375px] items-start gap-2 px-5 py-3 absolute top-[54px] left-0">
+        <header className="flex flex-col w-full items-start gap-2 px-4 sm:px-5 py-3 absolute top-[54px] left-0">
           <div className="flex items-center gap-4 w-full">
             <button
               className="relative w-6 h-6 flex-shrink-0"
@@ -174,9 +174,9 @@ export default function MyProfile() {
           </div>
         </header>
 
-        <main className="flex flex-col w-[375px] items-center gap-6 absolute top-[110px] -left-px">
+        <main className="flex flex-col w-full items-center gap-6 absolute top-[110px] left-0 px-1 sm:px-2">
           {/* ---------------- Profile Section ---------------- */}
-          <section className="flex flex-col w-[335px] items-center ">
+          <section className="flex flex-col w-full max-w-[335px] items-center">
             {/* Avatar + Edit holder */}
             <div className="relative">
               {/* Avatar */}
@@ -236,7 +236,7 @@ export default function MyProfile() {
 
             {/* Contact section with improved spacing */}
             <div className="flex flex-col items-center gap-2 -mt-3 ">
-              <div className="flex items-center gap-2 text-[#FEFEFE] text-sm leading-5">
+              <div className="flex items-center justify-center gap-2 text-[#FEFEFE] text-sm leading-5 w-full">
                 <Image
                   width={5}
                   height={5}
@@ -244,11 +244,11 @@ export default function MyProfile() {
                   src="https://c.animaapp.com/V1uc3arn/img/image-3958@2x.png"
                   className="w-[22px] h-[17px] flex-shrink-0"
                 />
-                <span className=" text-[#FEFEFE] max-w-[160px] text-lg font-normal">
+                <span className="text-[#FEFEFE] text-lg font-normal text-center truncate max-w-[120px]">
                   {profile?.email || "youremail@domain.com"}
                 </span>
-                <span className="opacity-60  text-[#FEFEFE] text-lg font-normal mx-1">|</span>
-                <span className=" text-[#FEFEFE] text-lg font-normal max-w-[100px]">{profile?.mobile || "+01 234 567 89"}</span>
+                <span className="opacity-60 text-[#FEFEFE] text-lg font-normal mx-1 flex-shrink-0">|</span>
+                <span className="text-[#FEFEFE] text-lg font-normal text-center flex-shrink-0">{profile?.mobile || "+01 234 567 89"}</span>
               </div>
 
               <div className="flex items-center gap-1  text-gray-300 text-sm leading-5">
@@ -265,105 +265,107 @@ export default function MyProfile() {
           </section>
 
           {/* ---------------- Earnings ---------------- */}
-          <section className="flex flex-col items-start gap-2.5 pl-5 pr-0 w-full">
-            <div className="relative w-[335px]">
-              <div
-                className="relative h-[134px] rounded-[12px] pt-30 overflow-hidden"
-                style={{
-                  backgroundImage:
-                    "url(https://c.animaapp.com/V1uc3arn/img/blank-button03@2x.png)",
-                  backgroundSize: "cover",
-                }}
-              >
-                <div className="absolute top-[10px] mt-3 ml-5">
-                  <div className="text-[#FFFFFF] text-[14px]">My Earnings</div>
-                  <div className="flex items-center  gap-2 ml-5">
+          <section className="flex flex-col items-center gap-2.5 w-full">
+            <div className="flex justify-center w-full">
+              <div className="relative w-[335px]">
+                <div
+                  className="relative h-[134px] rounded-[12px] pt-30 overflow-hidden"
+                  style={{
+                    backgroundImage:
+                      "url(https://c.animaapp.com/V1uc3arn/img/blank-button03@2x.png)",
+                    backgroundSize: "cover",
+                  }}
+                >
+                  <div className="absolute top-[10px] mt-3 ml-5">
+                    <div className="text-[#FFFFFF] text-[14px]">My Earnings</div>
+                    <div className="flex items-center  gap-2 ml-5">
+                      <div className="font-semibold text-white text-2xl">
+                        {stats?.balance ?? 0}
+                      </div>
+                      <Image
+                        width={23}
+                        height={24}
+                        alt="Coin"
+                        src="https://c.animaapp.com/V1uc3arn/img/image-3937@2x.png"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="absolute top-[39px]  mt-1 left-[103px] flex items-center ml-3 gap-2">
                     <div className="font-semibold text-white text-2xl">
-                      {stats?.balance ?? 0}
+                      {stats?.xp ?? 0}
                     </div>
                     <Image
-                      width={23}
-                      height={24}
-                      alt="Coin"
-                      src="https://c.animaapp.com/V1uc3arn/img/image-3937@2x.png"
+                      width={26}
+                      height={21}
+                      alt="Trophy icon"
+                      src="https://c.animaapp.com/V1uc3arn/img/pic.svg"
                     />
                   </div>
-                </div>
 
-                <div className="absolute top-[39px]  mt-1 left-[103px] flex items-center ml-3 gap-2">
-                  <div className="font-semibold text-white text-2xl">
-                    {stats?.xp ?? 0}
-                  </div>
-                  <Image
-                    width={26}
-                    height={21}
-                    alt="Trophy icon"
-                    src="https://c.animaapp.com/V1uc3arn/img/pic.svg"
-                  />
-                </div>
-
-                <div className="absolute w-[205px] h-[37px] top-[73px] left-4">
-                  <div className="relative w-[178px] h-[37px]">
-                    <div
-                      className="absolute w-[178px] h-[37px] top-0 left-0"
-                      style={{
-                        backgroundImage:
-                          "url(https://c.animaapp.com/V1uc3arn/img/group-289352@2x.png)",
-                        backgroundSize: "cover",
-                      }}
-                    >
-                      <Image
-                        width={29}
-                        height={30}
-                        className="absolute top-1 left-[3px]"
-                        alt="Level badge"
-                        src="https://c.animaapp.com/V1uc3arn/img/ellipse-35.svg"
-                      />
-                      <div className="absolute top-[6px] left-[14px] font-semibold text-[#815c23] text-[14.9px]">
-                        2
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="absolute top-[9px] left-[60px] font-semibold text-xs">
-                    <span className="text-[#685512]">
-                      {stats?.gamesPlayed ?? 0}
-                    </span>
-                    <span className="text-[#8d741b80]">/6000</span>
-                  </p>
-
-                  <div className="absolute top-1 left-[141px] opacity-50">
-                    <div className="relative w-[30px] h-[30px]">
-                      <div className="absolute w-[30px] h-[30px] top-0 left-0">
-                        <div
-                          className="h-[30px]"
-                          style={{
-                            backgroundImage:
-                              "url(https://c.animaapp.com/V1uc3arn/img/ellipse-35-1.svg)",
-                            backgroundSize: "cover",
-                          }}
+                  <div className="absolute w-[205px] h-[37px] top-[73px] left-4">
+                    <div className="relative w-[178px] h-[37px]">
+                      <div
+                        className="absolute w-[178px] h-[37px] top-0 left-0"
+                        style={{
+                          backgroundImage:
+                            "url(https://c.animaapp.com/V1uc3arn/img/group-289352@2x.png)",
+                          backgroundSize: "cover",
+                        }}
+                      >
+                        <Image
+                          width={29}
+                          height={30}
+                          className="absolute top-1 left-[3px]"
+                          alt="Level badge"
+                          src="https://c.animaapp.com/V1uc3arn/img/ellipse-35.svg"
                         />
-                      </div>
-                      <div className="absolute top-[4px] left-[10px] font-semibold text-[#815c23] text-[14.9px]">
-                        3
+                        <div className="absolute top-[6px] left-[14px] font-semibold text-[#815c23] text-[14.9px]">
+                          2
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <Image
-                    width={12}
-                    height={11}
-                    className="absolute top-3 left-[41px]"
-                    alt="Vector"
-                    src="https://c.animaapp.com/V1uc3arn/img/vector.svg"
-                  />
+                    <p className="absolute top-[9px] left-[60px] font-semibold text-xs">
+                      <span className="text-[#685512]">
+                        {stats?.gamesPlayed ?? 0}
+                      </span>
+                      <span className="text-[#8d741b80]">/6000</span>
+                    </p>
+
+                    <div className="absolute top-1 left-[141px] opacity-50">
+                      <div className="relative w-[30px] h-[30px]">
+                        <div className="absolute w-[30px] h-[30px] top-0 left-0">
+                          <div
+                            className="h-[30px]"
+                            style={{
+                              backgroundImage:
+                                "url(https://c.animaapp.com/V1uc3arn/img/ellipse-35-1.svg)",
+                              backgroundSize: "cover",
+                            }}
+                          />
+                        </div>
+                        <div className="absolute top-[4px] left-[10px] font-semibold text-[#815c23] text-[14.9px]">
+                          3
+                        </div>
+                      </div>
+                    </div>
+
+                    <Image
+                      width={12}
+                      height={11}
+                      className="absolute top-3 left-[41px]"
+                      alt="Vector"
+                      src="https://c.animaapp.com/V1uc3arn/img/vector.svg"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </section>
 
           {/* ---------------- Achievements ---------------- */}
-          <section className="flex flex-col w-[335px] items-start gap-2.5">
+          <section className="flex flex-col w-full max-w-[335px] items-start gap-2.5 mx-auto">
             <div className="flex w-full items-center justify-between">
               <div className="inline-flex items-center gap-2">
                 <Image
@@ -384,7 +386,7 @@ export default function MyProfile() {
             {achievements.map((a) => (
               <article
                 key={a.id}
-                className="relative w-[335px] h-[92px] bg-black rounded-[10px] shadow-[2.48px_2.48px_18.58px_#a6aabc4c,-1.24px_-1.24px_16.1px_#f9faff1a]"
+                className="relative w-full max-w-[335px] h-[92px] bg-black rounded-[10px] shadow-[2.48px_2.48px_18.58px_#a6aabc4c,-1.24px_-1.24px_16.1px_#f9faff1a]"
               >
                 <div
                   className="absolute w-16 h-16 top-3.5 left-4 bg-cover bg-center"
@@ -439,11 +441,11 @@ export default function MyProfile() {
 
           {/* ---------------- VIP ---------------- */}
           {vipStatus?.level === "BRONZE" ? (
-            <section className="relative w-[335px] h-[127px]">
+            <section className="relative w-full max-w-[335px] h-[127px] mx-auto">
               <Image
                 width={334}
                 height={127}
-                className="w-[334px] h-[140px]"
+                className="w-full h-[140px]"
                 alt="VIP background"
                 src="https://c.animaapp.com/V1uc3arn/img/race.svg"
               />
@@ -470,7 +472,7 @@ export default function MyProfile() {
               </div>
             </section>
           ) : (
-            <section className="w-[335px] h-[127px] p-6 rounded-lg bg-gradient-to-br from-purple-700 to-indigo-900 flex flex-col justify-center">
+            <section className="w-full max-w-[335px] h-[127px] p-6 rounded-lg bg-gradient-to-br from-purple-700 to-indigo-900 flex flex-col justify-center mx-auto">
               <div className="font-bold text-yellow-300 text-sm">You are a</div>
               <h3 className="font-semibold text-white text-3xl">
                 {vipStatus?.level} Member
@@ -489,77 +491,79 @@ export default function MyProfile() {
               - Remove overflow clipping from parent
               - Use fixed height container that matches artwork, but *no* negative margins
           */}
-          <section className="w-full pl-5 pr-0">
-            <div className="relative w-[335px]">
-              <div
-                className="relative h-[134px] rounded-[12px] overflow-hidden"
-                style={{
-                  backgroundImage:
-                    "url(https://c.animaapp.com/V1uc3arn/img/blank-button03-1@2x.png)",
-                  backgroundSize: "cover",
-                }}
-              >
-                <h4 className="absolute top-[19px] left-4 text-white text-lg">
-                  Invite Friends
-                </h4>
-                <div className="absolute top-[46px] left-4 font-bold text-white text-lg">
-                  Get a Premium Badge
-                </div>
+          <section className="w-full flex justify-center">
+            <div className="flex justify-center w-full">
+              <div className="relative w-[335px]">
+                <div
+                  className="relative h-[134px] rounded-[12px] overflow-hidden"
+                  style={{
+                    backgroundImage:
+                      "url(https://c.animaapp.com/V1uc3arn/img/blank-button03-1@2x.png)",
+                    backgroundSize: "cover",
+                  }}
+                >
+                  <h4 className="absolute top-[19px] left-4 text-white text-lg">
+                    Invite Friends
+                  </h4>
+                  <div className="absolute top-[46px] left-4 font-bold text-white text-lg">
+                    Get a Premium Badge
+                  </div>
 
-                <div className="absolute w-[67px] h-[67px] top-[27px] left-[241px] shadow-[0px_37.16px_55.74px_#eab02066]">
-                  <div className="relative w-[67px] h-[67px]">
-                    <div
-                      className="absolute inset-0 bg-cover"
-                      style={{
-                        backgroundImage:
-                          "url(https://c.animaapp.com/V1uc3arn/img/star-6-1.svg)",
-                      }}
-                    >
+                  <div className="absolute w-[67px] h-[67px] top-[27px] right-4 shadow-[0px_37.16px_55.74px_#eab02066]">
+                    <div className="relative w-[67px] h-[67px]">
                       <div
-                        className="relative w-full h-full bg-cover"
+                        className="absolute inset-0 bg-cover"
                         style={{
                           backgroundImage:
-                            "url(https://c.animaapp.com/V1uc3arn/img/star-7-1.svg)",
+                            "url(https://c.animaapp.com/V1uc3arn/img/star-6-1.svg)",
                         }}
                       >
-                        <Image
-                          width={46}
-                          height={47}
-                          className="absolute top-[11px] left-2.5"
-                          alt="Premium badge"
-                          src="https://c.animaapp.com/V1uc3arn/img/rectangle-1485-1.svg"
-                        />
+                        <div
+                          className="relative w-full h-full bg-cover"
+                          style={{
+                            backgroundImage:
+                              "url(https://c.animaapp.com/V1uc3arn/img/star-7-1.svg)",
+                          }}
+                        >
+                          <Image
+                            width={46}
+                            height={47}
+                            className="absolute top-[11px] left-2.5"
+                            alt="Premium badge"
+                            src="https://c.animaapp.com/V1uc3arn/img/rectangle-1485-1.svg"
+                          />
+                        </div>
                       </div>
+
+                      <Image
+                        width={22}
+                        height={16}
+                        className="absolute top-[25px] left-[23px]"
+                        alt="Check icon"
+                        src="https://c.animaapp.com/V1uc3arn/img/icon-navigation-check-24px-1.svg"
+                      />
+                      <Image
+                        width={47}
+                        height={47}
+                        className="absolute top-[11px] left-2.5"
+                        alt="Badge circle"
+                        src="https://c.animaapp.com/V1uc3arn/img/ellipse-10-1.svg"
+                      />
                     </div>
-
-                    <Image
-                      width={22}
-                      height={16}
-                      className="absolute top-[25px] left-[23px]"
-                      alt="Check icon"
-                      src="https://c.animaapp.com/V1uc3arn/img/icon-navigation-check-24px-1.svg"
-                    />
-                    <Image
-                      width={47}
-                      height={47}
-                      className="absolute top-[11px] left-2.5"
-                      alt="Badge circle"
-                      src="https://c.animaapp.com/V1uc3arn/img/ellipse-10-1.svg"
-                    />
                   </div>
-                </div>
 
-                <button className="inline-flex px-3.5 py-2 absolute top-[76px] left-4 bg-[#ffdd8f] rounded-xl">
-                  <span className="font-semibold text-[#736de8] text-[13px]">
-                    Know More
-                  </span>
-                </button>
+                  <button className="inline-flex px-3.5 py-2 absolute top-[76px] left-4 bg-[#ffdd8f] rounded-xl">
+                    <span className="font-semibold text-[#736de8] text-[13px]">
+                      Know More
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           </section>
 
           {/* ---------------- Leadership ---------------- */}
-          <section className="flex flex-col w-[335px] items-start gap-2.5">
+          <section className="flex flex-col w-full max-w-[335px] items-start gap-2.5 mx-auto">
             {/* JACK_58: Ensure heading is present and styled */}
             <h3 className="font-semibold text-white text-base">Leadership</h3>
 
@@ -609,8 +613,8 @@ export default function MyProfile() {
           </section>
 
           {/* ---------------- Spin & Win ---------------- */}
-          <section className="w-full pl-5 pr-0">
-            <div className="relative w-[335px] h-[103px] rounded-[10px] overflow-hidden bg-[linear-gradient(107deg,rgba(200,117,251,1)_0%,rgba(16,4,147,1)_100%)]">
+          <section className="w-full flex justify-center">
+            <div className="relative w-full max-w-[335px] h-[103px] rounded-[10px] overflow-hidden bg-[linear-gradient(107deg,rgba(200,117,251,1)_0%,rgba(16,4,147,1)_100%)]">
               <div className="inline-flex flex-col items-start pl-4 pr-8 py-4">
                 <h4 className="font-bold text-[#e5bfff] text-sm">Spin &amp; Win</h4>
                 <div className="relative">
@@ -720,7 +724,7 @@ export default function MyProfile() {
           </section>
 
           {/* ---------------- Settings ---------------- */}
-          <section className="flex flex-col w-[335px] items-start gap-2.5">
+          <section className="flex flex-col w-full max-w-[335px] items-start gap-2.5 mx-auto">
             <h3 className="font-semibold text-white text-base">Settings</h3>
 
             {/* group 1 */}

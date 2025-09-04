@@ -504,9 +504,9 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
   );
 
   return (
-    <div className={`flex flex-col w-[335px] items-start gap-8 absolute left-5 ${showSearch ? 'top-[200px]' : 'top-[146px]'}`}>
+    <div className={`flex flex-col max-w-[335px] w-full mx-auto items-start gap-8 relative ${showSearch ? 'top-[200px]' : 'top-[146px]'}`}>
       <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto]">
-        <div className="flex flex-col w-[335px] items-start gap-[49px] relative flex-[0_0_auto]">
+        <div className="flex flex-col w-full items-start gap-[49px] relative flex-[0_0_auto]">
           <div className="inline-flex items-center gap-0.5 relative flex-[0_0_auto]">
             <Image
               className="relative w-5 h-5"
@@ -521,7 +521,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
           </div>
         </div>
 
-        <div className="flex flex-col w-[335px] items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
+        <div className="flex flex-col w-full items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
           {filteredDownloadedGames.map((game, index) =>
             renderGameItem(game, index < filteredDownloadedGames.length - 1),
           )}
@@ -534,7 +534,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       {/* User Games from API */}
       {(userGames.length > 0 || searchQuery) && (
         <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto]">
-          <div className="flex flex-col w-[335px] items-start gap-[49px] relative flex-[0_0_auto]">
+          <div className="flex flex-col w-full items-start gap-[49px] relative flex-[0_0_auto]">
             <div className="inline-flex items-center gap-0.5 relative flex-[0_0_auto]">
               <Image
                 className="relative w-5 h-5"
@@ -549,7 +549,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
             </div>
           </div>
 
-          <div className="flex flex-col w-[335px] items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
+          <div className="flex flex-col w-full items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
             {filteredUserGames.map((game, index) => (
               <div
                 key={game._id}
@@ -607,10 +607,11 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       )}
 
 
-      <div className="flex flex-col w-[335px] h-[455px] items-start gap-[16px] relative">
-        <div className="flex flex-col h-[532px] items-start gap-2.5 self-stretch w-full mb-[-77.00px] relative overflow-x-scroll">
-          <div className="w-[334px] h-[455px] rounded-[20px] overflow-hidden bg-[linear-gradient(103deg,rgba(121,32,207,1)_0%,rgba(205,73,153,1)_80%)] relative overflow-x-scroll">
-            <div className="relative w-[334px] h-[455px]">
+
+      <div className="flex flex-col w-[335px] max-h-[479px] items-start gap-[16px] relative ">
+        <div className="flex flex-col items-start gap-2.5 self-stretch w-full relative">
+          <div className="w-[334px] h-[479px] rounded-[20px] overflow-hidden bg-[linear-gradient(103deg,rgba(121,32,207,1)_0%,rgba(205,73,153,1)_80%)] relative overflow-x-scroll">
+            <div className="relative w-[334px] h-[479px]">
               <div className="absolute w-[334px] h-[91px] top-0 left-0">
                 <div className="top-8 left-20 font-bold text-xl leading-6 absolute [font-family:'Poppins',Helvetica] text-[#FFFFFF] tracking-[0] whitespace-nowrap">
                   My Account Overview
@@ -624,9 +625,9 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 />
               </div>
 
-              <div className="absolute w-[334px] h-[332px] top-[123px] left-0 bg-[#982fbb] rounded-[0px_0px_20px_20px]" />
+              <div className="absolute w-[334px] h-[356px] top-[123px] left-0 bg-[#982fbb] rounded-[0px_0px_20px_20px]" />
 
-              <div className="absolute w-[304px] h-[75px] top-[138px] left-[15px] border-b [border-bottom-style:solid] border-[#cacaca80]">
+              <div className="absolute w-[304px] h-[99px] top-[138px] left-[15px] border-b [border-bottom-style:solid] border-[#cacaca80]">
                 <div className="absolute w-[154px] top-1.5 left-[5px] [font-family:'Poppins',Helvetica] font-bold text-white text-base tracking-[0.02px] leading-[normal]">
                   {userStats ? `${userStats.gamesPlayed}/5 Games Played` : "3/5 Games Played"}
                 </div>
@@ -634,7 +635,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                   <div className="w-[60%] h-full bg-[linear-gradient(90deg,rgba(255,221,143,1)_0%,rgba(255,183,77,1)_100%)] rounded-[10px]"></div>
                   <div className="absolute bg-white w-7 h-7   rounded-full top-[-8px] border-[5px] border-[#FFB74D]" style={{ left: 'calc(60% - 12px)' }}></div>
                 </div>
-                <div className="relative w-[70px] h-[55px] left-[226px] top-1 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
+                <div className="relative w-[70px] h-[55px] left-[226px] top-4 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
                   {/* Main container for the two columns */}
                   <div className="flex items-center justify-center gap-x-1">
 
@@ -674,7 +675,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 </div>
               </div>
 
-              <div className="top-[229px] border-b [border-bottom-style:solid] border-[#cacaca80] absolute w-[304px] h-[99px] left-[15px]">
+              <div className="top-[253px] border-b [border-bottom-style:solid] border-[#cacaca80] absolute w-[304px] h-[99px] left-[15px]">
                 <div className="absolute w-[178px] top-1.5 left-[5px] [font-family:'Poppins',Helvetica] font-bold text-white text-base tracking-[0.02px] leading-[normal]">
                   {userStats ? `${userStats.balance}/900 Coins Earned (Daily)` : "100/900 Coins Earned (Daily)"}
                 </div>
@@ -682,7 +683,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                   <div className="w-[25%] h-full bg-[linear-gradient(90deg,rgba(255,221,143,1)_0%,rgba(255,183,77,1)_100%)] rounded-[10px]"></div>
                   <div className="absolute  bg-white w-7 h-7   rounded-full top-[-8px] border-[5px]  border-[#FFB74D]" style={{ left: 'calc(25% - 12px)' }}></div>
                 </div>
-                <div className="relative w-[70px] h-[55px] left-[226px] top-1 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
+                <div className="relative w-[70px] h-[55px] left-[226px] top-4 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
                   {/* Main container for the two columns */}
                   <div className="flex items-center justify-center gap-x-1">
 
@@ -722,7 +723,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 </div>
               </div>
 
-              <div className="top-[344px] absolute w-[304px] h-[99px] left-[15px]">
+              <div className="top-[368px] absolute w-[304px] h-[99px] left-[15px]">
                 <div className="absolute w-[178px] top-1.5 left-[5px] [font-family:'Poppins',Helvetica] font-bold text-white text-base tracking-[0.02px] leading-[normal]">
                   {userStats ? `${userStats.surveysCompleted + userStats.racesCompleted}/3 Challenges Finished (Daily)` : "0/3 Challenges Finished (Daily)"}
                 </div>
@@ -730,7 +731,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                   <div className="w-[10%] h-full bg-[linear-gradient(90deg,rgba(255,221,143,1)_0%,rgba(255,183,77,1)_100%)] rounded-[10px]"></div>
                   <div className="absolute  bg-white w-7 h-7   rounded-full top-[-8px] border-[5px]  border-[#FFB74D]" style={{ left: 'calc(10% - 12px)' }}></div>
                 </div>
-                <div className="relative w-[70px] h-[55px] left-[226px] top-1 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
+                <div className="relative w-[70px] h-[55px] left-[226px] top-5 rounded-[12px] overflow-hidden bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)] flex items-center justify-center">
                   {/* Main container for the two columns */}
                   <div className="flex items-center justify-center gap-x-1">
 
@@ -769,7 +770,6 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                   </div>
                 </div>
               </div>
-
               <div className="absolute w-[334px] h-12 top-[78px] left-0 bg-[#80279e]" />
 
               <div className="left-36 flex w-[87px] h-[30px] items-center gap-[169px] absolute top-[87px]">
@@ -821,7 +821,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
 
 
       <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto]">
-        <div className="flex flex-col w-[335px] items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
+        <div className="flex flex-col w-full items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
           {filteredOtherGames.map((game, index) =>
             renderGameItem(game, index < filteredOtherGames.length - 1),
           )}
@@ -831,15 +831,24 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
         </div>
       </div>
 
-      <div className="relative w-[335px] h-[100px] bg-[#360875] rounded-[10px] overflow-hidden">
+      <div className="relative w-full max-w-[335px] mx-auto h-[100px] bg-[#360875] rounded-[10px] overflow-hidden">
         <div className="relative h-[99px] top-px bg-[url(https://c.animaapp.com/3mn7waJw/img/clip-path-group-3@2x.png)] bg-[100%_100%]">
           <div className="flex flex-col w-[205px] h-12 items-start absolute top-[25px] left-[116px]">
             <div className="flex flex-col items-start pt-0 pb-2 px-0 relative self-stretch w-full flex-[0_0_auto] mt-[2.4px]">
               <p className="relative w-fit mt-[-1.00px] [font-family:'Poppins',Helvetica] font-normal text-white text-sm tracking-[0] leading-4 whitespace-nowrap">
                 Watch an ad to get a
               </p>
-              <div className="relative w-fit ml-[-0.50px] [text-shadow:0px_4px_8px_#1a002f40] [-webkit-text-stroke:0.5px_transparent] [-webkit-background-clip:text] bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(245,245,245,1)_100%)] bg-clip-text [-webkit-text-fill-color:transparent] [text-fill-color:transparent] [font-family:'Poppins',Helvetica] font-semibold text-transparent text-[28px] tracking-[0] leading-8 whitespace-nowrap">
-                5 XP
+              <div className="flex items-center gap-1">
+                <span className="relative w-fit ml-[-0.50px] [text-shadow:0px_4px_8px_#1a002f40] [-webkit-text-stroke:0.5px_transparent] [-webkit-background-clip:text] bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(245,245,245,1)_100%)] bg-clip-text [-webkit-text-fill-color:transparent] [text-fill-color:transparent] [font-family:'Poppins',Helvetica] font-semibold text-transparent text-[28px] tracking-[0] leading-8 whitespace-nowrap">
+                  5
+                </span>
+                <Image
+                  className="w-[30px] h-[28px] mb-[3px] object-contain"
+                  alt="XP"
+                  src="https://c.animaapp.com/3mn7waJw/img/pic-7.svg"
+                  width={30}
+                  height={28}
+                />
               </div>
             </div>
           </div>
@@ -854,7 +863,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       </div>
 
       <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto]">
-        <div className="flex flex-col w-[335px] items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
+        <div className="flex flex-col w-full items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
           {filteredRecentGames.map((game, index) =>
             renderGameItem(game, index < filteredRecentGames.length - 1),
           )}
@@ -864,7 +873,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
         </div>
       </div>
 
-      <div className="w-[335px] h-[255px] mx-auto flex flex-col items-center">
+      <div className="w-full max-w-[335px] h-[255px] mx-auto flex flex-col items-center">
         <div className="w-full h-[24px] px-4 mb-2.5 mr-1">
           <h2 className="font-['Poppins',Helvetica] text-[16px]  mr-1 font-semibold leading-normal tracking-[0] text-[#FFFFFF]">
             Non- Gaming Offers
@@ -917,7 +926,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       </div>
 
       {/* Extra spacing to ensure content isn't hidden behind navigation */}
-      <div className="h-[150px]"></div>
+      <div className="h-[80px]"></div>
     </div>
   );
 };
