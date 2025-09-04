@@ -20,41 +20,17 @@ export const HomeIndicator = ({ activeTab }) => {
 
   const currentActiveTab = getActiveTab();
 
+
   const navigationItems = [
-    {
-      id: "home",
-      icon: "https://c.animaapp.com/Tbz6Qwwg/img/home.svg",
-      label: "Home",
-      route: "/homepage",
-    },
-    {
-      id: "games",
-      icon: "/Games.svg",
-      label: "My Games",
-      route: "/games",
-    },
-    {
-      id: "more",
-      icon: "https://c.animaapp.com/Tbz6Qwwg/img/more.svg",
-      label: "",
-      isCenter: true,
-      route: null,
-    },
-    {
-      id: "wallet",
-      icon: "https://c.animaapp.com/Tbz6Qwwg/img/wallet@2x.png",
-      label: "My Wallet",
-      // route: "/wallet",
-    },
-    {
-      id: "cash",
-      icon: "https://c.animaapp.com/Tbz6Qwwg/img/money.svg",
-      label: "Cash Coach",
-      // route: "/cash-coach",
-    },
+    { id: "home", icon: "https://c.animaapp.com/Tbz6Qwwg/img/home.svg", label: "Home", route: "/homepage" },
+    { id: "games", icon: "/Games.svg", label: "My Games", route: "/games" },
+    { id: "more", icon: "https://c.animaapp.com/Tbz6Qwwg/img/more.svg", label: "", isCenter: true, route: null },
+    { id: "wallet", icon: "https://c.animaapp.com/Tbz6Qwwg/img/wallet@2x.png", label: "My Wallet", route: "/wallet" },
+    { id: "cash", icon: "https://c.animaapp.com/Tbz6Qwwg/img/money.svg", label: "Cash Coach", route: "/cash-coach" },
   ];
 
   const handleTabClick = (tabId, route) => {
+    // Only navigate if a route is provided
     if (route) {
       router.push(route);
     }
@@ -83,9 +59,12 @@ export const HomeIndicator = ({ activeTab }) => {
 
               {/* Home Button */}
               <button
-                className="flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px]"
+                className={`
+                  flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative
+                `}
                 onClick={() => handleTabClick("home", "/homepage")}
                 aria-label="Navigate to Home"
+                aria-current={currentActiveTab === "home" ? "page" : undefined}
                 tabIndex={0}
               >
                 <img
@@ -97,14 +76,16 @@ export const HomeIndicator = ({ activeTab }) => {
                 <span className={`text-[10px] font-normal ${currentActiveTab === "home" ? "text-white" : "text-[#ffffffb2]"}`}>
                   Home
                 </span>
-                {/* {currentActiveTab === "home" && (
-                  <div className="absolute w-1 h-1 -bottom-1 left-1/2 transform -translate-x-1/2 bg-[#8b92de] rounded-full" />
-                )} */}
+                {currentActiveTab === "home" && (
+                  <div className="absolute w-1 h-1 bottom-0  left-1/2 transform -translate-x-1/2 bg-[#8b92de] rounded-full" />
+                )}
               </button>
 
               {/* Games Button */}
               <button
-                className="flex mr-8 flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px]"
+                className={`
+                  flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative
+                `}
                 onClick={() => handleTabClick("games", "/games")}
                 aria-label="Navigate to My Games"
                 aria-current={currentActiveTab === "games" ? "page" : undefined}
@@ -119,9 +100,9 @@ export const HomeIndicator = ({ activeTab }) => {
                 <span className={`text-[10px] font-normal text-center ${currentActiveTab === "games" ? "text-white" : "text-[#ffffffb2]"}`}>
                   My Games
                 </span>
-                {/* {currentActiveTab === "games" && (
-                  <div className="absolute w-1 h-1 -bottom-1 left-1/2 transform -translate-x-1/2 bg-[#8b92de] rounded-full" />
-                )} */}
+                {currentActiveTab === "games" && (
+                  <div className="absolute w-1 h-1 bottom-0 left-1/2 transform -translate-x-1/2 bg-[#8b92de] rounded-full" />
+                )}
               </button>
 
               {/* Center More Button - Half outside navbar */}
@@ -141,9 +122,12 @@ export const HomeIndicator = ({ activeTab }) => {
 
               {/* Wallet Button */}
               <button
-                className="flex flex-col  ml-8 items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px]"
-                onClick={() => handleTabClick("wallet", null)}
+                className={`
+                  flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative
+                `}
+                // onClick={() => handleTabClick("wallet", "/wallet")}
                 aria-label="Navigate to My Wallet"
+                aria-current={currentActiveTab === "wallet" ? "page" : undefined}
                 tabIndex={0}
               >
                 <div className="w-6 h-6 relative">
@@ -157,15 +141,17 @@ export const HomeIndicator = ({ activeTab }) => {
                 <span className={`text-[10px] font-normal text-center ${currentActiveTab === "wallet" ? "text-white" : "text-[#ffffffb2]"}`}>
                   My Wallet
                 </span>
-                {/* {currentActiveTab === "wallet" && (
-                  <div className="absolute w-1 h-1 -bottom-1 left-1/2 transform -translate-x-1/2 bg-[#8b92de] rounded-full" />
-                )} */}
+                {currentActiveTab === "wallet" && (
+                  <div className="absolute w-1 h-1 bottom-0 left-1/2 transform -translate-x-1/2 bg-[#8b92de] rounded-full" />
+                )}
               </button>
 
               {/* Cash Coach Button */}
               <button
-                className="flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px]"
-                onClick={() => handleTabClick("cash", null)}
+                className={`
+                  flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative
+                `}
+                // onClick={() => handleTabClick("cash", "/cash-coach")}
                 aria-label="Navigate to Cash Coach"
                 tabIndex={0}
               >
@@ -178,9 +164,9 @@ export const HomeIndicator = ({ activeTab }) => {
                 <span className={`text-[10px] font-normal text-center whitespace-nowrap ${currentActiveTab === "cash" ? "text-white" : "text-[#ffffffb2]"}`}>
                   Cash Coach
                 </span>
-                {/* {currentActiveTab === "cash" && (
-                  <div className="absolute w-1 h-1 -bottom-1   bg-[#8b92de] rounded-full" />
-                )} */}
+                {currentActiveTab === "cash" && (
+                  <div className="absolute w-1 h-1 bottom-0 left-1/2 transform -translate-x-1/2 bg-[#8b92de] rounded-full" />
+                )}
               </button>
 
             </div>

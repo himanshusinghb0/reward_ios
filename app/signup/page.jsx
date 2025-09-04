@@ -255,8 +255,8 @@ const SignUp = () => {
       >
         <div className="relative w-[460px] min-h-screen bg-[#272052] overflow-x-hidden overflow-y-auto"
         >
-          <div className="absolute  w-full h-[883px] -top-32 -left-3.5">
-            <div className="absolute w-[358px] h-[358px] top-0 left-7 bg-[#af7de6] rounded-[179px] blur-[250px]" />
+          <div className="absolute  w-full h-[883px] -top-32 mx-auto">
+            <div className="absolute w-full h-[358px] top-0 mx-auto bg-[#af7de6] rounded-[179px] blur-[250px]" />
 
             <div className="absolute w-[470px] h-[312px] top-[374px] left-4">
               <Image
@@ -287,7 +287,7 @@ const SignUp = () => {
             </div>
 
             <Image
-              className="absolute w-[21px] h-[22px] top-[187px] left-[334px]"
+              className="absolute w-[21px] h-[22px] top-[184px] left-[334px]"
               alt="Gem"
               src="https://c.animaapp.com/bkGH9LUL/img/gem-1@2x.png"
               width={21}
@@ -296,7 +296,7 @@ const SignUp = () => {
 
             <form
               onSubmit={handleSubmit}
-              className="w-[314px] absolute top-[274px] left-[40px] flex flex-col items-start gap-5 pb-20"
+              className="w-full absolute top-[274px]  flex flex-col items-center justify-center gap-5 pb-20"
             >
               <div className="flex flex-col">
                 <label className="[font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-[14.3px] tracking-[0] mb-[1px] leading-[normal]">
@@ -445,7 +445,7 @@ const SignUp = () => {
 
 
               {isOtpSent && !isMobileVerified && (
-                <div className="w-full flex flex-col ">
+                <div className="w-full flex flex-col items-center justify-center ">
                   {/* Main Title */}
                   <h3 className="[font-family:'Poppins',Helvetica] mb-1  ml-4 font-medium text-[#A4A4A4] text-[14.3px] tracking-[0]  leading-[normal]">
 
@@ -492,14 +492,13 @@ const SignUp = () => {
                       {isResending ? 'Sending...' : 'Resend OTP'}
                     </button>
                   </div>
-
                   {/* Primary "Verify" Button */}
-                  <div className="w-[180px] pt-4">
+                  <div className="w-[180px] flex items-center justify-center pt-4">
                     <button
                       type="button"
                       onClick={handleVerifyOtp}
                       disabled={isLoadings || formData.otp.join('').length < 4}
-                      className="w-full h-12 rounded-xl ml-16 bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] text-white  text-lg font-semibold shadow-md disabled:opacity-50 transition-opacity"
+                      className="w-full h-12 rounded-xl  bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] text-white  text-lg font-semibold shadow-md disabled:opacity-50 transition-opacity"
                     >
                       {isLoadings ? 'Verifying...' : 'Verify'}
                     </button>
@@ -622,18 +621,20 @@ const SignUp = () => {
               </div>
 
               {/* Sign Up Button */}
-              <button
-                onClick={handleSubmit} disabled={isLoading || !isMobileVerified}
+              <div className='flex justify-between items-center'>
+                <button
+                  onClick={handleSubmit} disabled={isLoading || !isMobileVerified}
 
-                className="all-[unset] box-border w-full h-[50px] cursor-pointer disabled:opacity-50 mt-4"
-                type="submit"
-              >
-                <div className="relative w-full h-[50px] rounded-[12.97px] bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)]">
-                  <div className="absolute top-[11px] left-1/2 transform -translate-x-1/2 [font-family:'Poppins',Helvetica] font-semibold text-white text-lg tracking-[0] leading-[normal]">
-                    {isLoading ? "Signing Up..." : "Sign up"}
+                  className="all-[unset] box-border w-full h-[50px] cursor-pointer disabled:opacity-50 mt-4"
+                  type="submit"
+                >
+                  <div className="flex justify-center items-center w-80   h-[50px] rounded-[12.97px] bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)]">
+                    <div className=" flex justify-center items-center   [font-family:'Poppins',Helvetica] font-semibold text-white text-lg tracking-[0] leading-[normal]">
+                      {isLoading ? "Signing Up..." : "Sign up"}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
 
               {/* Sign In Link */}
               <div className="w-full text-center mt-6">
@@ -649,13 +650,13 @@ const SignUp = () => {
               </div>
             </form>
 
-            <div className="absolute w-[305px] h-[65px] top-[179px] left-[45px]">
-              <p className="absolute top-11 left-0 [font-family:'Poppins',Helvetica] font-medium text-neutral-400 text-sm tracking-[0] leading-[normal]">
-                Create account to earn &amp; withdraw money
-              </p>
-              <h1 className="absolute top-0 left-[14px] [font-family:'Poppins',Helvetica] font-semibold text-[#efefef] text-2xl tracking-[0] leading-[normal]">
+            <div className="absolute w-[305px] h-[65px] top-[179px] left-1/2 -translate-x-1/2 text-center">
+              <h1 className="[font-family:'Poppins',Helvetica] font-semibold text-[#efefef] text-2xl tracking-[0] leading-[normal]">
                 Welcome to Jackson!
               </h1>
+              <p className="[font-family:'Poppins',Helvetica]  font-medium text-neutral-400 text-sm tracking-[0] leading-[normal] mt-3">
+                Create account to earn &amp; withdraw money
+              </p>
             </div>
           </div>
 

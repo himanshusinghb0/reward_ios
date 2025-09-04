@@ -108,20 +108,20 @@ export default function LoginPage() {
       {isRedirecting && <LoadingOverlay message="Redirecting to secure login..." />}
 
       <div
-        className="bg-[#272052] flex h-full flex-row justify-center w-full overflow-y-auto overflow-x-hidden scroll-smooth"
+        className="bg-[#272052] flex min-h-screen flex-row justify-center w-full overflow-y-auto overflow-x-hidden scroll-smooth "
         data-model-id="363:24235"
       >
         <div className="bg-[#272052] w-full flex justify-center ">
-          <div className="relative w-[904px] h-[800px] -top-32">
+          <div className="relative w-[904px] -top-32">
             <div className="absolute w-[358px] h-[358px] top-0 left-[229px] bg-[#af7de6] rounded-[179px] blur-[250px]" />
 
-            <div className="absolute w-[904px] h-[650px] top-[184px] left-0">
-              <div className="relative h-[650px]">
+            <div className="absolute w-[904px] h-[700px] top-[184px] left-0">
+              <div className="relative h-[700px]">
                 <div className="absolute w-[397px] h-[397px] top-[350px] left-[430px] rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(179,121,223,1)_0%,rgba(54,0,96,0)_100%)] opacity-[0.58]" />
 
                 <div className="absolute w-[397px] h-[397px] top-[330px] left-0 rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(196,86,71,1)_0%,rgba(210,90,99,0)_100%)] opacity-[0.58]" />
 
-                <div className="absolute w-[440px] h-[700px] top-[88px]  rounded-tl-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
+                <div className="absolute w-[440px] h-[770px] top-[88px]  rounded-tl-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
 
                 <div className="absolute w-[397px] h-[397px] top-0 left-[507px] rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(179,121,223,1)_0%,rgba(54,0,96,0)_100%)] opacity-[0.58]" />
               </div>
@@ -419,7 +419,7 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <p className="relative self-stretch [font-family:'Poppins',Helvetica] font-medium text-transparent text-sm text-center tracking-[0] leading-[normal]">
+                <p className="relative self-stretch [font-family:'Poppins',Helvetica] font-medium text-transparent mt-4 text-sm text-center tracking-[0] leading-[normal]">
                   <span className="text-white">Want to create an account? </span>
 
                   <button
