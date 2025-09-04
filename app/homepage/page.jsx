@@ -275,11 +275,11 @@ export const Frame = () => {
 const Homepage = () => {
   return (
     <div
-      className="relative w-full min-h-screen bg-black pb-[170px]"
+      className="relative w-full min-h-screen bg-black pb-[150px]"
       data-model-id="972:9945"
     >
       <div className="absolute w-full h-[49px] top-0 left-0 z-10 px-5">
-        <div className="absolute top-[37px] left-5 [font-family:'Poppins',Helvetica] font-normal text-white text-[10px] tracking-[0] leading-3 whitespace-nowrap">
+        <div className="absolute top-[8px] left-5 [font-family:'Poppins',Helvetica] font-normal text-white text-[10px] tracking-[0] leading-3 whitespace-nowrap">
           App Version: V0.0.1
         </div>
       </div>

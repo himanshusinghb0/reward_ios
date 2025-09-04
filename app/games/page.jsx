@@ -23,14 +23,14 @@ export default function GamesPage() {
     console.log("Searching for:", searchQuery);
   };
   return (
-    <div className="flex justify-center items-center">
+    <div className="flex justify-center ">
       <div
         className="relative overflow-x-hidden w-full min-h-screen bg-black pb-[250px] mx-auto"
         data-model-id="289:1500"
         style={{ paddingBottom: '250px' }}
       >
         {/* App version */}
-        <div className="absolute top-[37px] left-5 font-normal text-white text-[10px] leading-3 z-10 [font-family:'Poppins',Helvetica]">
+        <div className="absolute top-[16px] left-5 font-normal text-white text-[10px] leading-3 z-10 [font-family:'Poppins',Helvetica]">
           App Version: V0.0.1
         </div>
 

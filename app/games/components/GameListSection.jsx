@@ -926,7 +926,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       </div>
 
       {/* Extra spacing to ensure content isn't hidden behind navigation */}
-      <div className="h-[80px]"></div>
+      <div className="h-[8px]"></div>
     </div>
   );
 };

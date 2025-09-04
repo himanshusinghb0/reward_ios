@@ -50,10 +50,10 @@ export default function PlayerTypeSelection() {
 
       {/* Main container with flex center alignment */}
       <div className='relative w-full max-w-[375px] h-full mx-auto flex flex-col items-center justify-center px-6 py-8'>
-        <div className='w-full max-w-sm flex flex-col items-center justify-center space-y-8'>
+        <div className='w-full max-w-sm flex flex-col items-center justify-center space-y-4'>
 
           {/* Header section */}
-          <div className='text-center font-poppins'>
+          <div className=' mt-13 font-poppins ml-2'>
             <h1 className='text-white text-4xl font-light leading-tight mb-4'>
               Which of these sounds most like you?
             </h1>

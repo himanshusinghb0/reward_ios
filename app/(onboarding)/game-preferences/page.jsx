@@ -72,14 +72,14 @@ export default function GamePreferencesSelection() {
     <div className='relative w-full h-screen bg-[#272052] overflow-hidden flex flex-col'>
       <div className='w-[542px] h-[542px] top-0 left-0 bg-[#af7de6] rounded-full blur-[250px] fixed' />
 
-      <div className='relative z-10 px-6 pt-20 font-poppins'>
-        <h1 className='text-[#FFFFFF] text-4xl font-normal leading-tight mb-8'>
+      <div className='relative z-10 px-6 pt-15 font-poppins'>
+        <h1 className='text-[#FFFFFF] text-3xl font-normal leading-tight '>
           What types of games do you enjoy playing?
         </h1>
-        <p className='text-white/70 text-[16px] font-light mb-10 ml-1'>Select up to 3</p>
+        <p className='text-white/70 text-[16px] font-light mb-1 ml-1'>Select up to 3</p>
       </div>
 
-      <div className='relative z-10 pb-20   flex-1  overflow-y-auto  items-center px-6 space-y-6'>
+      <div className='relative z-10 flex-1 flex flex-col justify-center items-center px-6'>
         {isLoading && (
           <p className='text-white text-center font-poppins'>
             Loading game options...
@@ -87,53 +87,52 @@ export default function GamePreferencesSelection() {
         )}
         {error && <p className='text-red-400 text-center font-poppins'>{error}</p>}
 
-        {!isLoading &&
-          !error &&
-          gameOptions.map((option) => {
-            const isSelected = gamePreferencesSafe.includes(option.id)
-            return (
-              <button
-                key={option.id}
-                onClick={() => handlePreferenceSelect(option.id)}
-                className='relative w-full h-16 group focus:outline-none'
-              >
-                <div className='absolute inset-x-0 top-0 h-18 bg-[#D8D5E9] rounded-full' />
-                <div
-                  className={`absolute inset-x-0 top-0 h-16 rounded-full transition-all duration-300 flex items-center justify-start px-12 gap-4
-             bg-white group-hover:translate-y-0.5`}
+        <div className='w-full max-w-sm space-y-3'>
+          {!isLoading &&
+            !error &&
+            gameOptions.map((option) => {
+              const isSelected = gamePreferencesSafe.includes(option.id)
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => handlePreferenceSelect(option.id)}
+                  className='relative w-full h-12 group focus:outline-none'
                 >
-                  {isSelected ? (
-                    <div className='w-5 h-5 bg-[#7e22ce] rounded-md flex items-center justify-center'>
-                      <svg
-                        xmlns='http://www.w3.org/2000/svg'
-                        className='w-3 h-3 text-white'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
-                        strokeWidth={3}
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          d='M5 13l4 4L19 7'
-                        />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div className='w-5 h-5 mt-0.5 border-2 border-gray-300 rounded' />
-                  )}
-
-                  <span
-                    className={`text-base font-semibold font-poppins tracking-wide transition-colors duration-200 ${isSelected ? 'text-[#272052]' : 'text-[#2D2D2D]'
-                      }`}
+                  <div className='absolute inset-x-0 top-0 h-14 bg-[#D8D5E9] rounded-full' />
+                  <div
+                    className={`absolute inset-x-0 top-0 h-12 rounded-full transition-all duration-300 flex items-center justify-start px-8 gap-3 bg-white group-hover:translate-y-0.5 ${isSelected ? 'scale-105 shadow-lg shadow-[#AF7DE6]/50' : ''}`}
                   >
-                    {option.label}
-                  </span>
+                    {isSelected ? (
+                      <div className='w-4 h-4 bg-[#7e22ce] rounded-md flex items-center justify-center'>
+                        <svg
+                          xmlns='http://www.w3.org/2000/svg'
+                          className='w-2.5 h-2.5 text-white'
+                          fill='none'
+                          viewBox='0 0 24 24'
+                          stroke='currentColor'
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            d='M5 13l4 4L19 7'
+                          />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className='w-4 h-4 border-2 border-gray-300 rounded' />
+                    )}
 
-                </div>
-              </button>
-            )
-          })}
+                    <span
+                      className={`text-sm font-semibold font-poppins tracking-wide transition-colors duration-200 ${isSelected ? 'text-[#272052]' : 'text-[#2D2D2D]'}`}
+                    >
+                      {option.label}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+        </div>
       </div>
     </div>
   )
