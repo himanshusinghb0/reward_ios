@@ -2,36 +2,19 @@
 import useOnboardingStore from '@/stores/useOnboardingStore'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { getOnboardingOptions } from '@/lib/api'
-
+import { useSelector } from 'react-redux';
 export default function GenderSelection() {
   const router = useRouter()
   const { gender, setGender, setCurrentStep } = useOnboardingStore()
+  const { genderOptions, status: onboardingStatus, error } = useSelector((state) => state.onboarding);
 
-  const [genderOptions, setGenderOptions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+
 
   useEffect(() => {
     setCurrentStep(2);
-
-    const fetchOptions = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getOnboardingOptions('gender');
-        if (data && Array.isArray(data.options)) {
-          setGenderOptions(data.options);
-        }
-      } catch (err) {
-        setError("Could not load gender options. Please try again.");
-        console.error("Failed to fetch gender options:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOptions();
   }, [setCurrentStep]);
+
+
 
   const handleGenderSelect = async (selectedGender) => {
     await setGender(selectedGender);
@@ -56,12 +39,12 @@ export default function GenderSelection() {
       <div className='relative z-10 flex-1 flex   flex-col justify-center items-center  px-6 space-y-6'>
 
 
-        {!isLoading && !error && genderOptions.map((option) => {
-          const isSelected = gender === option.id; // Use `option.id` from API
+        {onboardingStatus === 'succeeded' && genderOptions.map((option) => {
+          const isSelected = gender === option.id;
           return (
             <button
-              key={option.id} // Use `option.id` as the key
-              onClick={() => handleGenderSelect(option.id)} // Pass `option.id` as the value
+              key={option.id}
+              onClick={() => handleGenderSelect(option.id)}
               className='relative w-full h-16 group focus:outline-none'
             >
               <div
@@ -76,16 +59,16 @@ export default function GenderSelection() {
                   className={`text-base font-semibold font-poppins tracking-wide transition-colors duration-200 ${isSelected ? 'text-[#272052]' : 'text-[#2D2D2D]'
                     }`}
                 >
-                  {option.label} {/* Use `option.label` from API */}
+                  {option.label}
                 </span>
               </div>
             </button>
           );
         })}
-        {isLoading && (
+        {onboardingStatus === 'loading' && (
           <p className="text-white mb-190text-center font-poppins">Loading options...</p>
         )}
-        {error && (
+        {onboardingStatus === 'failed' && (
           <p className="text-red-400 text-center font-poppins">{error}</p>
         )}
       </div>

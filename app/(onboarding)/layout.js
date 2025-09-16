@@ -10,10 +10,8 @@ const OnboardingLayout = ({ children }) => {
 
   return (
     <div className="relative w-full h-screen bg-[#272052] overflow-hidden">
-      {/* Progress bar and step indicator */}
       <div className="absolute top-6 left-0 px-4 w-full z-10">
         <div className="flex items-center space-x-2 mb-2">
-          {/* The progress bar is rendered dynamically based on the total steps. */}
           {[...Array(TOTAL_STEPS)].map((_, i) => {
             const step = i + 1;
             return (

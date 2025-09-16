@@ -2,38 +2,16 @@
 import useOnboardingStore from '@/stores/useOnboardingStore'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { getOnboardingOptions } from '@/lib/api'
-
+import { useSelector } from 'react-redux';
 
 export default function GameStyleSelection() {
   const router = useRouter()
   const { gameStyle, setGameStyle, setCurrentStep } = useOnboardingStore()
+  const { gameStyleOptions, status: onboardingStatus, error } = useSelector((state) => state.onboarding);
 
-  const [gameStyleOptions, setGameStyleOptions] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   useEffect(() => {
     setCurrentStep(4)
-
-    const fetchOptions = async () => {
-      try {
-        setIsLoading(true)
-        const data = await getOnboardingOptions('game_style')
-        if (data && Array.isArray(data.options)) {
-          setGameStyleOptions(data.options)
-        } else {
-          setError('Could not parse game styles.')
-        }
-      } catch (err) {
-        setError('Could not load game styles. Please try again.')
-        console.error('Failed to fetch game styles:', err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchOptions()
   }, [setCurrentStep])
 
   const handleSelectGameStyle = async (styleId) => {
@@ -58,21 +36,20 @@ export default function GameStyleSelection() {
       </div>
 
       <div className='relative z-10 flex-1 flex flex-col items-center justify-center px-6 space-y-6 '>
-        {isLoading && (
+        {onboardingStatus === 'loading' && (
           <p className='text-white text-center font-poppins'>Loading styles...</p>
         )}
-        {error && (
+        {onboardingStatus === 'failed' && (
           <p className='text-red-400 text-center font-poppins'>{error}</p>
         )}
 
-        {!isLoading &&
-          !error &&
+        {onboardingStatus === 'succeeded' &&
           gameStyleOptions.map((option) => {
-            const isSelected = gameStyle === option.id // Use `option.id` from API
+            const isSelected = gameStyle === option.id
             return (
               <button
-                key={option.id} // Use `option.id` as the key
-                onClick={() => handleSelectGameStyle(option.id)} // Pass `option.id`
+                key={option.id}
+                onClick={() => handleSelectGameStyle(option.id)}
                 className='relative w-full h-16 group focus:outline-none'
               >
                 <div

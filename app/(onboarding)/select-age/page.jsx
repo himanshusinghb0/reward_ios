@@ -2,52 +2,22 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import useOnboardingStore from '@/stores/useOnboardingStore'
-import { getOnboardingOptions } from '@/lib/api'
+import { useSelector } from 'react-redux';
 
 
 export default function AgeSelection() {
   const router = useRouter()
   const { ageRange, setAgeRange, setCurrentStep } = useOnboardingStore()
-  const [ageOptions, setAgeOptions] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { ageOptions, status: onboardingStatus, error } = useSelector((state) => state.onboarding);
   const [selectedIndex, setSelectedIndex] = useState(0)
   const wheelRef = useRef(null)
   const itemHeight = 50
 
+
   useEffect(() => {
     setCurrentStep(1)
-    const fetchOptions = async () => {
-      try {
-        setIsLoading(true)
-        const data = await getOnboardingOptions('age_range')
-        if (data && Array.isArray(data.options)) {
-          setAgeOptions(data.options)
-          // Set initial selected index to middle option
-          if (data.options.length > 0) {
-            setSelectedIndex(Math.floor(data.options.length / 2))
-          }
-        } else {
-          setError('Could not parse age options.')
-        }
-      } catch (err) {
-        setError('Could not load age ranges. Please try again.')
-        console.error('Failed to fetch age ranges:', err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchOptions()
   }, [setCurrentStep])
 
-  // Center the wheel on the selected item when options are loaded
-  useEffect(() => {
-    if (ageOptions.length > 0 && wheelRef.current) {
-      const initialIndex = Math.floor(ageOptions.length / 2)
-      wheelRef.current.scrollTop = initialIndex * itemHeight
-    }
-  }, [ageOptions, itemHeight])
 
 
   const handleSelectAge = async (ageOptionId) => {
@@ -96,13 +66,13 @@ export default function AgeSelection() {
 
       <div className='absolute inset-0 w-full flex items-center mt-50 justify-center'>
         <div className='relative w-full mx-4'>
-          {isLoading && (
+          {onboardingStatus === 'loading' && (
             <div className='text-white text-lg text-center p-4'>Loading...</div>
           )}
-          {error && (
+          {onboardingStatus === 'failed' && (
             <div className='text-red-400 text-lg text-center p-4'>{error}</div>
           )}
-          {!isLoading && !error && (
+          {onboardingStatus === 'succeeded' && (
             <div className='relative h-[250px] rounded-xl bg-[rgba(255,255,255,0.1)] backdrop-blur-sm'>
               {/* Wheel picker container */}
               <div
@@ -114,7 +84,6 @@ export default function AgeSelection() {
                   scrollBehavior: 'smooth'
                 }}
               >
-                {/* Padding items for centering */}
                 <div style={{ height: `${itemHeight * 2}px` }} />
 
                 {ageOptions.map((option, index) => (
@@ -141,16 +110,13 @@ export default function AgeSelection() {
                   </div>
                 ))}
 
-                {/* Padding items for centering */}
                 <div style={{ height: `${itemHeight * 2}px` }} />
               </div>
 
-              {/* Center selection indicator */}
               <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
                 <div className='w-full h-[50px] border-t-2 border-b-2 border-white/30 bg-white/5' />
               </div>
 
-              {/* Fade overlay */}
               <div className='pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-[rgba(39,32,82,0.8)] via-transparent to-[rgba(39,32,82,0.8)]' />
             </div>
           )}

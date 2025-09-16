@@ -2,18 +2,14 @@
 import useOnboardingStore from '@/stores/useOnboardingStore'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { getOnboardingOptions } from '@/lib/api'
-
+import { useSelector } from 'react-redux';
 
 export default function GamePreferencesSelection() {
   const router = useRouter()
   const { gamePreferences, setGamePreferences, setCurrentStep } =
     useOnboardingStore()
-
-  const [gameOptions, setGameOptions] = useState([])
+  const { gamePreferencesOptions, status: onboardingStatus, error } = useSelector((state) => state.onboarding);
   const [maxSelection, setMaxSelection] = useState(3)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   const gamePreferencesSafe = Array.isArray(gamePreferences)
     ? gamePreferences
@@ -21,28 +17,6 @@ export default function GamePreferencesSelection() {
 
   useEffect(() => {
     setCurrentStep(3)
-
-    const fetchOptions = async () => {
-      try {
-        setIsLoading(true)
-        const data = await getOnboardingOptions('game_preferences')
-        if (data && Array.isArray(data.options)) {
-          setGameOptions(data.options)
-          if (data.maxSelection) {
-            setMaxSelection(data.maxSelection)
-          }
-        } else {
-          setError('Could not parse game options.')
-        }
-      } catch (err) {
-        setError('Could not load game options. Please try again.')
-        console.error('Failed to fetch game preferences:', err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchOptions()
   }, [setCurrentStep])
 
   const handlePreferenceSelect = async (optionId) => {
@@ -80,58 +54,56 @@ export default function GamePreferencesSelection() {
       </div>
 
       <div className='relative z-10 flex-1 flex flex-col justify-center items-center px-6'>
-        {isLoading && (
+        {onboardingStatus === 'loading' && (
           <p className='text-white text-center font-poppins'>
             Loading game options...
           </p>
         )}
-        {error && <p className='text-red-400 text-center font-poppins'>{error}</p>}
+        {onboardingStatus === 'failed' && <p className='text-red-400 text-center font-poppins'>{error}</p>}
 
         <div className='w-full max-w-sm space-y-3'>
-          {!isLoading &&
-            !error &&
-            gameOptions.map((option) => {
-              const isSelected = gamePreferencesSafe.includes(option.id)
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => handlePreferenceSelect(option.id)}
-                  className='relative w-full h-12 group focus:outline-none'
+          {onboardingStatus === 'succeeded' && gamePreferencesOptions.map((option) => {
+            const isSelected = gamePreferencesSafe.includes(option.id)
+            return (
+              <button
+                key={option.id}
+                onClick={() => handlePreferenceSelect(option.id)}
+                className='relative w-full h-12 group focus:outline-none'
+              >
+                <div className='absolute inset-x-0 top-0 h-14 bg-[#D8D5E9] rounded-full' />
+                <div
+                  className={`absolute inset-x-0 top-0 h-12 rounded-full transition-all duration-300 flex items-center justify-start px-8 gap-3 bg-white group-hover:translate-y-0.5 ${isSelected ? 'scale-105 shadow-lg shadow-[#AF7DE6]/50' : ''}`}
                 >
-                  <div className='absolute inset-x-0 top-0 h-14 bg-[#D8D5E9] rounded-full' />
-                  <div
-                    className={`absolute inset-x-0 top-0 h-12 rounded-full transition-all duration-300 flex items-center justify-start px-8 gap-3 bg-white group-hover:translate-y-0.5 ${isSelected ? 'scale-105 shadow-lg shadow-[#AF7DE6]/50' : ''}`}
-                  >
-                    {isSelected ? (
-                      <div className='w-4 h-4 bg-[#7e22ce] rounded-md flex items-center justify-center'>
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          className='w-2.5 h-2.5 text-white'
-                          fill='none'
-                          viewBox='0 0 24 24'
-                          stroke='currentColor'
-                          strokeWidth={3}
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            d='M5 13l4 4L19 7'
-                          />
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className='w-4 h-4 border-2 border-gray-300 rounded' />
-                    )}
+                  {isSelected ? (
+                    <div className='w-4 h-4 bg-[#7e22ce] rounded-md flex items-center justify-center'>
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        className='w-2.5 h-2.5 text-white'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        stroke='currentColor'
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          d='M5 13l4 4L19 7'
+                        />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className='w-4 h-4 border-2 border-gray-300 rounded' />
+                  )}
 
-                    <span
-                      className={`text-sm font-semibold font-poppins tracking-wide transition-colors duration-200 ${isSelected ? 'text-[#272052]' : 'text-[#2D2D2D]'}`}
-                    >
-                      {option.label}
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
+                  <span
+                    className={`text-sm font-semibold font-poppins tracking-wide transition-colors duration-200 ${isSelected ? 'text-[#272052]' : 'text-[#2D2D2D]'}`}
+                  >
+                    {option.label}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>
