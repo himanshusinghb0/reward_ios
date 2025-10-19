@@ -50,6 +50,7 @@ export default function PermissionsPage() {
       await acceptDisclosure(token);
       localStorage.setItem("permissionsAccepted", "true");
       router.push("/location");
+
     } catch (err) {
       console.error("Failed to accept disclosure:", err);
       setError(err.message || "An unexpected error occurred. Please try again.");

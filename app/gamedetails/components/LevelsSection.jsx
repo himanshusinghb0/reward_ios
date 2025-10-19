@@ -1,0 +1,934 @@
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import { RulesModal } from "./RulesModal";
+import sessionManager from "@/lib/sessionManager";
+
+export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdate }) => {
+    const [processedGoals, setProcessedGoals] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [sessionCoins, setSessionCoins] = useState(0);
+    const [sessionXP, setSessionXP] = useState(0);
+    const [isClaimed, setIsClaimed] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const [showClaimModal, setShowClaimModal] = useState(false);
+    const [showRulesModal, setShowRulesModal] = useState(false);
+    const [claiming, setClaiming] = useState(false);
+    const [milestoneLevel, setMilestoneLevel] = useState(3); // Configurable milestone - Complete 3 tasks to claim
+    const [isGameDownloaded, setIsGameDownloaded] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [sessionId, setSessionId] = useState(null);
+
+    const dispatch = useDispatch();
+    const router = useRouter();
+
+    // Get user progress from Redux store
+    const { userData, userDataStatus } = useSelector((state) => state.games);
+
+    // Generate session ID when game is downloaded
+    const generateSessionId = () => {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 15);
+        return `session_${timestamp}_${random}`;
+    };
+
+    // Handle tier selection
+    const handleTierSelect = (tier) => {
+        setShowDropdown(false);
+        onTierChange(tier);
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showDropdown && !event.target.closest('.dropdown-container')) {
+                setShowDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showDropdown]);
+
+    // Check if milestone is reached after each set of three completed tasks (3, 6, 9, ...)
+    const checkMilestoneReached = () => {
+        const unlockedLevels = processedGoals.filter(goal => !goal.isLocked);
+        const completedUnlockedCount = unlockedLevels.filter(g => g.isCompleted).length;
+
+
+        const milestoneReached = completedUnlockedCount > 0 && (completedUnlockedCount % milestoneLevel === 0);
+
+
+        return milestoneReached;
+    };
+
+    // Notify parent component when session data changes
+    useEffect(() => {
+        if (onSessionUpdate) {
+            onSessionUpdate({
+                sessionCoins,
+                sessionXP,
+                isClaimed,
+                isGameDownloaded,
+                isMilestoneReached: checkMilestoneReached()
+            });
+        }
+    }, [sessionCoins, sessionXP, isClaimed, isGameDownloaded, processedGoals]);
+
+    // Process game goals from API with real-time progress tracking
+    useEffect(() => {
+        const processGameData = () => {
+            console.log('🔄 LevelsSection: Starting data processing...');
+            setIsLoading(true);
+            setError(null);
+
+            // Check if we have game data
+            if (!game) {
+                console.log('⚠️ LevelsSection: No game data available');
+                setIsLoading(false);
+                return;
+            }
+
+            console.log('🎯 LevelsSection: Processing game data:', {
+                gameTitle: game.title,
+                gameId: game.id,
+                hasGoals: !!game.goals,
+                goalsLength: game.goals?.length || 0,
+                goals: game.goals
+            });
+
+            // Check if we have goals
+            if (!game.goals || game.goals.length === 0) {
+                console.log('⚠️ LevelsSection: No goals found for game:', game.title);
+                setError('No goals available for this game');
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                // Process goals with ACTUAL API data (completed, failed, days_left)
+                const allGoals = game.goals.map((goal, index) => {
+                    // Use actual completion status from API
+                    const isCompleted = goal.completed === true;
+                    const isFailed = goal.failed === true;
+                    const isLinear = goal.goal_type === 'linear';
+                    const isNonLinear = goal.goal_type === 'non-linear';
+
+                    // Check if expired based on days_left
+                    const isExpired = goal.days_left !== null && goal.days_left <= 0 && !isCompleted;
+                    const isPending = !isCompleted && !isFailed && !isExpired;
+
+                    // Progressive unlocking in groups of three
+                    // First 3 tasks are always unlocked. Next 3 unlock when first 3 are all completed, etc.
+                    const isLocked = (() => {
+                        // Determine which block of three this index belongs to
+                        const blockIndex = Math.floor(index / 3); // 0-based block
+
+                        // Block 0 (first three) is always unlocked
+                        if (blockIndex === 0) {
+                            return false;
+                        }
+
+                        // For subsequent blocks, require all tasks in the previous block to be completed
+                        const prevBlockStart = (blockIndex - 1) * 3;
+                        const prevBlockEnd = prevBlockStart + 3; // non-inclusive
+                        const previousBlockGoals = game.goals.slice(prevBlockStart, prevBlockEnd);
+
+                        const previousBlockCompleted = previousBlockGoals.length > 0 && previousBlockGoals.every(prevGoal => {
+                            return prevGoal.completed === true || prevGoal.status === 'completed';
+                        });
+
+                        // Lock if previous block not fully completed
+                        return !previousBlockCompleted;
+                    })();
+
+                    // Determine task status
+                    let taskStatus = 'pending';
+                    if (isCompleted) taskStatus = 'completed';
+                    else if (isFailed) taskStatus = 'failed';
+                    else if (isExpired) taskStatus = 'expired';
+                    else if (isPending) taskStatus = 'pending';
+
+                    // Calculate rewards (only if completed)
+                    const coinReward = isCompleted ? goal.amount : 0;
+                    const xpReward = isCompleted ? Math.floor(goal.amount * 0.1) : 0;
+
+                    // Format time limit
+                    let timeLimit = 'No limit';
+                    if (goal.days_left !== null) {
+                        if (goal.days_left <= 0) {
+                            timeLimit = 'Expired';
+                        } else if (goal.days_left === 1) {
+                            timeLimit = '1 day left';
+                        } else {
+                            timeLimit = `${goal.days_left} days left`;
+                        }
+                    }
+
+                    // Determine gradient based on status and type
+                    let gradient;
+                    if (isLocked) {
+                        gradient = "bg-[linear-gradient(180deg,rgba(158,173,247,0.4)_0%,rgba(113,106,231,0.4)_100%)]";
+                    } else if (isCompleted) {
+                        gradient = "bg-[linear-gradient(180deg,rgba(19,200,116,0.6)_0%,rgba(34,150,87,0.6)_100%)]"; // Green for completed
+                    } else if (isFailed || isExpired) {
+                        gradient = "bg-[linear-gradient(180deg,rgba(200,19,19,0.4)_0%,rgba(150,34,34,0.4)_100%)]"; // Red for failed/expired
+                    } else if (isNonLinear) {
+                        gradient = "bg-[linear-gradient(180deg,rgba(255,193,7,0.6)_0%,rgba(255,152,0,0.6)_100%)]"; // Orange for turbo
+                    } else {
+                        gradient = getGradientForLevel(index + 1);
+                    }
+
+                    return {
+                        id: index + 1,
+                        title: goal.text,
+                        timeLimit,
+                        reward: goal.amount,
+                        points: `+${Math.floor(goal.amount * 0.1)}`,
+                        gradient,
+                        goalId: goal.goal_id,
+                        section: goal.section,
+                        isCompleted,
+                        isFailed,
+                        isLocked,
+                        isTurbo: isNonLinear,
+                        isExpired,
+                        taskStatus,
+                        progress: isCompleted ? 100 : 0,
+                        maxProgress: 100,
+                        vectorLeft: getVectorLeft(index),
+                        vectorRight: getVectorRight(index),
+                        pic: getPicIcon(index),
+                        rewardImage: "https://c.animaapp.com/ABnBdu2U/img/image-3937@2x.png",
+                        coinReward,
+                        xpReward,
+                        taskType: getTaskType(goal.section),
+                        levelBadge: getLevelBadge(index + 1),
+                        // Store API fields for reference
+                        days_left: goal.days_left,
+                        completed_datetime: goal.completed_datetime,
+                        expires_at: goal.expires_at,
+                        expire_datetime: goal.expire_datetime
+                    };
+                });
+
+                // Calculate session totals from COMPLETED goals only
+                const totalCoins = allGoals
+                    .filter(g => g.isCompleted)
+                    .reduce((sum, g) => sum + g.coinReward, 0);
+
+                const totalXP = allGoals
+                    .filter(g => g.isCompleted)
+                    .reduce((sum, g) => sum + g.xpReward, 0);
+
+                setSessionCoins(totalCoins);
+                setSessionXP(totalXP);
+                setProcessedGoals(allGoals);
+                setIsLoading(false);
+
+                // Set game as downloaded if any goals are completed
+                const hasProgress = allGoals.some(g => g.isCompleted);
+                if (hasProgress) {
+                    setIsGameDownloaded(true);
+
+                    // Track task completion in session
+                    const getUserId = () => {
+                        try {
+                            const userData = localStorage.getItem('user');
+                            if (userData) {
+                                const user = JSON.parse(userData);
+                                return user._id || user.id;
+                            }
+                        } catch (error) {
+                            console.error('Error getting user ID:', error);
+                        }
+                        return null;
+                    };
+
+                    const userId = getUserId();
+                    if (userId) {
+                        const activeSession = sessionManager.getActiveSessionForGame(game.id, userId);
+                        if (activeSession) {
+                            // Track completed tasks
+                            allGoals.filter(g => g.isCompleted).forEach(goal => {
+                                sessionManager.updateSessionActivity(activeSession.id, {
+                                    type: 'task_completed',
+                                    taskCompleted: goal.goalId,
+                                    milestoneReached: goal.id === milestoneLevel ? 'milestone_reached' : null
+                                });
+                            });
+
+                            // Update session with current progress
+                            sessionManager.updateSessionActivity(activeSession.id, {
+                                sessionCoins: totalCoins,
+                                sessionXP: totalXP,
+                                type: 'progress_update'
+                            });
+                        }
+                    }
+                }
+
+                console.log('✅ LevelsSection: Goals processed with real-time data:', {
+                    totalGoals: allGoals.length,
+                    completedGoals: allGoals.filter(g => g.isCompleted).length,
+                    failedGoals: allGoals.filter(g => g.isFailed).length,
+                    expiredGoals: allGoals.filter(g => g.isExpired).length,
+                    pendingGoals: allGoals.filter(g => g.taskStatus === 'pending').length,
+                    totalEarned: `$${totalCoins}`,
+                    totalXP: `${totalXP} XP`,
+                    linearGoals: allGoals.filter(g => !g.isTurbo && g.section === 'linear').length,
+                    turboGoals: allGoals.filter(g => g.isTurbo).length
+                });
+
+            } catch (err) {
+                console.error('❌ LevelsSection: Error processing game data:', err);
+                setError('Failed to load game levels');
+                setIsLoading(false);
+            }
+        };
+
+        processGameData();
+    }, [game, userData]);
+
+    // Helper functions for styling
+    const getGradientForLevel = (level) => {
+        const gradients = [
+            "bg-[linear-gradient(180deg,rgba(220,195,34,1)_0%,rgba(80,50,146,0.7)_100%)]", // Yellow gradient for "Install The Game"
+            "bg-[linear-gradient(180deg,rgba(255,0,217,0.4)_0%,rgba(113,106,231,0.4)_100%)]", // Pink gradient
+            "bg-[linear-gradient(180deg,rgba(255,0,247,0.4)_0%,rgba(113,106,231,0.4)_100%)]", // Purple gradient
+            "bg-[linear-gradient(180deg,rgba(255,0,217,0.4)_0%,rgba(113,106,231,0.4)_100%)]", // Pink gradient
+            "bg-[linear-gradient(180deg,rgba(255,0,238,0.4)_0%,rgba(113,106,231,0.4)_100%)]", // Purple gradient
+            "bg-[linear-gradient(180deg,rgba(19,200,116,1)_0%,rgba(87,34,150,1)_100%)]" // Green gradient for turbo
+        ];
+        return gradients[(level - 1) % gradients.length];
+    };
+
+    const getVectorLeft = (index) => {
+        const vectors = [
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4235.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4235-1.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4235-2.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4235-3.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4235-4.svg"
+        ];
+        return vectors[index % vectors.length];
+    };
+
+    const getVectorRight = (index) => {
+        const vectors = [
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4234.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4234-1.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4234-2.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4234-3.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/vector-4234-4.svg"
+        ];
+        return vectors[index % vectors.length];
+    };
+
+    const getPicIcon = (index) => {
+        const pics = [
+            "https://c.animaapp.com/ABnBdu2U/img/pic.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/pic-1.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/pic-2.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/pic-3.svg",
+            "https://c.animaapp.com/ABnBdu2U/img/pic-4.svg"
+        ];
+        return pics[index % pics.length];
+    };
+
+    // Task type color coding
+    const getTaskType = (section) => {
+        const taskTypes = {
+            'linear': { color: 'bg-blue-500', label: 'Goal' },
+            'turbo': { color: 'bg-green-500', label: 'Turbo' },
+            'bonus': { color: 'bg-yellow-500', label: 'Bonus' },
+            'install': { color: 'bg-orange-500', label: 'Install' },
+            'daily': { color: 'bg-purple-500', label: 'Daily' }
+        };
+        return taskTypes[section] || { color: 'bg-gray-500', label: 'Task' };
+    };
+
+    // Level badge styling
+    const getLevelBadge = (level) => {
+        if (level >= 1 && level <= 10) return { color: 'bg-blue-500', text: 'text-blue-500' };
+        if (level >= 11 && level <= 20) return { color: 'bg-green-500', text: 'text-green-500' };
+        if (level >= 21 && level <= 30) return { color: 'bg-yellow-500', text: 'text-yellow-500' };
+        return { color: 'bg-gray-500', text: 'text-gray-500' };
+    };
+
+    // Use the checkMilestoneReached function defined above
+    const isMilestoneReached = checkMilestoneReached;
+
+    // Handle Start Playing button
+    const handleStartPlaying = () => {
+        if (game?.url) {
+            window.open(game.url, '_blank');
+            setIsGameDownloaded(true);
+
+            // Track game download in session
+            const getUserId = () => {
+                try {
+                    const userData = localStorage.getItem('user');
+                    if (userData) {
+                        const user = JSON.parse(userData);
+                        return user._id || user.id;
+                    }
+                } catch (error) {
+                    console.error('Error getting user ID:', error);
+                }
+                return null;
+            };
+
+            const userId = getUserId();
+            if (userId) {
+                const activeSession = sessionManager.getActiveSessionForGame(game.id, userId);
+                if (activeSession) {
+                    sessionManager.updateSessionActivity(activeSession.id, {
+                        type: 'game_downloaded',
+                        milestoneReached: 'game_downloaded'
+                    });
+                }
+            }
+        } else {
+            alert('Game link not available. Please try again later.');
+        }
+    };
+
+    // Handle End & Claim Rewards
+    const handleClaimRewards = async () => {
+        if (!isMilestoneReached() || isClaimed) return;
+
+        setClaiming(true);
+        try {
+            // Call backend API to claim rewards
+            const response = await fetch('/api/claim-rewards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    gameId: game?.id,
+                    userId: userData?.user_id,
+                    sessionId: sessionId || generateSessionId(),
+                    coins: sessionCoins,
+                    xp: sessionXP
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Update Redux store with claimed rewards
+
+                setIsClaimed(true);
+                setShowClaimModal(false);
+
+                // Show success toast as per requirements
+                alert(`Your rewards have been added to your wallet! +${result.coinsTransferred} coins, +${result.xpTransferred} XP`);
+
+            } else {
+                throw new Error(result.message || 'Failed to claim rewards');
+            }
+
+        } catch (error) {
+            console.error('❌ Error claiming rewards:', error);
+            alert('Failed to claim rewards. Please try again.');
+        } finally {
+            setClaiming(false);
+        }
+    };
+
+    // Filter goals into active and locked lists based on the 'isLocked' property
+    const activeLevels = processedGoals.filter(goal => !goal.isLocked);
+    const lockedLevels = processedGoals.filter(goal => goal.isLocked);
+
+    // Calculate dynamic line heights to connect from first card to last card
+    const calculateLineHeight = (cardCount, isLocked = false) => {
+        if (cardCount === 0) return 0;
+        if (cardCount === 1) return 75; // Single card height
+
+        // Each card is 75px height + 16px gap between cards
+        const cardHeight = 75;
+        const gapBetweenCards = 16;
+
+        // Calculate total height: (number of cards × card height) + (gaps between cards × gap size)
+        const baseHeight = (cardCount * cardHeight) + ((cardCount - 1) * gapBetweenCards);
+
+        // Only apply reduction to locked lines to prevent over-extension
+        const totalHeight = isLocked ? baseHeight - 60 : baseHeight;
+
+        return totalHeight;
+    };
+
+    const activeLineHeight = calculateLineHeight(activeLevels.length, false);
+    const lockedLineHeight = calculateLineHeight(lockedLevels.length, true);
+
+
+
+
+
+    return (
+        <div className="w-[375px] min-h-[1019px]  mt-3 mb-3  px-2 flex flex-col">
+            {/* Header Section */}
+            <div className="flex w-[375px] h-11 items-center justify-between pt-2 pb-5 px-6">
+                <div className="font-semibold text-[#f4f3fc] text-[20px]">
+                    Levels
+                </div>
+                <div className="relative dropdown-container">
+                    <button
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="flex w-[90px] items-center justify-center gap-1 rounded-[10px] border border-solid border-[#363636] px-2 py-1 hover:bg-gray-800 transition-colors cursor-pointer"
+                    >
+                        <div className="font-regular text-white text-[14px]">
+                            {selectedTier || 'Junior'}
+                        </div>
+                        <img
+                            className={`w-[12.19px] h-[12.19px] transition-transform ${showDropdown ? 'rotate-180' : ''}`}
+                            alt="Arrow back ios new"
+                            src="https://c.animaapp.com/ABnBdu2U/img/arrow-back-ios-new@2x.png"
+                        />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {showDropdown && (
+                        <div className="absolute top-full right-0 mt-1 w-[90px] bg-black border border-[#363636] rounded-[10px] shadow-lg z-50">
+                            <button
+                                onClick={() => handleTierSelect('Junior')}
+                                className={`w-full px-3 py-2 text-left text-[14px] hover:bg-gray-800 transition-colors first:rounded-t-[10px] ${selectedTier === 'Junior' ? 'text-white bg-gray-700' : 'text-gray-300'
+                                    }`}
+                            >
+                                Junior
+                            </button>
+                            <button
+                                onClick={() => handleTierSelect('Mid')}
+                                className={`w-full px-3 py-2 text-left text-[14px] hover:bg-gray-800 transition-colors ${selectedTier === 'Mid' ? 'text-white bg-gray-700' : 'text-gray-300'
+                                    }`}
+                            >
+                                Mid
+                            </button>
+                            <button
+                                onClick={() => handleTierSelect('Senior')}
+                                className={`w-full px-3 py-2 text-left text-[14px] hover:bg-gray-800 transition-colors last:rounded-b-[10px] ${selectedTier === 'Senior' ? 'text-white bg-gray-700' : 'text-gray-300'
+                                    }`}
+                            >
+                                Senior
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+
+            {/* Progress Summary */}
+            {isGameDownloaded && (
+                <div className="px-5 mt-4 space-y-3">
+                    {/* Overall Progress Stats */}
+                    <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-lg p-4 border border-purple-500/30">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="text-white text-sm font-semibold">📊 Your Progress</span>
+                            <span className="text-green-400 text-xs font-medium">
+                                {processedGoals.filter(g => g.isCompleted).length} / {processedGoals.length} Goals
+                            </span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
+                            <div
+                                className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500"
+                                style={{ width: `${(processedGoals.filter(g => g.isCompleted).length / processedGoals.length) * 100}%` }}
+                            ></div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mt-3">
+                            <div className="text-center">
+                                <div className="text-green-400 text-xs font-semibold">{processedGoals.filter(g => g.isCompleted).length}</div>
+                                <div className="text-gray-400 text-[10px]">Completed</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-orange-400 text-xs font-semibold">{processedGoals.filter(g => g.isExpired).length}</div>
+                                <div className="text-gray-400 text-[10px]">Expired</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-blue-400 text-xs font-semibold">{processedGoals.filter(g => g.taskStatus === 'pending').length}</div>
+                                <div className="text-gray-400 text-[10px]">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Earnings Summary */}
+                    <div className=" mb-6 grid grid-cols-2 gap-3">
+                        <div className="bg-gradient-to-br from-yellow-900/40 to-orange-900/40 rounded-lg p-3 border border-yellow-500/30">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-yellow-400 text-lg">💰</span>
+                                <span className="text-white text-xs font-medium">Earned</span>
+                            </div>
+                            <div className="text-yellow-300 text-xl font-bold">${sessionCoins.toFixed(2)}</div>
+                            <div className="text-gray-400 text-[10px] mt-1">Total Coins</div>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 rounded-lg p-3 border border-blue-500/30">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-blue-400 text-lg">⭐</span>
+                                <span className="text-white text-xs font-medium">Earned</span>
+                            </div>
+                            <div className="text-blue-300 text-xl font-bold">{sessionXP}</div>
+                            <div className="text-gray-400 text-[10px] mt-1">Total XP</div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Active Levels */}
+            <div className="relative flex flex-col gap-4 px-5">
+                {/* Progress Line - Dynamic Height - Connects first to last card */}
+                {activeLevels.length > 0 && (
+                    <div
+                        className="absolute left-[39px] top-6 z-0"
+                        style={{
+                            width: '2px',
+                            height: `${activeLineHeight}px`
+                        }}
+                        title={`Active Line: ${activeLevels.length} cards, ${activeLineHeight}px height`}
+                    >
+                        {/* Pure CSS Line - No Image */}
+                        <div
+                            className="w-full h-full"
+                            style={{
+                                background: '#2f344a',
+                                borderRadius: '1px'
+                            }}
+                        />
+                    </div>
+                )}
+
+                {activeLevels.map((level, index) => (
+                    <div key={level.id} className="flex items-center gap-3 w-full relative z-10">
+                        {/* Level Number Circle with Status Indicator */}
+                        <div className={`flex w-[43px] h-[43px] items-center justify-center rounded-full flex-shrink-0 relative ${level.isCompleted ? 'bg-green-600' :
+                            level.isFailed || level.isExpired ? 'bg-red-600/50' :
+                                'bg-[#2f344a]'
+                            }`}>
+                            {level.isCompleted ? (
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                            ) : level.isFailed || level.isExpired ? (
+                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <div className="font-semibold text-[#f4f3fc] text-[14.7px]">
+                                    {level.id}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Level Card */}
+                        <div className={`w-[256px] min-h-[75px] relative rounded-[10px] ${level.gradient} flex flex-col justify-between p-2 pb-2 ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''} ${level.isCompleted ? 'ring-2 ring-green-400' : ''}`}>
+                            {/* Status Badge */}
+                            {(level.isCompleted || level.isFailed || level.isExpired || level.isTurbo) && (
+                                <div className="absolute -top-2 -right-2 z-10">
+                                    {level.isCompleted && (
+                                        <div className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                            <span>✓</span>
+                                        </div>
+                                    )}
+                                    {level.isFailed && (
+                                        <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                            <span>✗</span>
+                                        </div>
+                                    )}
+                                    {level.isExpired && !level.isFailed && (
+                                        <div className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                            <span>⏱</span>
+                                        </div>
+                                    )}
+                                    {level.isTurbo && !level.isCompleted && !level.isFailed && (
+                                        <div className="bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-0.5">
+                                            <span>⚡</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Top Row: Title and Reward */}
+                            <div className="flex justify-between items-start gap-2 mb-1.5">
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-normal text-[#f4f3fc] text-[13px] leading-tight line-clamp-2 pr-1">
+                                        {level.title}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    <div className={`font-semibold text-[15px] ${level.isCompleted ? 'text-yellow-300' : 'text-white'}`}>
+                                        {level.reward}
+                                    </div>
+                                    <img
+                                        className="w-[19px] h-[20px]"
+                                        alt="Reward Icon"
+                                        src={level.rewardImage}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Time Limit Row */}
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-1.5">
+                                    <img
+                                        className="w-[14px] h-[14px] flex-shrink-0"
+                                        alt="Clock"
+                                        src="https://c.animaapp.com/ABnBdu2U/img/clock-10.svg"
+                                    />
+                                    <span className={`font-normal text-[11px] ${level.isExpired ? 'text-red-300 font-semibold' :
+                                        level.days_left && level.days_left <= 3 ? 'text-orange-300 font-medium' :
+                                            'text-[#f4f3fc]'
+                                        }`}>
+                                        {level.timeLimit}
+                                    </span>
+                                </div>
+
+                                {/* Completion Status Indicator */}
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-gray-400">Completed:</span>
+                                    <div className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${level.isCompleted
+                                        ? 'bg-green-500 text-white'
+                                        : level.isFailed
+                                            ? 'bg-red-500 text-white'
+                                            : level.isExpired
+                                                ? 'bg-orange-500 text-white'
+                                                : 'bg-gray-500 text-white'
+                                        }`}>
+                                        {level.isCompleted ? 'TRUE' : 'FALSE'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Bottom Row: XP Bonus */}
+                            <div className="flex justify-center ">
+                                <div className="w-[89px] h-[22px]  top-2 relative">
+                                    <div className="absolute top-0 left-[18px] w-[52px] h-[22px] bg-[#201f59] rounded-t-[4px] shadow-[0px_0px_4px_#fef47e33]" />
+                                    <img className="absolute top-0.5 left-0 w-[19px] h-5" alt="Vector Left" src={level.vectorLeft} />
+                                    <img className="absolute top-[3px] left-[70px] w-[18px] h-[19px]" alt="Vector Right" src={level.vectorRight} />
+                                    <div className="absolute top-px left-[26px] h-5 w-[calc(100%_-_71px)] flex items-center justify-center font-medium text-white text-[13px]">
+                                        {level.points}
+                                    </div>
+                                    <img className="absolute top-1 left-[46px] w-4 h-[13px]" alt="XP Icon" src={level.pic} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Arrow between levels */}
+                        {index < activeLevels.length - 1 && (
+                            <div className="absolute top-[116px] left-[8px] z-20">
+                                <img
+                                    className="w-[23px] h-[23px]"
+                                    alt="Arrow back ios new"
+                                    src="https://c.animaapp.com/ABnBdu2U/img/arrow-back-ios-new-3@2x.png"
+                                />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Claim Rewards Button */}
+            <div className="flex justify-center  ml-12">
+                <div className={`w-[216px] h-[30px] ml-2 flex gap-[3px] rounded-[0px_0px_10px_10px] overflow-hidden shadow-[0px_4px_4px_#00000040] bg-[linear-gradient(141deg,rgba(244,187,64,1)_0%,rgba(247,206,70,1)_64%,rgba(251,234,141,1)_80%,rgba(247,206,70,1)_98%)] ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
+                    <p className="mt-1.5 w-[214px] h-[18px] ml-[16px] [text-shadow:0px_4px_4px_#00000040] [font-family:'Poppins',Helvetica] font-semibold text-black text-xs text-center tracking-[0] leading-[normal]">
+                        Reach Here To Claim Your Rewards
+                    </p>
+                    <button
+                        onClick={() => setShowRulesModal(true)}
+                        disabled={isClaimed}
+                        className={`mt-[5px] w-[19px] h-[19px] flex bg-[#716ae7] rounded-[100px] overflow-hidden hover:bg-[#5a52d4] transition-colors cursor-pointer ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                    >
+                        <div className="w-2 h-2 ml-[1px] px [text-shadow:0px_4px_4px_#00000040] [font-family:'Poppins',Helvetica] font-bold text-white text-base text-center tracking-[0] leading-4 whitespace-nowrap">
+                            ﹖
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            {/* End & Claim Rewards Button - Hidden but functionality preserved */}
+            <div className="hidden">
+                <button
+                    onClick={() => setShowClaimModal(true)}
+                    disabled={!isMilestoneReached() || isClaimed || claiming}
+                    className={`w-full h-12 rounded-lg font-semibold text-sm transition-all duration-200 ${isClaimed
+                        ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                        : isMilestoneReached()
+                            ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 shadow-lg'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                >
+                    {claiming ? (
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Claiming Rewards...
+                        </div>
+                    ) : isClaimed ? (
+                        '✅ Rewards Claimed'
+                    ) : isMilestoneReached() ? (
+                        '🎁 End & Claim Rewards'
+                    ) : (
+                        `Complete ${milestoneLevel} levels to unlock`
+                    )}
+                </button>
+            </div>
+
+            {/* Locked Levels */}
+            <div className="relative flex flex-col gap-4 px-5 mt-6">
+                {/* Progress Line for Locked Levels - Dynamic Height - Connects first to last card */}
+                {lockedLevels.length > 0 && (
+                    <div
+                        className="absolute left-[40px] top-0 z-0 bg-[#2f344a] "
+                        style={{
+                            width: '2px',
+                            height: `${lockedLineHeight}px`
+                        }}
+                        title={`Locked Line: ${lockedLevels.length} cards, ${lockedLineHeight}px height`}
+                    >
+                        {/* Pure CSS Line - No Image */}
+                        <div
+                            className="w-full h-full"
+                            style={{
+                                background: '#2f344a',
+                                borderRadius: '1px'
+                            }}
+                        />
+                    </div>
+                )}
+
+                {lockedLevels.map((level, index) => (
+                    <div key={`locked-${index}`} className="flex items-center gap-2.5 w-full relative z-10">
+                        <div className="flex w-[43px] h-[43px] items-center justify-center bg-[#2f344a] rounded-full flex-shrink-0 relative">
+                            <div className="font-semibold text-white-f4f3fc text-[14.7px]">
+                                {level.id}
+                            </div>
+                            {/* Lock overlay */}
+                            <div className="absolute inset-0 bg-[#d6d6d680] rounded-full flex items-center justify-center">
+                                <img
+                                    className="w-[35px] h-[35px]"
+                                    alt="Lock Icon"
+                                    src="https://c.animaapp.com/ABnBdu2U/img/image-3943-3@2x.png"
+                                />
+                            </div>
+                        </div>
+
+                        <div className={`w-[282px] h-[68px] rounded-[10px] bg-[linear-gradient(180deg,rgba(158,173,247,0.4)_0%,rgba(113,106,231,0.4)_100%)] relative ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
+                            {/* Lock overlay */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-[10px] bg-[#292929f2] p-2">
+                                <p className="w-[220px] text-center font-semibold text-white text-sm">
+                                    Unlock level by completing the above tasks
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Arrow between locked levels */}
+                        {index < lockedLevels.length - 1 && (
+                            <div className="absolute top-[80px] left-[9px] z-20">
+                                <img
+                                    className="w-[23px] h-[23px]"
+                                    alt="Arrow back ios new"
+                                    src="https://c.animaapp.com/ABnBdu2U/img/arrow-back-ios-new-3@2x.png"
+                                />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* End & Claim Rewards Button - Hidden but functionality preserved */}
+            <div className="hidden">
+                <button
+                    onClick={() => setShowClaimModal(true)}
+                    disabled={!isMilestoneReached() || isClaimed || claiming}
+                    className={`w-full h-12 rounded-lg font-semibold text-sm transition-all duration-200 ${isClaimed
+                        ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                        : isMilestoneReached()
+                            ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 shadow-lg'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                >
+                    {claiming ? (
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Claiming Rewards...
+                        </div>
+                    ) : isClaimed ? (
+                        '✅ Rewards Claimed'
+                    ) : isMilestoneReached() ? (
+                        '🎁 End & Claim Rewards'
+                    ) : (
+                        `Complete ${milestoneLevel} levels to unlock`
+                    )}
+                </button>
+            </div>
+
+
+
+            {/* Tooltip Modal */}
+            {showTooltip && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+                        <h3 className="text-lg font-bold text-gray-800 mb-3">🎯 Milestone Information</h3>
+                        <p className="text-gray-600 text-sm mb-4">
+                            Once you reach this level, you'll be eligible to end this session and transfer your collected coins and XP to your wallet. After claiming, you won't be able to return to this game's reward flow. Choose wisely.
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowTooltip(false)}
+                                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
+                            >
+                                Got it
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Claim Confirmation Modal */}
+            {showClaimModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+                        <h3 className="text-lg font-bold text-gray-800 mb-3">🎁 Claim Your Rewards</h3>
+                        <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-gray-600">Coins Earned:</span>
+                                <span className="font-bold text-yellow-600">🎁 {sessionCoins}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">XP Earned:</span>
+                                <span className="font-bold text-blue-600">⭐ {sessionXP}</span>
+                            </div>
+                        </div>
+                        <p className="text-gray-600 text-sm mb-4">
+                            Once you claim these rewards, they will be added to your wallet and this game session will be locked. You won't be able to earn more rewards from this game.
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowClaimModal(false)}
+                                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleClaimRewards}
+                                disabled={claiming}
+                                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                            >
+                                {claiming ? 'Claiming...' : 'Claim Rewards'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Rules Modal */}
+            <RulesModal
+                isVisible={showRulesModal}
+                onClose={() => setShowRulesModal(false)}
+            />
+        </div>
+    );
+};

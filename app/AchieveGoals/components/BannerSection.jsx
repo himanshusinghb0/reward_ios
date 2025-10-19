@@ -1,16 +1,19 @@
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export const BannerSection = () => {
     const [isPressed, setIsPressed] = useState(false);
+    const router = useRouter();
 
     const handleChallengeClick = () => {
         setIsPressed(true);
         setTimeout(() => setIsPressed(false), 150);
+        router.push("/dailychallenge");
     };
 
     return (
         <section
-            className="flex flex-col h-full w-full justify-center items-center px-4  relative"
+            className="flex flex-col h-full w-full justify-center items-center   mb-30 relative"
             role="banner"
             aria-label="Daily Challenge Banner"
         >

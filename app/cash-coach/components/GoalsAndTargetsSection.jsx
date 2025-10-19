@@ -33,16 +33,17 @@ export const GoalsAndTargetsSection = () => {
 
 
     const goalData = [
-        { key: "salary", label: "Salary (Per Month)", max: 100 },
-        { key: "rent", label: "Rent (Per Month)", max: 100 },
-        { key: "food", label: "Food (Per Month)", max: 100 },
-        { key: "savings", label: "Savings (Per Month)", max: 100 },
-        { key: "revenueGoal", label: "Revenue Goal from Jackson", max: 100 },
+        { key: "salary", label: "Salary (Per Month)", max: 9999 },
+        { key: "rent", label: "Rent (Per Month)", max: 9999 },
+        { key: "food", label: "Food (Per Month)", max: 9999 },
+        { key: "savings", label: "Savings (Per Month)", max: 9999 },
+        { key: "revenueGoal", label: "Revenue Goal from Jackson", max: 9999 },
     ];
-    const areAllGoalsSet = goalData.every(goal => (goals[goal.key] ?? 0) > 0);
+    // All goals have default value of 40, so button should always be enabled
+    const areAllGoalsSet = goalData.every(goal => (goals[goal.key] || 40) >= 40);
     const isButtonDisabled = !areAllGoalsSet;
     return (
-        <section className="flex  flex-col w-full justify-center mt-7 items-start gap-2 relative">
+        <section className="flex  flex-col w-full justify-center mb-30 mt-7 items-start gap-2 relative">
             <header className="flex w-full items-center justify-between  ml-1 relative">
                 <h2 className="relative [font-family:'Poppins',Helvetica] font-semibold text-[#F4F3FC] text-base tracking-[0] leading-[normal]">
                     Personalised Earning Targets
@@ -56,7 +57,8 @@ export const GoalsAndTargetsSection = () => {
             <div className="relative w-full p-5 bg-black rounded-[10px] shadow-[2.48px_2.48px_18.58px_#a6aabc4c,-1.24px_-1.24px_16.1px_#f9faff1a]">
                 <div className="flex flex-col w-full items-start gap-4">
                     {goalData.map((goal, index) => {
-                        const currentValue = goals[goal.key] ?? 0;
+                        // Default value is 40 as per requirement
+                        const currentValue = goals[goal.key] || 40;
                         const progress = (currentValue / goal.max) * 100;
                         const sliderStyle = {
                             background: `linear-gradient(to right, #6a6dcd ${progress}%, #307fe24c ${progress}%)`,
@@ -105,9 +107,8 @@ export const GoalsAndTargetsSection = () => {
 
                     <button
                         onClick={handleHelpMeEarnClick}
-                        disabled={isButtonDisabled}
-                        className={`w-[200px] h-12 self-center mt-4 rounded-[12px] bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] hover:opacity-90 transition-opacity font-semibold text-white text-base ${isButtonDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-                            }`}
+                        className={`w-[200px] h-12 self-center mt-4 rounded-[12px] bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] hover:opacity-90 transition-opacity font-semibold text-white text-base  cursor-pointer
+                            `}
                     >
                         Help me earn
                     </button>

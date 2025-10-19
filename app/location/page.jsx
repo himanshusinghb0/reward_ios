@@ -1,18 +1,20 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext"; // Import auth context
-import { updateLocationSettings, updateLocation } from "@/lib/api"; // Import API functions
+import { useAuth } from "@/contexts/AuthContext";
+import { updateLocation } from "@/lib/api";
+import { getCityAndCountry } from "@/lib/locationUtils";
 import { Geolocation } from '@capacitor/geolocation';
 
 export default function LocationPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null); // State for user feedback
+  const [error, setError] = useState(null);
+  const [loadingStep, setLoadingStep] = useState("");
   const router = useRouter();
   const [isSkipping, setIsSkipping] = useState(false);
-  const { user, token } = useAuth(); // Get user and token for API calls
+  const { user, token } = useAuth();
   const [showSkipWarning, setShowSkipWarning] = useState(false);
-  // --- 2. THIS IS THE REPLACED FUNCTION THAT USES THE NATIVE PLUGIN ---
+  // Main location handler with Android optimization
   const handleContinue = async () => {
     if (!user || !token) {
       setError("Authentication session not found. Please log in again.");
@@ -21,44 +23,138 @@ export default function LocationPage() {
 
     setIsLoading(true);
     setError(null);
+    setLoadingStep("Starting location process...");
 
     try {
-      // First, request permission. This triggers the native Android dialog.
+      // Request location permissions
+      setLoadingStep("Requesting location permissions...");
       const permissionStatus = await Geolocation.requestPermissions();
 
       if (permissionStatus.location === 'granted') {
-        // If permission is granted, get the current GPS position.
-        const position = await Geolocation.getCurrentPosition({
+        setLoadingStep("Getting GPS location...");
+
+        // Android-optimized location settings
+        const locationOptions = {
           enableHighAccuracy: true,
-          timeout: 10000, // 10 seconds
-        });
-        const { latitude, longitude } = position.coords;
+          timeout: 15000,
+          maximumAge: 60000, // Accept recent location for speed
+          requireAltitude: false,
+          requireSpeed: false,
+          requireHeading: false
+        };
 
-        // Update your backend with the location data and settings
-        await Promise.all([
-          updateLocationSettings(user.mobile, "granted", "while_using"),
-          updateLocation({ latitude, longitude }, token)
-        ]);
+        // Get GPS position with retry logic
+        let position = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            position = await Geolocation.getCurrentPosition(locationOptions);
+            break;
+          } catch (locationError) {
+            if (attempt === 3) throw locationError;
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait before retry
+          }
+        }
+
+        if (!position) throw new Error("Unable to get location");
+
+        const { latitude, longitude, accuracy } = position.coords;
+
+        // Get city/country from coordinates
+        setLoadingStep("Getting location details...");
+        let city = "Unknown", country = "Unknown", region = "Unknown", timezone = "Asia/Kolkata";
+
+        try {
+          const locationDetails = await getCityAndCountry(latitude, longitude);
+          city = locationDetails.city || "Unknown";
+          country = locationDetails.country || "Unknown";
+          region = locationDetails.region || "Unknown";
+          timezone = locationDetails.timezone || "Asia/Kolkata";
+        } catch (geocodingError) {
+          // Use fallback values
+        }
+
+        // Get IP address and network info
+        setLoadingStep("Getting network information...");
+        let networkData = { ip: "Unknown", isp: "Unknown", timezone };
+
+        try {
+          // Try CORS-friendly IP services
+          const ipServices = [
+            { url: 'https://jsonip.com', parser: (data) => ({ ip: data.ip, isp: "Unknown" }) },
+            { url: 'https://ipapi.co/json/', parser: (data) => ({ ip: data.ip, isp: data.org || "Unknown" }) },
+            { url: 'https://ipinfo.io/json', parser: (data) => ({ ip: data.ip, isp: data.org || "Unknown" }) }
+          ];
+
+          for (const service of ipServices) {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+              const response = await fetch(service.url, {
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json', 'User-Agent': 'JacksonRewardsApp/1.0 (Android)' },
+                mode: 'cors'
+              });
+
+              clearTimeout(timeoutId);
+
+              if (response.ok) {
+                const data = await response.json();
+                const parsedData = service.parser(data);
+                networkData = { ...parsedData, timezone };
+                break;
+              }
+            } catch (serviceError) {
+              continue; // Try next service
+            }
+          }
+        } catch (networkError) {
+          // Use fallback values
+        }
+
+        // Prepare location data for API
+        const locationData = {
+          latitude: parseFloat(latitude.toFixed(8)),
+          longitude: parseFloat(longitude.toFixed(8)),
+          accuracy: Math.round(accuracy) || 15,
+          country: country || "IN",
+          city: city || "New Delhi",
+          region: region || "Delhi",
+          timezone: timezone,
+          ip: networkData.ip,
+          isp: networkData.isp,
+          platform: "android",
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          locationSource: "gps"
+        };
+
+        // Send to backend
+        setLoadingStep("Saving location data...");
+        await updateLocation(locationData, token);
         localStorage.setItem("locationCompleted", "true");
-
-        // Navigate to the next page on success
         router.push("/homepage");
 
       } else {
-        // This block runs if the user taps "Don't allow"
-        console.warn('Location permission was denied by the user.');
-        await updateLocationSettings(user.mobile, "denied", "never");
-        setError("Location access is required for key features. You can enable it later in app settings.");
+        // Permission denied
+        if (permissionStatus.location === 'denied') {
+          setError("Location access is required. Please enable location permissions in your device settings and restart the app.");
+        } else {
+          setError("Location access is required for key features. You can enable it later in app settings.");
+        }
       }
     } catch (err) {
-      console.error("Geolocation plugin error:", err);
-      // This block handles errors like the user's GPS being turned off
-      let errorMessage = "Could not get your location. Please ensure location services are enabled on your device and try again.";
+      // Handle specific Android errors
+      let errorMessage = "Could not get your location. Please ensure location services are enabled and try again.";
 
-      try {
-        await updateLocationSettings(user.mobile, "denied", "never");
-      } catch (apiError) {
-        console.error("Failed to update settings after location error:", apiError);
+      if (err.code === 1) {
+        errorMessage = "Location permission was denied. Please enable location access in your device settings.";
+      } else if (err.code === 2) {
+        errorMessage = "Location is unavailable. Please check your GPS settings and try again.";
+      } else if (err.code === 3) {
+        errorMessage = "Location request timed out. Please try again in an area with better GPS signal.";
+      } else if (err.message.includes('Location services are not enabled') || err.message.includes('OS-PLUG-GLOC-0007')) {
+        errorMessage = "Location services are disabled. Please enable location services in Android settings:\n\n1. Go to Settings > Location\n2. Turn ON Location\n3. Set location mode to 'High accuracy'\n4. Return to the app and try again.";
       }
 
       setError(errorMessage);
@@ -77,15 +173,13 @@ export default function LocationPage() {
     setError(null);
 
     try {
-      // Update the backend immediately when the user chooses to skip
-      await updateLocationSettings(user.mobile, "denied", "never");
-      console.log("User chose to skip. Settings updated, showing warning.");
+      console.log("User chose to skip location permission.");
 
       // THIS IS THE KEY CHANGE: Show the in-page warning
       setShowSkipWarning(true);
 
     } catch (apiError) {
-      console.error("Failed to update location settings on skip:", apiError);
+      console.error("Error handling skip:", apiError);
       setError("An error occurred. Please try again.");
     } finally {
       // Stop the "Skipping..." loader, the user will now see the warning
@@ -147,8 +241,43 @@ export default function LocationPage() {
               You must select &quot;Allow While Using the App&quot; on the next
               screen for Jackson app to work
             </p>
+
+            {/* Progress Indicator */}
+            {isLoading && (
+              <div className="w-full max-w-sm mx-auto mb-4">
+                <div className="bg-gray-800/50 rounded-lg p-3">
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <span className="text-white text-sm font-medium">
+                      {loadingStep || "Processing..."}
+                    </span>
+                  </div>
+                  <div className="text-gray-300 text-xs text-center">
+                    This may take 5-15 seconds for accurate location
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="w-full px-6 mb-4">
+            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 max-w-sm mx-auto">
+              <h3 className="text-red-400 font-semibold text-sm mb-2">Location Error</h3>
+              <div className="text-red-300 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto">
+                {error}
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-red-400 text-xs underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Bottom buttons */}
         <div className="w-full px-6 pb-8">
@@ -161,7 +290,7 @@ export default function LocationPage() {
                 disabled={isLoading || isSkipping}
               >
                 <span className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base">
-                  {isLoading ? "Requesting..." : "Continue"}
+                  {isLoading ? (loadingStep || "Processing...") : "Continue"}
                 </span>
               </button>
 

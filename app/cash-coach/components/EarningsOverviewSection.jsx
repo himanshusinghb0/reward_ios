@@ -8,6 +8,10 @@ export const EarningsOverviewSection = () => {
     } = useSelector((state) => state.profile);
     const balance = stats?.balance ?? 0;
 
+    // Get wallet screen data from Redux store
+    const { walletScreen } = useSelector((state) => state.walletTransactions);
+    const coinBalance = walletScreen?.wallet?.balance || 0;
+
     console.log("summary", summary);
 
     const earningsData = [
@@ -80,23 +84,8 @@ export const EarningsOverviewSection = () => {
     );
 
     return (
-        <section className="flex flex-col items-start gap-3 self-stretch w-full">
-            <div className=" font-normal  w-[334px]  text-[#A4A4A4] text-[10px] leading-3">
-                App Version: V0.0.1
-            </div>
-            <div className="flex items-center justify-between   ">
-                <h2 className="text-[#FFFFFF] font-semibold  ml-1 [font-family:'Poppins',Helvetica] text-[20px] my-2"> Cash Coach</h2>
-                <div className="w-[87px] h-9 rounded-3xl bg-[linear-gradient(180deg,rgba(158,173,247,0.4)_0%,rgba(113,106,231,0.4)_100%)] flex items-center justify-between ml-24 px-2.5">
-                    <div className="text-white text-lg [font-family:'Poppins',Helvetica] font-semibold leading-[normal]">
-                        {balance || 0}
-                    </div>
-                    <img
-                        className="w-[23px] h-6"
-                        alt="Image"
-                        src="/dollor.png"
-                    />
-                </div>
-            </div>
+        <section className="flex flex-col items-start gap-3 self-stretch w-full max-w-[390px] mx-auto">
+            {/* Removed App Version and Cash Coach title - now in PageHeader */}
             <div className="flex w-full items-start justify-center gap-3">
                 {earningsData.slice(0, 2).map(renderCard)}
             </div>

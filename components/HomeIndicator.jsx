@@ -1,20 +1,130 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+const MoreMenu = ({ onClose }) => {
+  const router = useRouter();
+
+  const menuItems = [
+    {
+      id: 1,
+      icon: "https://c.animaapp.com/vuiLipjk/img/vector.svg",
+      label: "Daily Challenges",
+      iconWidth: "w-6",
+      iconHeight: "h-[24.89px]",
+      marginTop: "mt-[45px]",
+      marginLeft: "ml-[53px]",
+      labelWidth: "w-14",
+      href: "/dailychallenge",
+    },
+
+    {
+      id: 3,
+      icon: "https://c.animaapp.com/vuiLipjk/img/group@2x.png",
+      label: "Daily Rewards",
+      iconWidth: "w-[26px]",
+      iconHeight: "h-[26px]",
+      marginTop: "mt-11",
+      marginLeft: "",
+      labelWidth: "w-[52px]",
+      href: "/Daily-Reward",
+    },
+  ];
+
+  const handleMenuClick = (href) => {
+    onClose(); // Close the menu
+    router.push(href); // Navigate to the page
+  };
+
+  return (
+    <nav
+      className="w-full h-[100px] flex justify-end items-end relative"
+      data-model-id="2035:12830"
+      role="navigation"
+      aria-label="More menu options"
+    >
+      <div
+        className="flex flex-row justify-center items-end gap-12 pr- relative z-10"
+        style={{
+          position: "absolute",
+          bottom: "28px",
+          right: "12%",
+          width: "44%",
+        }}
+      >
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            className="
+              flex flex-col items-center justify-center
+              w-[70px] h-[70px]
+              bg-black rounded-full border border-solid border-[#474747]
+              shadow-[0px_0px_11px_#d8d8d840] cursor-pointer
+              hover:border-[#5a5a5a] transition-colors
+              focus:outline-none focus:ring-2 focus:ring-[#5a5a5a] 
+              focus:ring-offset-2 focus:ring-offset-black
+            "
+            aria-label={item.label}
+            type="button"
+            onClick={() => handleMenuClick(item.href)}
+            style={{
+              minWidth: "70px",
+              minHeight: "70px",
+              borderRadius: "50%",
+              aspectRatio: "1/1",
+              padding: 0,
+              overflow: "hidden"
+            }}
+          >
+            <img
+              className={`relative ${item.iconWidth} ${item.iconHeight}`}
+              alt=""
+              src={item.icon}
+              aria-hidden="true"
+            />
+            <span
+              className={`relative ${item.labelWidth} [font-family:'Poppins',Helvetica] font-normal text-[#ffffffb2] text-[10px] text-center tracking-[-0.17px] leading-3 mt-1`}
+            >
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+};
 
 export const HomeIndicator = ({ activeTab }) => {
   const pathname = usePathname();
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMoreMenu(false);
+      }
+    };
+
+    if (showMoreMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMoreMenu]);
 
   const getActiveTab = () => {
     if (activeTab) return activeTab;
-    if (pathname === "/homepage") return "home";
-    if (pathname === "/games") return "games";
-    if (pathname === "/Wallet") return "wallet";
-    if (pathname === "/cash-coach") return "cash";
+    if (pathname === "/homepage" || pathname === "/homepage/") return "home";
+    if (pathname === "/games" || pathname === "/games/") return "games";
+    if (pathname === "/Wallet" || pathname === "/Wallet/") return "wallet";
+    if (pathname === "/cash-coach" || pathname === "/cash-coach/") return "cash";
     return "home";
   };
-
   const currentActiveTab = getActiveTab();
 
   const getActiveIconStyle = (tabId) => {
@@ -32,12 +142,12 @@ export const HomeIndicator = ({ activeTab }) => {
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="flex justify-center items-end w-full">
-        <div className="w-full max-w-[375px] h-[100px] relative">
+      <div className="w-full">
+        <div className="w-full h-[100px] relative">
           <div className="absolute bottom-0 left-0 right-0 bg-black w-full h-[78px]"></div>
           <div className="absolute bottom-[5px] left-1/2 transform -translate-x-1/2 w-[135px] h-[5px] bg-white rounded-[100px]"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-[78px] flex items-center justify-center px-6">
-            <div className="flex items-center justify-between w-full max-w-[320px] relative">
+          <div className="absolute bottom-0 left-0 right-0 h-[78px] flex items-center justify-between px-4">
+            <div className="flex items-center justify-between w-full relative">
 
               <Link
                 href="/homepage"
@@ -65,7 +175,7 @@ export const HomeIndicator = ({ activeTab }) => {
 
               <Link
                 href="/games"
-                className="group flex flex-col mr-6 items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative"
+                className="group flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative"
                 aria-label="Navigate to My Games"
                 aria-current={currentActiveTab === "games" ? "page" : undefined}
               >
@@ -87,22 +197,34 @@ export const HomeIndicator = ({ activeTab }) => {
                 )}
               </Link>
 
-              <button
-                className="flex flex-col items-center cursor-pointer focus:outline-none rounded-full absolute -top-[42px] left-1/2 transform -translate-x-1/2"
-                aria-label="More options"
-                tabIndex={0}
-              >
-                <img
-                  className="w-[62px] h-[62px]"
-                  alt=""
-                  src="https://c.animaapp.com/Tbz6Qwwg/img/more.svg"
-                  role="presentation"
-                />
-              </button>
+              <div ref={menuRef} className="flex flex-col items-center cursor-pointer focus:outline-none rounded-full absolute -top-[42px] left-1/2 transform -translate-x-1/2 z-30">
+                <button
+                  className="flex flex-col items-center justify-center w-[62px] h-[62px] rounded-full focus:outline-none relative transition-all duration-300 hover:opacity-80"
+                  aria-label="Open more options"
+                  tabIndex={0}
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  type="button"
+                >
+                  <img
+                    className="w-[62px] h-[62px]"
+                    alt=""
+                    src="https://c.animaapp.com/Tbz6Qwwg/img/more.svg"
+                    role="presentation"
+                  />
+                </button>
+
+                {/* More Menu - positioned above the middle button, shifted very far left */}
+                {showMoreMenu && (
+                  <div className="absolute bottom-[70px] left-1/2 transform -translate-x-[200%] z-40">
+                    <MoreMenu onClose={() => setShowMoreMenu(false)} />
+                  </div>
+                )}
+
+              </div>
 
               <Link
                 href="/Wallet"
-                className="group flex flex-col ml-4 items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative"
+                className="group flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative"
                 aria-label="Navigate to My Wallet"
                 aria-current={currentActiveTab === "wallet" ? "page" : undefined}
               >

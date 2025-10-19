@@ -4,8 +4,6 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
-// Recommended: Import the main object from the navigation bar plugin
-import { NavigationBar } from "@capgo/capacitor-navigation-bar";
 
 export default function StatusBarSetter() {
     useEffect(() => {
@@ -15,27 +13,16 @@ export default function StatusBarSetter() {
 
         const setBars = async () => {
             try {
-                // This is a good practice to keep
+                // Keep status bar visible, don't overlay content
                 await StatusBar.setOverlaysWebView({ overlay: false });
 
-                // --- STATUS BAR (TOP) ---
-                // 1. Set background color to black
+                // Set status bar background to black
                 await StatusBar.setBackgroundColor({ color: "#000000" });
 
-                // 2. Set style to Dark for LIGHT icons on a dark background
+                // Set style to Dark for light icons on dark background
                 await StatusBar.setStyle({ style: Style.Dark });
-
-                // --- NAVIGATION BAR (BOTTOM - Android only) ---
-                if (platform === "android") {
-                    await NavigationBar.setColor({
-                        // 3. Set background color to black
-                        color: "#000000",
-                        // 4. Set darkButtons to false for LIGHT buttons on a dark background
-                        darkButtons: false,
-                    });
-                }
             } catch (e) {
-                console.warn("StatusBar/NavigationBar config failed:", e);
+                console.warn("StatusBar config failed:", e);
             }
         };
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useRealTimeCountdown } from "../hooks/useRealTimeCountdown";
 
 // The SVG for the "Welcome Offer" label, converted to a reusable JSX component.
 const WelcomeOfferLabel = () => (
@@ -43,6 +44,20 @@ export const WelcomeOffer = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipRef = useRef(null);
+
+  // Use real-time countdown hook with 24-hour persistence
+  const {
+    formatTime,
+    isExpired,
+    isLoading,
+    timeRemaining,
+    resetTimer
+  } = useRealTimeCountdown({
+    defaultDuration: 24 * 60 * 60, // 24 hours in seconds
+    persist: true,
+    storageKey: 'welcomeOfferEndTime',
+    autoReset: false // Don't auto reset when expired
+  });
 
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -103,12 +118,13 @@ export const WelcomeOffer = () => {
             <div className="top-[37px] left-5 font-medium text-white text-xl leading-6 absolute [font-family:'Poppins',Helvetica] tracking-[0] whitespace-nowrap">
               Claim your
             </div>
-
             <img
               className="absolute w-[109px] h-[109px] top-[45px] right-[15px] object-cover"
               alt="Png clipart buried"
               src="https://c.animaapp.com/iuW6cMRd/img/png-clipart-buried-treasure-treasure-miscellaneous-treasure-tran@2x.png"
             />
+
+            {/* Removed big circular countdown timer per request */}
 
             <img
               className="absolute w-10 h-10 top-[-3px] right-[-1px] cursor-pointer hover:opacity-80 transition-opacity duration-200"
@@ -143,9 +159,12 @@ export const WelcomeOffer = () => {
           </div>
         </div>
 
-        <div className="absolute w-[122px] h-[37px] top-[166px] left-36 rounded-[10px] overflow-hidden bg-[linear-gradient(107deg,rgba(200,117,251,1)_0%,rgba(16,4,147,1)_100%)]">
+        <div className={`absolute w-[122px] h-[37px] top-[166px] left-36 rounded-[10px] overflow-hidden ${isExpired
+          ? 'bg-[linear-gradient(107deg,rgba(255,0,0,0.8)_0%,rgba(139,0,0,1)_100%)]'
+          : 'bg-[linear-gradient(107deg,rgba(200,117,251,1)_0%,rgba(16,4,147,1)_100%)]'
+          }`}>
           <div className="absolute top-1.5 left-[15px] [font-family:'Poppins',Helvetica] font-medium text-white text-base tracking-[0] leading-[normal]">
-            22h:30 mins
+            {isLoading ? 'Loading...' : (isExpired ? 'EXPIRED' : formatTime)}
           </div>
         </div>
 

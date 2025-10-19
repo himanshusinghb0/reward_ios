@@ -1,0 +1,672 @@
+
+"use client";
+import React, { useEffect, useState, Suspense } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useRouter, useSearchParams } from "next/navigation";
+
+// Component imports
+import { DailyChallenge } from "./dailychallange";
+import { ActionButtonSection } from "./components/ActionButtonSection";
+import { InstructionsTextSection } from "./components/InstructionsTextSection";
+import { LevelsSection } from "./components/LevelsSection";
+import { Coin } from "./components/coin";
+import { Breakdown } from "./components/Breakdown";
+import { HomeIndicator } from "@/components/HomeIndicator";
+import { SessionStatus } from "./components/SessionStatus";
+import { LoadingOverlay } from "@/components/AndroidOptimizedLoader";
+
+// Optimized Image Component for Android
+const OptimizedGameImage = ({ game, isLoaded, onLoad, onError }) => {
+    const imageUrl = game?.square_image || game?.image || game?.images?.banner || game?.images?.large_image;
+
+    if (!imageUrl) return null;
+
+    return (
+        <img
+            className="w-[335px] h-[164px] object-cover rounded-lg transition-opacity duration-300 game-image image-fade-in"
+            alt={`${game?.title || game?.name || game?.details?.name} banner`}
+            src={imageUrl}
+            onLoad={onLoad}
+            onError={onError}
+            style={{
+                opacity: isLoaded ? 1 : 0
+            }}
+            loading="eager" // Load immediately for better UX
+            decoding="async" // Decode asynchronously for better performance
+        />
+    );
+};
+
+// Utility imports
+import { handleGameDownload } from "@/lib/gameDownloadUtils";
+import sessionManager from "@/lib/sessionManager";
+import { fetchGameById } from "@/lib/redux/slice/gameSlice";
+
+/**
+ * Game Details Page - Main content component
+ * Displays comprehensive game information, progress tracking, and reward management
+ */
+function GameDetailsContent() {
+    // Navigation and routing
+    const router = useRouter();
+    const dispatch = useDispatch();
+    const searchParams = useSearchParams();
+    const gameId = searchParams.get('gameId') || searchParams.get('id');
+
+    // Redux state management
+    const {
+        offers,
+        offersStatus,
+        currentGameDetails,
+        gameDetailsStatus
+    } = useSelector((state) => state.games);
+
+    // Component state
+    const [selectedGame, setSelectedGame] = useState(null);
+    const [loadedFromLocalStorage, setLoadedFromLocalStorage] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true); // Track initial loading state
+
+    // Debug Redux state
+    console.log('🎮 GameDetails: Redux state:', {
+        gameDetailsStatus,
+        hasCurrentGameDetails: !!currentGameDetails,
+        gameId,
+        selectedGame: !!selectedGame
+    });
+    const [selectedTier, setSelectedTier] = useState('Junior');
+    const [isGameInstalled, setIsGameInstalled] = useState(false);
+    const [sessionData, setSessionData] = useState({
+        sessionCoins: 0,
+        sessionXP: 0,
+        isClaimed: false,
+        isGameDownloaded: false,
+        isMilestoneReached: false // Track actual milestone status
+    });
+    const [currentSession, setCurrentSession] = useState(null);
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
+    const [isImageLoaded, setIsImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+
+
+    // Load game data - handle both downloaded games (localStorage) and API games
+    useEffect(() => {
+        const loadGameData = async () => {
+            console.log('🎮 GameDetails: Starting to load game data:', {
+                gameId,
+                hasLocalStorageData: !!localStorage.getItem('selectedGameData')
+            });
+
+            // Priority 1: Check localStorage for downloaded games (from "My Games" section)
+            const storedGameData = localStorage.getItem('selectedGameData');
+            if (storedGameData) {
+                try {
+                    const parsedGame = JSON.parse(storedGameData);
+                    console.log('🎮 GameDetails: Loading downloaded game from localStorage:', {
+                        gameId: parsedGame.id || parsedGame._id,
+                        title: parsedGame.title || parsedGame.name || parsedGame.details?.name
+                    });
+
+                    setSelectedGame(parsedGame);
+                    setLoadedFromLocalStorage(true);
+                    setIsDataLoaded(true);
+                    setIsInitialLoading(false); // Stop initial loading
+                    await initializeSession(parsedGame);
+
+                    // Clean up localStorage after loading
+                    localStorage.removeItem('selectedGameData');
+                    return;
+                } catch (error) {
+                    console.error('❌ Error parsing localStorage game data:', error);
+                    localStorage.removeItem('selectedGameData');
+                }
+            }
+
+            // Priority 2: Fetch from API if no localStorage data
+            if (gameId && !selectedGame && !loadedFromLocalStorage) {
+                console.log('🎮 GameDetails: Fetching game from API:', { gameId });
+                dispatch(fetchGameById(gameId));
+            } else if (!gameId) {
+                // No gameId provided, stop loading
+                setIsInitialLoading(false);
+            }
+        };
+
+        loadGameData();
+    }, [dispatch, gameId]);
+
+    // Handle game details from new API
+    useEffect(() => {
+        console.log('🎮 GameDetails: API response handler triggered:', {
+            hasCurrentGameDetails: !!currentGameDetails,
+            gameDetailsStatus,
+            gameId,
+            currentGameDetails: currentGameDetails ? {
+                id: currentGameDetails.id || currentGameDetails._id,
+                title: currentGameDetails.title || currentGameDetails.name || currentGameDetails.details?.name
+            } : null
+        });
+
+        if (currentGameDetails && gameDetailsStatus === 'succeeded') {
+            console.log('🎮 Game details loaded from API:', {
+                gameId: currentGameDetails.id || currentGameDetails._id,
+                title: currentGameDetails.title || currentGameDetails.name || currentGameDetails.details?.name,
+                requestedGameId: gameId,
+                isCorrectGame: (currentGameDetails.id || currentGameDetails._id) === gameId
+            });
+
+            // If we already loaded from localStorage, don't overwrite to avoid flicker/race
+            if (!loadedFromLocalStorage || !selectedGame) {
+                setSelectedGame(currentGameDetails);
+                setIsDataLoaded(true);
+                setIsInitialLoading(false); // Stop initial loading
+                initializeSession(currentGameDetails);
+            }
+        } else if (gameDetailsStatus === 'failed') {
+            console.error('❌ Game details API failed:', {
+                gameId,
+                status: gameDetailsStatus,
+                error: 'API request failed'
+            });
+            setIsInitialLoading(false); // Stop loading on error
+        } else if (gameDetailsStatus === 'loading') {
+            console.log('⏳ Game details API is loading...', { gameId });
+        }
+    }, [currentGameDetails, gameDetailsStatus, gameId, loadedFromLocalStorage, selectedGame]);
+
+    // Use fresh API data (Redux state cleared before navigation)
+    const displayGame = selectedGame || currentGameDetails;
+
+    // Preload game image to prevent delay
+    useEffect(() => {
+        if (displayGame) {
+            const imageUrl = displayGame.square_image || displayGame.image || displayGame.images?.banner || displayGame.images?.large_image;
+            if (imageUrl) {
+                setIsImageLoaded(false);
+                setImageError(false);
+
+                const img = new Image();
+                img.onload = () => {
+                    setIsImageLoaded(true);
+                };
+                img.onerror = () => {
+                    setImageError(true);
+                    setIsImageLoaded(false);
+                };
+                img.src = imageUrl;
+            }
+        }
+    }, [displayGame]);
+
+    // Initialize session for the game
+    const initializeSession = async (game) => {
+        if (!game || (!game.id && !game._id)) return;
+
+        try {
+            // Get user ID
+            const getUserId = () => {
+                try {
+                    const userData = localStorage.getItem('user');
+                    if (userData) {
+                        const user = JSON.parse(userData);
+                        return user._id || user.id;
+                    }
+                } catch (error) {
+                    console.error('Error getting user ID:', error);
+                }
+                return null;
+            };
+
+            const userId = getUserId();
+            if (!userId) {
+                console.warn('⚠️ No user ID found, cannot create session');
+                return;
+            }
+
+            // Use the correct game ID (either id or _id from new API)
+            const gameIdForSession = game.id || game._id;
+
+            // Check for existing active session
+            const existingSession = sessionManager.getActiveSessionForGame(gameIdForSession, userId);
+            if (existingSession) {
+                console.log('🔄 Found existing session:', existingSession.id);
+                setCurrentSession(existingSession);
+
+                // Validate existing session
+                const isValid = await sessionManager.validateSession(existingSession.id);
+                if (!isValid) {
+                    console.log('⚠️ Existing session invalid, creating new one');
+                    const newSessionId = sessionManager.createSession(gameIdForSession, userId, game);
+                    const newSession = sessionManager.getSession(newSessionId);
+                    setCurrentSession(newSession);
+                }
+            } else {
+                // Create new session
+                console.log('🆕 Creating new session for game:', game.title || game.name);
+                const sessionId = sessionManager.createSession(gameIdForSession, userId, game);
+                const session = sessionManager.getSession(sessionId);
+                setCurrentSession(session);
+            }
+        } catch (error) {
+            console.error('❌ Error initializing session:', error);
+        }
+    };
+
+
+    // Check game installation status
+    useEffect(() => {
+        setIsGameInstalled(false); // TODO: Implement actual device app detection
+    }, [selectedGame]);
+
+    // Event handlers
+    const handleBack = () => router.back();
+
+    const handleGameAction = async () => {
+        if (selectedGame) {
+            try {
+                await handleGameDownload(selectedGame);
+            } catch (error) {
+                console.error('❌ Game action failed:', error);
+            }
+        }
+    };
+
+    const handleTierChange = (tier) => setSelectedTier(tier);
+
+    const handleSessionUpdate = (data) => {
+        setSessionData(data);
+
+        // Update session manager with new data
+        if (currentSession) {
+            sessionManager.updateSessionActivity(currentSession.id, {
+                sessionCoins: data.sessionCoins,
+                sessionXP: data.sessionXP,
+                type: 'progress_update'
+            });
+        }
+    };
+
+    const handleDailyChallenge = () => {
+        router.push(`/gamedetails/dailychallange?gameId=${gameId}`);
+    };
+
+    // Handle reward claiming with session lock
+    const handleClaimRewards = async () => {
+        if (!currentSession) {
+            console.error('❌ No active session for claiming rewards');
+            throw new Error('No active session found. Please refresh the page.');
+        }
+
+        try {
+            console.log('🎁 Claiming rewards for session:', currentSession.id);
+
+            // Use session manager to claim rewards
+            const claimResult = await sessionManager.claimSessionRewards(currentSession.id, {
+                coins: sessionData.sessionCoins,
+                xp: sessionData.sessionXP,
+                isClaimed: true
+            });
+
+            // Update local state
+            setSessionData(prev => ({ ...prev, isClaimed: true }));
+
+            // End the session
+            sessionManager.endSession(currentSession.id, 'claimed', {
+                coins: sessionData.sessionCoins,
+                xp: sessionData.sessionXP,
+                isClaimed: true
+            });
+
+            // Show success message
+            alert(`✅ Rewards claimed!\n💰 $${sessionData.sessionCoins.toFixed(2)} Coins\n⭐ ${sessionData.sessionXP} XP\n\nSession ended successfully.`);
+
+            console.log('✅ Rewards claimed successfully:', claimResult);
+        } catch (error) {
+            console.error('❌ Claim rewards failed:', error);
+            throw error;
+        }
+    };
+
+    // Show skeleton loader for initial loading or when API is loading
+    const hasGameData = !!displayGame;
+    const hasLocalStorageData = loadedFromLocalStorage || (typeof window !== 'undefined' && !!localStorage.getItem('selectedGameData'));
+    const isLoading = isInitialLoading || (gameId && !hasGameData && !hasLocalStorageData && (gameDetailsStatus === 'loading' || gameDetailsStatus === 'idle'));
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col  overflow-x-hidden w-full h-full items-center justify-center px-4 pb-3 pt-1 bg-black max-w-[390px] mx-auto loading-container android-optimized">
+                {/* Header Skeleton */}
+                <div className="flex w-[375px] items-center gap-6 px-4 py-4 relative">
+                    <div
+                        className="w-6 h-6 bg-gray-800 rounded-full animate-pulse"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                    <div
+                        className="flex-1 h-6 bg-gray-800 rounded animate-pulse"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '0.2s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                </div>
+
+                {/* Game Image Skeleton */}
+                <div className="flex w-[375px] items-center justify-center px-4 relative mt-4">
+                    <div
+                        className="w-[335px] h-[164px] bg-gray-800 rounded-lg animate-pulse"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '0.4s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                </div>
+
+                {/* Game Info Skeleton */}
+                <div className="w-full max-w-[375px] mt-6 space-y-3">
+                    <div
+                        className="h-8 bg-gray-800 rounded animate-pulse w-3/4"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '0.6s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                    <div
+                        className="h-4 bg-gray-800 rounded animate-pulse w-1/2"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '0.8s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                    <div className="flex gap-2 mt-4">
+                        <div
+                            className="h-10 bg-gray-800 rounded animate-pulse w-24"
+                            style={{
+                                animation: 'pulse 1.5s ease-in-out infinite',
+                                animationDelay: '1.0s',
+                                transform: 'translateZ(0)',
+                                willChange: 'opacity'
+                            }}
+                        />
+                        <div
+                            className="h-10 bg-gray-800 rounded animate-pulse w-24"
+                            style={{
+                                animation: 'pulse 1.5s ease-in-out infinite',
+                                animationDelay: '1.2s',
+                                transform: 'translateZ(0)',
+                                willChange: 'opacity'
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Reward Summary Skeleton */}
+                <div className="flex w-[280px] items-center justify-center relative mt-6">
+                    <div
+                        className="flex flex-row items-center justify-center gap-2 bg-gray-800 rounded-[10px] py-2 w-full h-12 animate-pulse"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '1.4s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                </div>
+
+                {/* Description Skeleton */}
+                <div className="w-full max-w-[375px] mt-6 space-y-2">
+                    <div
+                        className="h-4 bg-gray-800 rounded animate-pulse w-full"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '1.6s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                    <div
+                        className="h-4 bg-gray-800 rounded animate-pulse w-5/6"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '1.8s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                    <div
+                        className="h-4 bg-gray-800 rounded animate-pulse w-4/6"
+                        style={{
+                            animation: 'pulse 1.5s ease-in-out infinite',
+                            animationDelay: '2.0s',
+                            transform: 'translateZ(0)',
+                            willChange: 'opacity'
+                        }}
+                    />
+                </div>
+
+                {/* Loading indicator */}
+
+            </div>
+        );
+    }
+
+    // Error state - game not found
+    if (!displayGame) {
+        console.error('❌ GameDetails: Game not found - Debug info:', {
+            gameId,
+            gameDetailsStatus,
+            hasCurrentGameDetails: !!currentGameDetails,
+            hasSelectedGame: !!selectedGame,
+            loadedFromLocalStorage,
+            isDataLoaded
+        });
+
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-black animate-fade-in">
+                <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-white text-xl font-semibold mb-2">Game not found</h2>
+                    <p className="text-gray-400 text-sm mb-2">Game ID: {gameId || 'No ID provided'}</p>
+                    <p className="text-gray-400 text-sm">Status: {gameDetailsStatus || 'Unknown'}</p>
+                </div>
+                <button
+                    onClick={handleBack}
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                >
+                    Go Back
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <LoadingOverlay
+            isLoading={!isDataLoaded && !isInitialLoading}
+            message="Loading game details..."
+            className="w-full h-full"
+        >
+            <div
+                className="flex flex-col overflow-x-hidden w-full h-full items-center justify-center px-4 pb-3 pt-1 bg-black max-w-[390px] mx-auto transition-all duration-300 ease-in-out animate-fade-in android-optimized"
+            >
+                {/* Header */}
+                <div className="flex w-[375px] items-center gap-6  px-4 py-4 relative ">
+                    <button
+                        onClick={handleBack}
+                        className="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-gray-800"
+                    >
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <div className="flex flex-col items-center">
+                        <h1 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[20px] tracking-[0] leading-[normal]">
+                            {(displayGame?.title || 'Game Details').split(' - ')[0]}
+                        </h1>
+                    </div>
+
+                    <div className="w-8 h-8" /> {/* Spacer for centering */}
+                </div>
+
+                {/* Game Banner */}
+                {(displayGame?.square_image || displayGame?.image || displayGame?.images?.banner || displayGame?.images?.large_image) && (
+                    <div className="flex w-[375px] items-center justify-center px-4 relative">
+                        {/* Image Skeleton - Show while loading */}
+                        {!isImageLoaded && !imageError && (
+                            <div
+                                className="w-[335px] h-[164px] bg-gray-800 rounded-lg animate-pulse"
+                                style={{
+                                    animation: 'pulse 1.5s ease-in-out infinite',
+                                    transform: 'translateZ(0)',
+                                    willChange: 'opacity'
+                                }}
+                            />
+                        )}
+
+                        {/* Actual Image - Show when loaded */}
+                        {!imageError && (
+                            <OptimizedGameImage
+                                game={displayGame}
+                                isLoaded={isImageLoaded}
+                                onLoad={() => setIsImageLoaded(true)}
+                                onError={() => setImageError(true)}
+                            />
+                        )}
+
+                        {/* Error State - Show if image fails to load */}
+                        {imageError && (
+                            <div className="w-[335px] h-[164px] bg-gray-800 rounded-lg flex items-center justify-center">
+                                <div className="text-center">
+                                    <svg className="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <p className="text-gray-500 text-sm">Image unavailable</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Game Info */}
+                <div className="flex flex-col w-[375px] items-start justify-center px-6 py-2 relative">
+                    <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[20px] text-center">
+                        {(selectedGame?.title || selectedGame?.name || selectedGame?.details?.name || 'Game Title').split(' - ')[0]}
+                    </h2>
+                    <span className="[font-family:'Poppins',Helvetica] font-regular text-[#f4f3fc] text-[13px]">
+                        {selectedGame?.category || selectedGame?.details?.category || 'Casual'}
+                    </span>
+                </div>
+
+                {/* Reward Summary */}
+                <div className="flex w-[280px] items-center justify-center relative">
+                    <div className="flex flex-row items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)] rounded-[10px] py-2 w-full">
+                        <span className="[font-family:'Poppins',Helvetica] font-medium text-white text-[16px] flex items-center justify-center gap-2 flex-wrap">
+                            <span className="whitespace-nowrap">Earn up to</span>
+                            <span className="flex items-center gap-1">
+                                <span className="font-semibold">{displayGame?.amount || displayGame?.rewards?.coins || 0}</span>
+                                <img
+                                    className="w-[23px] h-[22px] object-contain"
+                                    alt="Coin icon"
+                                    src="https://c.animaapp.com/ltgoa7L3/img/image-3937-7@2x.png"
+                                />
+                            </span>
+                            <span className="whitespace-nowrap">and</span>
+                            <span className="flex items-center gap-1">
+                                <span className="font-semibold">{displayGame?.cpi || displayGame?.rewards?.xp || 0}</span>
+                                <img
+                                    className="w-[22px] h-[23px] object-contain"
+                                    alt="XP icon"
+                                    src="https://c.animaapp.com/ltgoa7L3/img/pic-7.svg"
+                                />
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                {/* Main Content Sections */}
+                <div className="animate-fade-in">
+                    <InstructionsTextSection game={displayGame} />
+                </div>
+
+                <div className="animate-fade-in">
+                    <ActionButtonSection
+                        game={displayGame}
+                        isInstalled={isGameInstalled}
+                        onGameAction={handleGameAction}
+                    />
+                </div>
+
+                <div className="animate-fade-in">
+                    <LevelsSection
+                        game={displayGame}
+                        selectedTier={selectedTier}
+                        onTierChange={handleTierChange}
+                        onSessionUpdate={handleSessionUpdate}
+                    />
+                </div>
+
+                <div className="animate-fade-in">
+                    <Coin
+                        game={displayGame}
+                        sessionCoins={sessionData.sessionCoins}
+                        sessionXP={sessionData.sessionXP}
+                        isClaimed={sessionData.isClaimed}
+                        isMilestoneReached={sessionData.isMilestoneReached}
+                        onClaimRewards={handleClaimRewards}
+                    />
+                </div>
+
+                <div className="animate-fade-in">
+                    <Breakdown
+                        game={displayGame}
+                        sessionCoins={sessionData.sessionCoins}
+                        sessionXP={sessionData.sessionXP}
+                    />
+                </div>
+
+                <div className="animate-fade-in">
+                    <DailyChallenge
+                        game={displayGame}
+                        onChallengeClick={handleDailyChallenge}
+                    />
+                </div>
+
+                <HomeIndicator />
+
+                {/* Session Status Component */}
+                <SessionStatus
+                    game={selectedGame}
+                    currentSession={currentSession}
+                />
+
+            </div>
+        </LoadingOverlay>
+    );
+}
+
+
+export default function GameDetailsPage() {
+    return (
+        <Suspense fallback={
+            <div className="w-full min-h-screen bg-black flex justify-center items-center">
+                <div className="h-12 w-12 rounded-full border-4 border-white/20 border-t-white animate-spin" />
+                <p className="text-white text-lg font-medium mt-4">Loading game details...</p>
+            </div>
+        }>
+            <GameDetailsContent />
+        </Suspense>
+    );
+}

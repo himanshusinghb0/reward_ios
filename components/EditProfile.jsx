@@ -36,8 +36,19 @@ export const EditProfile = () => {
         socialTag: profile.socialTag || "",
       });
       if (profile.profile?.avatar) {
-        setAvatarPreview(profile.profile.avatar);
-        setOriginalAvatar(profile.profile.avatar);
+        // Clean and fix the avatar URL
+        let avatarUrl = profile.profile.avatar;
+
+        // Remove any leading '=' characters
+        avatarUrl = avatarUrl.replace(/^=+/, '');
+
+        // Ensure the avatar URL has proper protocol
+        if (!avatarUrl.startsWith('http')) {
+          avatarUrl = `https://rewardsapi.hireagent.co${avatarUrl}`;
+        }
+
+        setAvatarPreview(avatarUrl);
+        setOriginalAvatar(avatarUrl);
       }
     }
   }, [profile, profileStatus]);

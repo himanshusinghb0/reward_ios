@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
+  output: "export",
   trailingSlash: true,
   images: {
     unoptimized: true,
-    domains: ['c.animaapp.com', 'rewardsapi.hireagent.co'],
+    domains: ["c.animaapp.com", "rewardsapi.hireagent.co"],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

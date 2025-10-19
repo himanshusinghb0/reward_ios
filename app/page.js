@@ -1,11 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import LoadingScreen from "@/components/LoadingScreen";
+import { useEffect } from "react";
 
 export default function AppLoader() {
   const router = useRouter();
-  const [loadingMessage, setLoadingMessage] = useState("Loading App...");
 
   useEffect(() => {
     const storedUserString = localStorage.getItem("user");
@@ -20,11 +18,6 @@ export default function AppLoader() {
     if (storedUserString) {
       try {
         const user = JSON.parse(storedUserString);
-        if (user && user.firstName) {
-          setLoadingMessage(`Welcome back, ${user.firstName}!`);
-        } else {
-          setLoadingMessage("Resuming your session...");
-        }
 
         if (!permissionsAccepted) {
           router.replace("/permissions");
@@ -39,7 +32,8 @@ export default function AppLoader() {
         router.replace("/homepage");
         return;
       } catch (e) {
-        setLoadingMessage("Resuming your session...");
+        // If parsing fails, redirect to login
+        router.replace("/login");
       }
     } else if (onboardingInProgressData) {
       try {
@@ -48,7 +42,6 @@ export default function AppLoader() {
 
         // Check if there's valid state to resume from.
         if (state) {
-          setLoadingMessage("Resuming your setup...");
           if (!state.ageRange) {
             router.replace("/select-age");
           } else if (!state.gender) {
@@ -80,5 +73,7 @@ export default function AppLoader() {
     }
   }, [router]);
 
-  return <LoadingScreen message={loadingMessage} />;
+  // Industry standard: No loading screen, just redirect immediately
+  // The native splash screen handles the visual feedback
+  return null;
 }

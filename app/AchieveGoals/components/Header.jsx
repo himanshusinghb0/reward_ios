@@ -8,15 +8,15 @@ export const Header = () => {
                 App Version: V0.0.1
             </div>
 
-            <header className="flex flex-col w-[334px] items-center justify-center gap-2 pt-7 pb-2">
-                <div className="flex items-center justify-start gap-6 w-full">
+            <header className="flex flex-col w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl items-center justify-center gap-2 pt-7 pb-2 mx-auto">
+                <div className="flex items-center w-full max-w-full px-0 sm:px-2 md:px-4 lg:px-6" /* moved left by reducing px padding */>
                     <Link
                         className="relative w-6 h-6 flex-shrink-0"
                         aria-label="Go back"
                         href="/cash-coach"
                     >
                         <svg
-                            className="w-6 h-6 mt-[2.5px]"
+                            className="w-6 h-6 mt-[3px]"
                             viewBox="0 0 24 24"
                             fill="none"
                             xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +30,7 @@ export const Header = () => {
                             />
                         </svg>
                     </Link>
-                    <h1 className="font-semibold text-[#FFFFFF] text-[20px] leading-5">
+                    <h1 className="font-semibold text-[#FFFFFF] text-[20px] leading-5 flex-1 ml-2 text-left truncate">
                         Achieve Your Goal
                     </h1>
                 </div>

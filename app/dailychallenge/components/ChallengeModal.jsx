@@ -1,0 +1,254 @@
+import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import {
+    selectGame,
+    startTodayChallenge,
+    completeTodayChallenge
+} from "../../../lib/redux/slice/dailyChallengeSlice";
+
+export const ChallengeModal = ({
+    isOpen,
+    onClose,
+    today,
+    onStartChallenge
+}) => {
+    const dispatch = useDispatch();
+    const router = useRouter();
+    const [countdown, setCountdown] = useState("");
+    const [selectedGameId, setSelectedGameId] = useState(null);
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [isStarting, setIsStarting] = useState(false);
+    const [isCompleting, setIsCompleting] = useState(false);
+
+    // Calculate countdown timer
+    useEffect(() => {
+        if (!today?.countdown) return;
+
+        const updateCountdown = () => {
+            const now = new Date();
+            const endTime = new Date(today.countdown);
+            const diff = endTime - now;
+
+            if (diff <= 0) {
+                setCountdown("Challenge expired");
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        };
+
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+
+        return () => clearInterval(interval);
+    }, [today?.countdown]);
+
+    if (!isOpen) return null;
+
+    // Handle case when no challenge is available
+    if (!today?.hasChallenge) {
+        return (
+            <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                onClick={onClose}
+            >
+                <div
+                    className="bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 w-full max-w-sm shadow-2xl border border-gray-600/50 relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="text-center">
+                        <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal mb-4">
+                            No challenge available for today you can select the list of game by clicking below button
+                        </div>
+                        <button
+                            onClick={() => {
+                                router.push('/Race/ListGame');
+                            }}
+                            className="relative w-full h-12 rounded-[12.97px] overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] transition-transform duration-150 scale-100 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 shadow-lg border-2 border-white/20"
+                            style={{
+                                boxShadow: '0 8px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                                transform: 'translateZ(10px)',
+                                transformStyle: 'preserve-3d'
+                            }}
+                        >
+                            <span className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base text-center tracking-[0] leading-[normal] whitespace-nowrap">
+                                Select Game
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const handleSelectGame = async (gameId) => {
+        try {
+            setIsSelecting(true);
+            await dispatch(selectGame({ gameId, token: localStorage.getItem('authToken') }));
+            setSelectedGameId(gameId);
+        } catch (error) {
+            console.error("Failed to select game:", error);
+        } finally {
+            setIsSelecting(false);
+        }
+    };
+
+    const handleStartChallenge = async () => {
+        try {
+            setIsStarting(true);
+            const result = await dispatch(startTodayChallenge({ token: localStorage.getItem('authToken') }));
+            if (result.payload?.deepLink) {
+                // Open the game deep link
+                window.open(result.payload.deepLink, '_blank');
+            }
+            onStartChallenge();
+        } catch (error) {
+            console.error("Failed to start challenge:", error);
+        } finally {
+            setIsStarting(false);
+        }
+    };
+
+    const handleCompleteChallenge = async () => {
+        try {
+            setIsCompleting(true);
+            await dispatch(completeTodayChallenge({
+                conversionId: today?.conversionId,
+                token: localStorage.getItem('authToken')
+            }));
+            onClose();
+        } catch (error) {
+            console.error("Failed to complete challenge:", error);
+        } finally {
+            setIsCompleting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 rounded-lg p-6 w-full max-w-sm border border-gray-700">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-white">Today's Challenge</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-white text-2xl"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                {/* Countdown Timer */}
+                {countdown && (
+                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                        <div className="text-red-200 text-sm font-medium mb-1">Time Remaining</div>
+                        <div className="text-red-100 text-lg font-bold font-mono">{countdown}</div>
+                    </div>
+                )}
+
+                {/* Challenge Description */}
+                {today?.challenge && (
+                    <div className="mb-4">
+                        <div className="text-white text-sm font-medium mb-2">Challenge:</div>
+                        <div className="text-gray-300 text-sm leading-relaxed">
+                            {today.challenge.description}
+                        </div>
+                    </div>
+                )}
+
+                {/* Game Selection */}
+                {!today?.selectedGame && (
+                    <div className="mb-4">
+                        <div className="text-white text-sm font-medium mb-2">Select a Game:</div>
+                        <div className="space-y-2">
+                            {today?.availableGames?.map((game) => (
+                                <button
+                                    key={game.id}
+                                    onClick={isSelecting ? undefined : () => handleSelectGame(game.id)}
+                                    disabled={isSelecting}
+                                    className={`w-full p-3 rounded-lg text-left transition-colors ${isSelecting ? 'bg-gray-700 cursor-not-allowed' : 'bg-gray-800 hover:bg-gray-700'}`}
+                                >
+                                    <div className="text-white font-medium">{game.name}</div>
+                                    <div className="text-gray-400 text-sm">{game.description}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Selected Game */}
+                {today?.selectedGame && (
+                    <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+                        <div className="text-green-200 text-sm font-medium mb-1">Selected Game:</div>
+                        <div className="text-green-100 font-medium">{today.selectedGame.name}</div>
+                    </div>
+                )}
+
+                {/* Progress Status */}
+                {today?.progress && (
+                    <div className="mb-4">
+                        <div className="text-white text-sm font-medium mb-2">Progress:</div>
+                        <div className="text-gray-300 text-sm">
+                            Status: <span className="capitalize">{today.progress.status}</span>
+                        </div>
+                        {today.progress.rewardsEarned && (
+                            <div className="text-green-400 text-sm mt-1">
+                                Rewards Earned: {today.progress.rewardsEarned.coins} coins, {today.progress.rewardsEarned.xp} XP
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                    {!today?.selectedGame ? (
+                        <button
+                            disabled
+                            className="flex-1 py-3 bg-gray-600 text-gray-400 rounded-lg font-medium cursor-not-allowed"
+                        >
+                            Select Game First
+                        </button>
+                    ) : today?.progress?.status === "completed" ? (
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                        >
+                            Challenge Completed!
+                        </button>
+                    ) : today?.progress?.status === "started" ? (
+                        <button
+                            onClick={isCompleting ? undefined : handleCompleteChallenge}
+                            disabled={isCompleting}
+                            className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors ${isCompleting ? 'bg-blue-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        >
+                            {isCompleting ? 'Completing…' : 'Mark as Complete'}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={isStarting ? undefined : handleStartChallenge}
+                            disabled={isStarting}
+                            className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors ${isStarting ? 'bg-purple-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
+                        >
+                            {isStarting ? 'Opening…' : 'Play Now'}
+                        </button>
+                    )}
+                </div>
+
+                {/* Rewards Info */}
+                {today?.rewards && (
+                    <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                        <div className="text-yellow-200 text-sm font-medium mb-1">Rewards:</div>
+                        <div className="text-yellow-100 text-sm">
+                            {today.rewards.coins} coins, {today.rewards.xp} XP
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
