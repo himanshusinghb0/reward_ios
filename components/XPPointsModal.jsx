@@ -204,7 +204,7 @@ export const XPPointsModal = ({ isOpen, onClose }) => {
               complete 5 levels of the game. Here&apos;s how XP Points benefits you
             </p>
 
-            <div className="flex items-start justify-between w-full">
+            <div className="flex items-start w-full">
               {exampleData.map((item, index) => (
                 <div
                   key={index}
