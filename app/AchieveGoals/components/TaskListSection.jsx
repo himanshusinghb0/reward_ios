@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
 
 const RecommendationCard = ({ card, onCardClick }) => {
@@ -11,10 +12,13 @@ const RecommendationCard = ({ card, onCardClick }) => {
             onClick={() => onCardClick(card)}
         >
             <div className="relative w-[158px] h-[158px]">
-                <img
-                    className="absolute inset-0 w-full h-full object-fit"
+                <Image
+                    className="object-cover"
                     alt="Game promotion"
-                    src={card.image}
+                    src={card.image || '/placeholder.png'}
+                    fill
+                    sizes="158px"
+                    priority
                 />
 
             </div>
@@ -23,11 +27,27 @@ const RecommendationCard = ({ card, onCardClick }) => {
                 <div className="flex flex-col mt-auto">
                     <div className="flex items-center gap-1">
                         <p className="[font-family:'Poppins',Helvetica] font-medium text-white text-[14px]">Earn upto {card.earnings || "100"}</p>
-                        <img className="w-[18px] h-[19px]" alt="Coin" src="/dollor.png" />
+                        <Image
+                            className="w-[18px] h-[19px]"
+                            alt="Coin"
+                            src="/dollor.png"
+                            width={18}
+                            height={19}
+                            priority
+                            unoptimized
+                        />
                     </div>
                     <div className="flex items-center gap-1">
                         <p className="[font-family:'Poppins',Helvetica] font-medium text-white text-[14px]">and {card.xpPoints || "50"}</p>
-                        <img className="w-[21px] h-[16px]" alt="Reward icon" src="/xp.svg" />
+                        <Image
+                            className="w-[21px] h-[16px]"
+                            alt="Reward icon"
+                            src="/xp.svg"
+                            width={21}
+                            height={16}
+                            priority
+                            unoptimized
+                        />
                     </div>
                 </div>
             </div>
@@ -38,8 +58,6 @@ const RecommendationCard = ({ card, onCardClick }) => {
 export const TaskListSection = () => {
     const router = useRouter();
     const dispatch = useDispatch();
-    const [currentScaleClass, setCurrentScaleClass] = useState("scale-100");
-
     // Use new game discovery API for Cash Coach Recommendation section
     const { gamesBySection, gamesBySectionStatus } = useSelector((state) => state.games);
 
@@ -64,7 +82,7 @@ export const TaskListSection = () => {
 
     // Map the new API data to component format
     const recommendationCards = Array.isArray(sectionGames)
-        ? sectionGames.slice(0, 2).map((game) => ({
+        ? sectionGames.map((game) => ({
             id: game._id || game.id,
             title: game.details?.name,
             category: game.details?.category || (typeof game.categories?.[0] === 'string' ? game.categories[0] : 'Action'),
@@ -112,7 +130,7 @@ export const TaskListSection = () => {
                     💸💸Recommendations💸💸
                 </h2>
             </header>
-            <div className="flex items-start justify-center gap-3 self-stretch">
+            <div className="flex items-start justify-center gap-3 self-stretch flex-wrap">
                 {recommendationCards.length > 0 ? (
                     recommendationCards.map((card) => (
                         <RecommendationCard

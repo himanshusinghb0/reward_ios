@@ -19,6 +19,8 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
         recipientName: '',
         recipientEmail: ''
     });
+    const formContainerRef = React.useRef(null);
+    const submitButtonRef = React.useRef(null);
 
     // Function to refetch wallet data after successful payout
     const refetchWalletData = async () => {
@@ -68,6 +70,18 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
         }));
     };
 
+    // ✅ FIX: Scroll to button when keyboard opens (mobile)
+    const handleInputFocus = () => {
+        setTimeout(() => {
+            if (submitButtonRef.current) {
+                submitButtonRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }
+        }, 300); // Wait for keyboard to appear
+    };
+
 
     // Handle swipe-to-close functionality
     const handleTouchStart = (e) => {
@@ -115,6 +129,12 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
     }, [isOpen, onClose]);
 
     const handleSubmitDebitCard = async () => {
+        // CRITICAL FIX: Prevent double submission
+        if (isSubmitting) {
+            console.warn('⚠️ Debit card submission already in progress');
+            return;
+        }
+
         // Clear previous errors
         setError(null);
         setFieldErrors({});
@@ -190,10 +210,16 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
             if (result.success) {
                 setSuccess('Prepaid card request submitted successfully!');
 
-                // Refetch wallet data immediately after successful payout
-                await refetchWalletData();
+                // Stop showing processing state immediately when success is set
+                setIsSubmitting(false);
 
-                setTimeout(() => onClose(), 500);
+                // Close modal after 2 seconds (don't wait for refetch)
+                setTimeout(() => onClose(), 2000);
+
+                // Refetch wallet data in background (don't await - let it run in parallel)
+                refetchWalletData().catch(err => {
+                    console.error('Background wallet refetch error:', err);
+                });
             } else {
                 // Handle different types of errors with user-friendly messages
                 let errorMessage = 'Failed to process prepaid card request.';
@@ -332,7 +358,7 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                             <div></div>
                         </header>
 
-                        <div className="space-y-3">
+                        <div className="space-y-3" ref={formContainerRef}>
                             <div>
                                 <label className="block text-[#B7B7B7] text-sm mb-1">Amount</label>
                                 <input
@@ -344,6 +370,7 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                             setFieldErrors(prev => ({ ...prev, amount: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     placeholder="Enter amount"
                                     className={`w-full bg-[#1a1a1a] border rounded-lg px-3 py-2 text-white ${fieldErrors.amount
                                         ? 'border-red-500 focus:border-red-500'
@@ -370,6 +397,7 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                             setFieldErrors(prev => ({ ...prev, recipientName: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     placeholder="Enter recipient name (letters only)"
                                     className={`w-full bg-[#1a1a1a] border rounded-lg px-3 py-2 text-white ${fieldErrors.recipientName
                                         ? 'border-red-500 focus:border-red-500'
@@ -394,6 +422,7 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                             setFieldErrors(prev => ({ ...prev, recipientEmail: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     placeholder="Enter recipient email"
                                     className={`w-full bg-[#1a1a1a] border rounded-lg px-3 py-2 text-white ${fieldErrors.recipientEmail
                                         ? 'border-red-500 focus:border-red-500'
@@ -417,14 +446,27 @@ export const DebitTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                 </div>
                             )}
 
-                            <button
-                                onClick={handleSubmitDebitCard}
-                                // Disable button after successful payout message
-                                disabled={isSubmitting || !!success}
-                                className="w-full bg-[#1b47f7] text-white py-3 rounded-lg font-medium disabled:opacity-50"
-                            >
-                                {isSubmitting ? 'Processing...' : 'Get Debit Card'}
-                            </button>
+                            <div ref={submitButtonRef} className="pb-4">
+                                <button
+                                    onClick={handleSubmitDebitCard}
+                                    disabled={isSubmitting || !!success}
+                                    className="w-full bg-[#1b47f7] text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                                >
+                                    {isSubmitting ? (
+                                        success ? (
+                                            'Get Debit Card'
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Processing...
+                                            </span>
+                                        )
+                                    ) : 'Get Debit Card'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

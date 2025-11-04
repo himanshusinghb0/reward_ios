@@ -33,7 +33,7 @@ const bottomSteps = [
 export const GoalProgressSection = () => {
     return (
         <div
-            className="relative  w-[334px] h-[390px] rounded-[20px] overflow-hidden bg-[linear-gradient(103deg,rgba(121,32,207,1)_0%,rgba(205,73,153,1)_80%)]"
+            className="relative  mb-1 w-[334px] h-[390px] rounded-[20px] overflow-hidden bg-[linear-gradient(103deg,rgba(121,32,207,1)_0%,rgba(205,73,153,1)_80%)]"
         >
             <div className="relative h-[366px]">
                 <div className="w-[334px] h-[354px] left-0 absolute top-0">

@@ -108,6 +108,7 @@ export const Race = () => {
             name: "Orbitron",
             isActive: true,
             position: 1,
+            bgColor: "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)", // Blue gradient
         },
         {
             src: "https://c.animaapp.com/j8smgVil/img/friends-1@2x.png",
@@ -117,6 +118,7 @@ export const Race = () => {
             name: "ByteBeast",
             isActive: true,
             position: 2,
+            bgColor: "linear-gradient(135deg, #10b981 0%, #059669 100%)", // Green gradient
         },
         {
             src: "https://c.animaapp.com/j8smgVil/img/friends-2@2x.png",
@@ -126,6 +128,7 @@ export const Race = () => {
             name: "CyberBot",
             isActive: true,
             position: 3,
+            bgColor: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", // Indigo gradient
         },
         {
             src: "https://c.animaapp.com/j8smgVil/img/friends-3@2x.png",
@@ -135,6 +138,7 @@ export const Race = () => {
             name: "You",
             isActive: true,
             position: 4,
+            bgColor: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", // Orange gradient
         },
     ];
 
@@ -193,8 +197,15 @@ export const Race = () => {
                                     filter: 'drop-shadow(0 2px 8px rgba(255,255,255,0.2))'
                                 }}
                             />
-                            {/* Simple Player Name */}
-                            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-black/70 text-white text-xs px-1 py-0.5 rounded text-center whitespace-nowrap">
+                            {/* Simple Player Name with Dynamic Background */}
+                            <div
+                                className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-md text-center whitespace-nowrap font-semibold shadow-lg"
+                                style={{
+                                    background: friend.bgColor,
+                                    minWidth: 'fit-content',
+                                    width: 'auto',
+                                }}
+                            >
                                 {friend.name}
                             </div>
                         </div>

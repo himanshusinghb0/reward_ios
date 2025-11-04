@@ -171,14 +171,67 @@ export default function SpinWheel() {
 
     return (
         <div
-            className="relative w-[330px] h-[620px] bg-black overflow-hidden"
+            className="relative w-full h-[620px] bg-black overflow-hidden"
             data-model-id="3721:8597"
         >
-
-
+            {/* Spin Count Display at Top */}
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30">
+                <motion.div
+                    className="flex flex-col items-center gap-1 px-4 py-2 bg-gradient-to-br from-[#FFD700] via-[#FFA500] to-[#B8860B] rounded-full shadow-[0_4px_15px_rgba(255,215,0,0.5)] border-2 border-[#FFD700]"
+                    animate={isSpinning ? {
+                        scale: [1, 1.1, 1],
+                        boxShadow: [
+                            "0 4px 15px rgba(255,215,0,0.5)",
+                            "0 8px 25px rgba(255,215,0,0.8)",
+                            "0 4px 15px rgba(255,215,0,0.5)"
+                        ]
+                    } : {
+                        scale: [1, 1.05, 1]
+                    }}
+                    transition={isSpinning ? {
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    } : {
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    }}
+                >
+                    <motion.span
+                        className="text-[#2C1810] text-2xl font-black tracking-tight"
+                        style={{
+                            fontFamily: 'Arial Black, sans-serif',
+                            fontWeight: 900,
+                            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                        }}
+                        animate={isSpinning ? {
+                            scale: [1, 1.2, 1],
+                            color: ["#2C1810", "#FFD700", "#2C1810"]
+                        } : {}}
+                        transition={isSpinning ? {
+                            duration: 0.5,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        } : {}}
+                    >
+                        {spins}
+                    </motion.span>
+                    <span
+                        className="text-[#2C1810] text-xs font-bold tracking-wide"
+                        style={{
+                            fontFamily: 'Arial Black, sans-serif',
+                            fontWeight: 700,
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                        }}
+                    >
+                        SPINS
+                    </span>
+                </motion.div>
+            </div>
 
             {/* 3D Animated Border for Slot Machine */}
-            <div className="absolute top-[20px] left-0 w-[330px] h-[563px] z-20 pointer-events-none">
+            <div className="absolute top-[20px] left-0 w-full h-[563px] z-20 pointer-events-none">
                 {/* Outer 3D border with animated glowing corners and sides */}
                 <div className="relative w-full h-full">
                     {/* 3D border layers */}
@@ -243,7 +296,7 @@ export default function SpinWheel() {
             </div>
 
 
-            <div className="absolute top-[20px] left-0 w-[330px] h-[563px] aspect-[0.68] z-10">
+            <div className="absolute top-[20px] left-0 w-full h-[563px] aspect-[0.68] z-10">
                 <img
                     className="w-full h-full object-cover transition-transform duration-300"
                     alt="Spin wheel slot machine"
@@ -297,13 +350,19 @@ export default function SpinWheel() {
                                     <motion.div
                                         className="flex items-center justify-center w-[60px] h-[95px] bg-gradient-to-b from-[#DEB887] via-[#D2B48C] to-[#BC9A6A] border-r-[1px] border-[#8B4513]"
                                         whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 400 }}
+                                        animate={isSpinning ? {
+                                            rotateY: [0, 10, -10, 10, 0],
+                                            scale: [1, 1.05, 1]
+                                        } : {}}
+                                        transition={isSpinning ? { duration: 3, ease: "easeOut" } : { type: "spring", stiffness: 400 }}
                                     >
                                         {/* Golden coin with 3D metallic effect */}
                                         <motion.div
                                             className="relative w-[35px] h-[35px]"
                                             animate={isSpinning ? {
-                                                rotateY: [0, 360, 720, 1080, 1440, 1800, 0]
+                                                rotateY: [0, 360, 720, 1080, 1440, 1800, 0],
+                                                rotateZ: [0, 180, 360, 540, 720, 0],
+                                                scale: [1, 1.2, 1, 1.2, 1, 1]
                                             } : {
                                                 rotateY: [0, 360],
                                                 scale: [1, 1.05, 1],
@@ -354,9 +413,9 @@ export default function SpinWheel() {
                                         </motion.div>
                                     </motion.div>
 
-                                    {/* Center Panel - Spins Counter with pulse animation */}
+                                    {/* Center Panel - Coin Image Only */}
                                     <motion.div
-                                        className="flex flex-col items-center justify-center w-[75px] h-[95px] bg-gradient-to-b from-[#DEB887] via-[#D2B48C] to-[#BC9A6A] border-r-[1px] border-[#8B4513] relative overflow-hidden"
+                                        className="flex items-center justify-center w-[75px] h-[95px] bg-gradient-to-b from-[#DEB887] via-[#D2B48C] to-[#BC9A6A] border-r-[1px] border-[#8B4513] relative overflow-hidden"
                                         animate={isSpinning ? {
                                             boxShadow: [
                                                 "inset 0 0 0 rgba(255,215,0,0)",
@@ -364,7 +423,7 @@ export default function SpinWheel() {
                                                 "inset 0 0 0 rgba(255,215,0,0)"
                                             ],
                                             scale: [1, 1.1, 1],
-                                            rotateZ: [0, 2, 0]
+                                            rotateZ: [0, 5, -5, 0]
                                         } : {
                                             boxShadow: [
                                                 "inset 0 0 0 rgba(255,215,0,0)",
@@ -381,56 +440,55 @@ export default function SpinWheel() {
                                             ease: "easeInOut"
                                         }}
                                     >
-                                        <motion.span
-                                            className="text-[#2C1810] text-[38px] font-black leading-none tracking-tight drop-shadow-[0_3px_5px_rgba(0,0,0,0.5),0_1px_2px_rgba(255,215,0,0.3)]"
-                                            style={{
-                                                fontFamily: 'Arial Black, sans-serif',
-                                                fontWeight: 900,
-                                                textShadow: isSpinning ? '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,165,0,0.6), 0 3px 5px rgba(0,0,0,0.6)' : '0 0 6px rgba(255,215,0,0.4), 0 3px 5px rgba(0,0,0,0.6)'
-                                            }}
+                                        {/* Coin Image in Center */}
+                                        <motion.div
+                                            className="relative w-[45px] h-[45px]"
                                             animate={isSpinning ? {
+                                                rotateY: [0, 360, 720, 1080, 1440, 1800, 0],
                                                 rotateX: [0, 180, 360, 540, 720, 0],
-                                                scale: [1, 1.3, 1, 1.3, 1, 1],
-                                                y: [0, -3, 0, 3, 0, 0],
-                                                color: ["#2C1810", "#FFD700", "#FFA500", "#FFD700", "#2C1810", "#2C1810"]
+                                                scale: [1, 1.2, 1, 1.2, 1, 1]
                                             } : {
-                                                scale: [1, 1.15, 1],
-                                                y: [0, -1, 0]
+                                                rotateY: [0, 360],
+                                                scale: [1, 1.1, 1],
+                                                y: [0, -2, 0]
                                             }}
                                             transition={isSpinning ? {
                                                 duration: 3,
                                                 ease: "easeOut"
                                             } : {
-                                                duration: 1.5,
+                                                duration: 4,
                                                 repeat: Infinity,
                                                 ease: "easeInOut"
                                             }}
                                         >
-                                            {spins}
-                                        </motion.span>
-                                        <span
-                                            className="text-[#2C1810] text-[12px] font-black tracking-[0.1em] mt-1 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4),0_1px_1px_rgba(255,215,0,0.2)]"
-                                            style={{
-                                                fontFamily: 'Arial Black, sans-serif',
-                                                fontWeight: 900,
-                                                textShadow: '0 0 4px rgba(255,215,0,0.3), 0 2px 3px rgba(0,0,0,0.5)'
-                                            }}
-                                        >
-                                            SPINS
-                                        </span>
+                                            <img
+                                                src="/dollor.png"
+                                                alt="Coin"
+                                                className="w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(255,215,0,0.6)]"
+                                                style={{
+                                                    filter: isSpinning ? 'drop-shadow(0 0 12px rgba(255,215,0,0.9)) brightness(1.3)' : 'drop-shadow(0 0 6px rgba(255,215,0,0.6))'
+                                                }}
+                                            />
+                                        </motion.div>
                                     </motion.div>
 
                                     {/* Right Coin Panel with 3D animation */}
                                     <motion.div
                                         className="flex items-center justify-center w-[60px] h-[95px] bg-gradient-to-b from-[#DEB887] via-[#D2B48C] to-[#BC9A6A]"
                                         whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 400 }}
+                                        animate={isSpinning ? {
+                                            rotateY: [0, -10, 10, -10, 0],
+                                            scale: [1, 1.05, 1]
+                                        } : {}}
+                                        transition={isSpinning ? { duration: 3, ease: "easeOut" } : { type: "spring", stiffness: 400 }}
                                     >
                                         {/* Golden coin with 3D metallic effect */}
                                         <motion.div
                                             className="relative w-[35px] h-[35px]"
                                             animate={isSpinning ? {
-                                                rotateY: [0, -360, -720, -1080, -1440, -1800, 0]
+                                                rotateY: [0, -360, -720, -1080, -1440, -1800, 0],
+                                                rotateZ: [0, -180, -360, -540, -720, 0],
+                                                scale: [1, 1.2, 1, 1.2, 1, 1]
                                             } : {
                                                 rotateY: [0, -360],
                                                 scale: [1, 1.05, 1],

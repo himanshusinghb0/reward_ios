@@ -16,14 +16,14 @@ import { SessionStatus } from "./components/SessionStatus";
 import { LoadingOverlay } from "@/components/AndroidOptimizedLoader";
 
 // Optimized Image Component for Android
-const OptimizedGameImage = ({ game, isLoaded, onLoad, onError }) => {
+const OptimizedGameImage = ({ game, isLoaded, onLoad, onError, className }) => {
     const imageUrl = game?.square_image || game?.image || game?.images?.banner || game?.images?.large_image;
 
     if (!imageUrl) return null;
 
     return (
         <img
-            className="w-[335px] h-[164px] object-cover rounded-lg transition-opacity duration-300 game-image image-fade-in"
+            className={`w-[335px] h-[164px] object-cover rounded-lg transition-opacity duration-300 game-image image-fade-in ${className || ''}`}
             alt={`${game?.title || game?.name || game?.details?.name} banner`}
             src={imageUrl}
             onLoad={onLoad}
@@ -38,9 +38,10 @@ const OptimizedGameImage = ({ game, isLoaded, onLoad, onError }) => {
 };
 
 // Utility imports
-import { handleGameDownload } from "@/lib/gameDownloadUtils";
+import { handleGameDownload, getUserId } from "@/lib/gameDownloadUtils";
 import sessionManager from "@/lib/sessionManager";
-import { fetchGameById } from "@/lib/redux/slice/gameSlice";
+import { fetchGameById, fetchUserData } from "@/lib/redux/slice/gameSlice";
+import { fetchWalletTransactions, fetchFullWalletTransactions } from "@/lib/redux/slice/walletTransactionsSlice";
 
 /**
  * Game Details Page - Main content component
@@ -58,7 +59,8 @@ function GameDetailsContent() {
         offers,
         offersStatus,
         currentGameDetails,
-        gameDetailsStatus
+        gameDetailsStatus,
+        inProgressGames
     } = useSelector((state) => state.games);
 
     // Component state
@@ -252,10 +254,66 @@ function GameDetailsContent() {
     };
 
 
-    // Check game installation status
+    // Refresh user data when page regains focus (after user downloads game)
     useEffect(() => {
-        setIsGameInstalled(false); // TODO: Implement actual device app detection
-    }, [selectedGame]);
+        const handleFocus = () => {
+            const userId = getUserId();
+            const token = localStorage.getItem('authToken');
+            if (userId && token) {
+                console.log('🔄 GameDetails: Page focused, refreshing downloaded games list...');
+                dispatch(fetchUserData({ userId, token }));
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [dispatch]);
+
+    // Listen for gameDownloaded event to refresh list immediately
+    useEffect(() => {
+        const handleGameDownloaded = (event) => {
+            console.log('🎮 GameDetails: Game download event received:', event);
+            const userId = getUserId();
+            const token = localStorage.getItem('authToken');
+            if (userId && token) {
+                console.log('🔄 GameDetails: Refreshing downloaded games list after download...');
+                dispatch(fetchUserData({ userId, token }));
+            }
+        };
+
+        window.addEventListener('gameDownloaded', handleGameDownloaded);
+        return () => window.removeEventListener('gameDownloaded', handleGameDownloaded);
+    }, [dispatch]);
+
+    // Check game installation status - Check if game is in downloaded games list
+    useEffect(() => {
+        if (!displayGame) {
+            setIsGameInstalled(false);
+            return;
+        }
+
+        // Get the current game ID (handle both id and _id formats)
+        const currentGameId = displayGame.id || displayGame._id;
+
+        if (!currentGameId) {
+            setIsGameInstalled(false);
+            return;
+        }
+
+        // Check if the game is in the inProgressGames (downloaded games) array
+        const isDownloaded = inProgressGames && inProgressGames.some(game => {
+            const gameId = game.id || game._id;
+            return gameId === currentGameId || gameId?.toString() === currentGameId?.toString();
+        });
+
+        setIsGameInstalled(isDownloaded || false);
+
+        console.log('🎮 GameDetails: Installation status check:', {
+            gameId: currentGameId,
+            isDownloaded,
+            inProgressGamesCount: inProgressGames?.length || 0
+        });
+    }, [displayGame, inProgressGames]);
 
     // Event handlers
     const handleBack = () => router.back();
@@ -264,6 +322,17 @@ function GameDetailsContent() {
         if (selectedGame) {
             try {
                 await handleGameDownload(selectedGame);
+
+                // Refresh downloaded games list after a short delay to allow server to update
+                // This ensures the button updates to "Start Playing" after download
+                setTimeout(() => {
+                    const userId = getUserId();
+                    const token = localStorage.getItem('authToken');
+                    if (userId && token) {
+                        console.log('🔄 GameDetails: Refreshing downloaded games list after download action...');
+                        dispatch(fetchUserData({ userId, token }));
+                    }
+                }, 2000); // Wait 2 seconds for server to process download
             } catch (error) {
                 console.error('❌ Game action failed:', error);
             }
@@ -315,6 +384,21 @@ function GameDetailsContent() {
                 xp: sessionData.sessionXP,
                 isClaimed: true
             });
+
+            // Refresh transaction history immediately after reward claim
+            try {
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    await Promise.all([
+                        dispatch(fetchWalletTransactions({ token, limit: 5 })),
+                        dispatch(fetchFullWalletTransactions({ token, page: 1, limit: 20, type: "all" }))
+                    ]);
+                    console.log("✅ Transaction history refreshed after reward claim");
+                }
+            } catch (transactionError) {
+                console.warn("⚠️ Failed to refresh transaction history:", transactionError);
+                // Don't throw error - reward was still claimed successfully
+            }
 
             // Show success message
             alert(`✅ Rewards claimed!\n💰 $${sessionData.sessionCoins.toFixed(2)} Coins\n⭐ ${sessionData.sessionXP} XP\n\nSession ended successfully.`);
@@ -503,19 +587,20 @@ function GameDetailsContent() {
                 className="flex flex-col overflow-x-hidden w-full h-full items-center justify-center px-4 pb-3 pt-1 bg-black max-w-[390px] mx-auto transition-all duration-300 ease-in-out animate-fade-in android-optimized"
             >
                 {/* Header */}
-                <div className="flex w-[375px] items-center gap-6  px-4 py-4 relative ">
+                <div className="flex w-[375px] items-center gap-6  px-2 py-4 relative ">
                     <button
                         onClick={handleBack}
-                        className="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-gray-800"
+                        className="flex  justify-center items-center w-8 h-8 rounded-full transition-colors hover:bg-gray-800"
                     >
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 mt-[3px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
 
-                    <div className="flex flex-col items-center">
+                    <div className="flex  items-center">
                         <h1 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[20px] tracking-[0] leading-[normal]">
-                            {(displayGame?.title || 'Game Details').split(' - ')[0]}
+                            {(displayGame?.title || 'Game Details').split(' - ')[0]
+                                .split(':')[0]}
                         </h1>
                     </div>
 
@@ -528,7 +613,7 @@ function GameDetailsContent() {
                         {/* Image Skeleton - Show while loading */}
                         {!isImageLoaded && !imageError && (
                             <div
-                                className="w-[335px] h-[164px] bg-gray-800 rounded-lg animate-pulse"
+                                className="w-[335px] h-[164px] bg-gray-800 rounded-lg animate-pulse shadow-[100px] shadow-blue"
                                 style={{
                                     animation: 'pulse 1.5s ease-in-out infinite',
                                     transform: 'translateZ(0)',
@@ -544,12 +629,14 @@ function GameDetailsContent() {
                                 isLoaded={isImageLoaded}
                                 onLoad={() => setIsImageLoaded(true)}
                                 onError={() => setImageError(true)}
+                                // We pass the shadow classes as a prop
+                                className="shadow-[0_14px_50px_-2px_rgba(113,106,231,0.5)]"
                             />
                         )}
 
                         {/* Error State - Show if image fails to load */}
                         {imageError && (
-                            <div className="w-[335px] h-[164px] bg-gray-800 rounded-lg flex items-center justify-center">
+                            <div className="w-[335px] h-[164px] bg-gray-800 rounded-lg flex items-center justify-center shadow-lg shadow-white/30">
                                 <div className="text-center">
                                     <svg className="w-8 h-8 text-gray-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -562,22 +649,25 @@ function GameDetailsContent() {
                 )}
 
                 {/* Game Info */}
-                <div className="flex flex-col w-[375px] items-start justify-center px-6 py-2 relative">
-                    <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[20px] text-center">
-                        {(selectedGame?.title || selectedGame?.name || selectedGame?.details?.name || 'Game Title').split(' - ')[0]}
+                <div className="flex flex-col w-[375px] items-start justify-center mt-6 px-6 py-2 relative">
+                    <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[20px] ">
+                        {(selectedGame?.title || selectedGame?.name || selectedGame?.details?.name || 'Game Title')
+                            .split(' - ')[0]
+                            .split(':')[0]}
+
                     </h2>
-                    <span className="[font-family:'Poppins',Helvetica] font-regular text-[#f4f3fc] text-[13px]">
+                    <span className="[font-family:'Poppins',Helvetica] font-regular text-[#f4f3fc] mt-1 text-[13px]">
                         {selectedGame?.category || selectedGame?.details?.category || 'Casual'}
                     </span>
                 </div>
 
                 {/* Reward Summary */}
-                <div className="flex w-[280px] items-center justify-center relative">
+                <div className="flex w-[266px] items-center justify-center relative mr-2">
                     <div className="flex flex-row items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)] rounded-[10px] py-2 w-full">
                         <span className="[font-family:'Poppins',Helvetica] font-medium text-white text-[16px] flex items-center justify-center gap-2 flex-wrap">
-                            <span className="whitespace-nowrap">Earn up to</span>
+                            <span className="whitespace-nowrap text-[16px] font-medium">Earn up to</span>
                             <span className="flex items-center gap-1">
-                                <span className="font-semibold">{displayGame?.amount || displayGame?.rewards?.coins || 0}</span>
+                                <span className="font-semibold text-[16px]">{displayGame?.amount || displayGame?.rewards?.coins || 0}</span>
                                 <img
                                     className="w-[23px] h-[22px] object-contain"
                                     alt="Coin icon"

@@ -1,11 +1,13 @@
 "use client";
 import Image from 'next/image';
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useWalletUpdates } from "@/hooks/useWalletUpdates";
 
 export default function MyEarningCard({ token }) {
     const router = useRouter();
+    const [showTooltip, setShowTooltip] = useState(false);
+    const tooltipRef = useRef(null);
 
     // Use custom hook for real-time wallet updates
     const { realTimeBalance, realTimeXP, realTimeLevel } = useWalletUpdates(token);
@@ -34,19 +36,81 @@ export default function MyEarningCard({ token }) {
     // Calculate progress percentage for dynamic bar
     const progressWidth = Math.min(Math.max((xpInCurrentLevel / xpNeededForNextLevel) * 100, 0), 100);
 
+    const toggleTooltip = () => {
+        setShowTooltip(!showTooltip);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Check if click is outside tooltip and not on the info icon button
+            const clickedButton = event.target.closest('button[aria-label="More information"]');
+            if (
+                tooltipRef.current &&
+                !tooltipRef.current.contains(event.target) &&
+                !clickedButton
+            ) {
+                setShowTooltip(false);
+            }
+        };
+
+        if (showTooltip) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showTooltip]);
+
 
     return (
-        <section className="flex flex-col items-center gap-2.5 w-full">
+        <section className="flex flex-col items-center justify-center gap-2.5 w-full">
             <div className="flex justify-center w-full">
                 <div className="relative w-[335px]">
+                    {/* Tooltip - Same style and position as WelcomeOffer */}
+                    {showTooltip && (
+                        <div
+                            ref={tooltipRef}
+                            className="absolute top-[37px] right-[-3px] z-50 w-[320px] bg-black/95 backdrop-blur-sm rounded-[12px] px-4 py-3 shadow-2xl"
+                        >
+                            <div className="text-white font-medium text-sm [font-family:'Poppins',Helvetica] leading-normal">
+                                <div className="text-[#ffe664] font-semibold mb-1 text-center">
+                                    My Earnings
+                                </div>
+                                <div className="text-center">
+                                    Earn XP by completing game tasks. Tier upgrades unlock special features.
+                                </div>
+                            </div>
+                            {/* Arrow pointing up to the info icon */}
+                            <div className="absolute top-[-8px] right-[25px] w-4 h-4 bg-black/95 transform rotate-45"></div>
+                        </div>
+                    )}
                     <div
-                        className="relative h-[134px] rounded-[12px] pt-30 overflow-hidden"
+                        className="relative h-[134px] rounded-[12px] pt-10 overflow-hidden"
                         style={{
                             backgroundImage:
                                 "url(/bgearning.png)",
                             backgroundSize: "cover",
+                            backgroundColor: "rgba(255, 255, 255, 0.08)",
+                            backgroundBlendMode: "lighten",
+                            opacity: 0.85,
                         }}
                     >
+                        {/* Info icon for tooltip - custom blue rounded rectangle with white 'i' icon */}
+                        <button
+                            onClick={toggleTooltip}
+                            className="absolute w-8 h-8 top-[3px] right-[3px] z-20 cursor-pointer hover:opacity-90 transition-opacity duration-200 rounded-lg overflow-hidden flex items-center justify-center"
+                            aria-label="More information"
+                            style={{
+                                background: '#6BB5E8',
+                            }}
+                        >
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="9" cy="9" r="7.5" fill="white" />
+                                <text x="9" y="13" fontFamily="Arial, sans-serif" fontSize="11" fontWeight="bold" fill="#6BB5E8" textAnchor="middle">i</text>
+                            </svg>
+                        </button>
+
                         <div className="absolute top-[10px] mt-3 ml-5 max-w-[280px]">
                             <div className="text-[#FFFFFF] text-[14px]">My Earnings</div>
                             <button

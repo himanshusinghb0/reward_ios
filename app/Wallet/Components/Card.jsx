@@ -209,13 +209,16 @@ export const Card = ({ isOpen, onClose, methods, fundingSources, token }) => {
             if (result.success) {
                 setSuccess(`${selectedCard.name} gift card request submitted successfully!`);
 
-                // Refetch wallet data immediately after successful payout
-                await refetchWalletData();
-
                 // Stop showing processing state immediately when success is set
                 setIsSubmitting(false);
 
-                setTimeout(() => onClose(), 500);
+                // Close modal after 2 seconds (don't wait for refetch)
+                setTimeout(() => onClose(), 2000);
+
+                // Refetch wallet data in background (don't await - let it run in parallel)
+                refetchWalletData().catch(err => {
+                    console.error('Background wallet refetch error:', err);
+                });
             } else {
                 // Handle different types of errors with user-friendly messages
                 let errorMessage = 'Failed to process gift card request.';

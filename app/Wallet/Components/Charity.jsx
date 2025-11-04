@@ -20,6 +20,8 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
         donorName: '',
         donorEmail: ''
     });
+    const formContainerRef = React.useRef(null);
+    const submitButtonRef = React.useRef(null);
 
     // Function to refetch wallet data after successful payout
     const refetchWalletData = async () => {
@@ -75,6 +77,18 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
         setShowAllCharities(false);
     };
 
+    // ✅ FIX: Scroll to button when keyboard opens (mobile)
+    const handleInputFocus = () => {
+        setTimeout(() => {
+            if (submitButtonRef.current) {
+                submitButtonRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }
+        }, 300); // Wait for keyboard to appear
+    };
+
     // Handle swipe-to-close functionality
     const handleTouchStart = (e) => {
         setStartY(e.touches[0].clientY);
@@ -121,6 +135,12 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
     }, [isOpen, onClose]);
 
     const handleSubmitDonation = async () => {
+        // CRITICAL FIX: Prevent double submission
+        if (isSubmitting) {
+            console.warn('⚠️ Donation submission already in progress');
+            return;
+        }
+
         setError(null);
         setFieldErrors({});
         const amount = parseFloat(formData.amount);
@@ -190,9 +210,16 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
 
             if (result.success) {
                 setSuccess(`Donation to ${selectedCharity.name} submitted successfully!`);
-                setIsSubmitting(false); // <-- MUST set before await
-                await refetchWalletData();
-                setTimeout(() => onClose(), 500);
+                // Stop showing processing state immediately when success is set
+                setIsSubmitting(false);
+                
+                // Close modal after 2 seconds (don't wait for refetch)
+                setTimeout(() => onClose(), 2000);
+
+                // Refetch wallet data in background (don't await - let it run in parallel)
+                refetchWalletData().catch(err => {
+                    console.error('Background wallet refetch error:', err);
+                });
             } else {
                 let errorMessage = 'Failed to process donation.';
                 if (result.error) {
@@ -359,7 +386,7 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
                             <div></div>
                         </header>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4" ref={formContainerRef}>
                             <div>
                                 <label className="block text-[#B7B7B7] text-sm mb-2">Donation Amount</label>
                                 <input
@@ -371,6 +398,7 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
                                             setFieldErrors(prev => ({ ...prev, amount: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     placeholder="Enter donation amount"
                                     className={`w-full bg-[#1a1a1a] border rounded-lg px-3 py-2 text-white ${fieldErrors.amount
                                         ? 'border-red-500 focus:border-red-500'
@@ -397,6 +425,7 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
                                             setFieldErrors(prev => ({ ...prev, donorName: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     placeholder="Enter your name (letters only)"
                                     className={`w-full bg-[#1a1a1a] border rounded-lg px-3 py-2 text-white ${fieldErrors.donorName
                                         ? 'border-red-500 focus:border-red-500'
@@ -421,6 +450,7 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
                                             setFieldErrors(prev => ({ ...prev, donorEmail: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     placeholder="Enter your email for receipt"
                                     className={`w-full bg-[#1a1a1a] border rounded-lg px-3 py-2 text-white ${fieldErrors.donorEmail
                                         ? 'border-red-500 focus:border-red-500'
@@ -444,16 +474,27 @@ export const Charity = ({ isOpen, onClose, methods, fundingSources, token }) => 
                                 </div>
                             )}
 
-                            {/* Button only visible if NOT processing and NOT in success state */}
-                            {(!success) && (
+                            <div ref={submitButtonRef} className="pb-4">
                                 <button
                                     onClick={handleSubmitDonation}
-                                    disabled={isSubmitting}
-                                    className="w-full bg-[#34a853] text-white py-3 rounded-lg font-medium disabled:opacity-50"
+                                    disabled={isSubmitting || !!success}
+                                    className="w-full bg-[#34a853] text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                                 >
-                                    {isSubmitting ? 'Processing...' : 'Donate Now'}
+                                    {isSubmitting ? (
+                                        success ? (
+                                            'Donate Now'
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Processing...
+                                            </span>
+                                        )
+                                    ) : 'Donate Now'}
                                 </button>
-                            )}
+                            </div>
                         </div>
                     </div>
                 )}

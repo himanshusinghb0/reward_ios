@@ -106,7 +106,7 @@ export default function MyProfile() {
           App Version: V0.0.1
         </div>
 
-        <header className="flex flex-col w-full items-start gap-2 px-4 sm:px-5 py-3 absolute top-[40px] left-0">
+        <header className="flex flex-col w-full items-start gap-2 px-4 sm:px-5 pb-3 absolute top-[40px] left-0">
           <div className="flex items-center gap-4 w-full">
             <button
               className="relative w-6 h-6 flex-shrink-0"

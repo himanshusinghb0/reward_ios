@@ -529,10 +529,10 @@ const GameCard = ({ onClose: onCloseProp }) => {
 
                 {/* Last card display */}
                 <article className="absolute w-[335px] h-[429px] top-0 left-0 rounded-[12px_12px_0px_0px] overflow-hidden shadow-[0px_27.92px_39.88px_#4d0d3399] bg-[linear-gradient(180deg,rgba(95,14,58,1)_0%,rgba(16,8,25,1)_100%)]">
-                    <section className="absolute w-[302px] h-[303px] top-[90px] left-[18px]">
+                    <section className="absolute w-[400px] h-[303px] top-[90px] ">
                         {/* REMOVED: Image loading state for better Android UX */}
                         <img
-                            className="absolute w-[370px] h-[344px] top-[-2px] left-2 aspect-[1] object-cover rounded-lg"
+                            className="absolute w-[400px] h-[344px] top-[-2px]  aspect-[1] object-cover "
                             alt={`${gameData?.title || 'Game'} artwork`}
                             src={gameData?.image || "https://c.animaapp.com/DfFsihWg/img/image-3930@2x.png"}
                             loading="eager"
@@ -668,10 +668,10 @@ const GameCard = ({ onClose: onCloseProp }) => {
                     className="absolute w-[335px] h-[429px] top-0 left-0 rounded-[12px_12px_0px_0px] overflow-hidden shadow-[0px_27.92px_39.88px_#4d0d3399] bg-[linear-gradient(180deg,rgba(95,14,58,1)_0%,rgba(16,8,25,1)_100%)] cursor-pointer hover:opacity-95 transition-opacity duration-200"
                     onClick={handleGameCardClick}
                 >
-                    <section className="absolute w-[302px] h-[303px] top-[90px] left-[18px]">
+                    <section className="absolute w-[400px] h-[303px] top-[90px] ">
                         {/* REMOVED: Image loading state for better Android UX */}
                         <img
-                            className="absolute w-[370px] h-[344px] top-[-2px] right-1.5 aspect-[1] object-cover rounded-lg"
+                            className="absolute w-[400px] h-[344px] top-[-2px] object-cover  "
                             alt={`${gameData?.title || 'Game'} artwork`}
                             src={gameData?.image || "https://c.animaapp.com/DfFsihWg/img/image-3930@2x.png"}
                             loading="eager"

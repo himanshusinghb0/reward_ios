@@ -436,11 +436,18 @@ export default function BuySubscription() {
                                     aria-selected={isActive}
                                     style={isActive ? { background: tierData[tier.id].gradient } : {}}
                                 >
-                                    <div className={`relative w-fit [font-family:'Poppins',Helvetica] ${isActive ? "font-bold text-[#f4f3fc] text-[18px] text-center" : "font-normal text-[#f4f3fc] text-[16px]"
-                                        } tracking-[0] leading-[normal]`}
+                                    <div
+                                        className={`relative w-fit [font-family:'Poppins',Helvetica] 
+    ${isActive
+                                                ? `font-bold text-[#f4f3fc] text-[18px] text-center ${tier.name === "Platinum" ? "mr-3" : ""
+                                                }`
+                                                : "font-normal text-[#f4f3fc] text-[16px] text-center"
+                                            } 
+    tracking-[0] leading-[normal]`}
                                     >
                                         {tier.name}
                                     </div>
+
                                 </button>
                             );
                         })}

@@ -10,8 +10,9 @@ import Image from "next/image";
  * @param {function} onBack - Optional custom back handler (defaults to router.back())
  * @param {React.ReactNode} rightElement - Optional element to display on the right (e.g., coin balance)
  * @param {string} className - Optional additional classes for the header
+ * @param {boolean} showBack - Optional flag to show/hide back button (defaults to true)
  */
-export const PageHeader = ({ title, onBack, rightElement, className = "" }) => {
+export const PageHeader = ({ title, onBack, rightElement, className = "", showBack = true }) => {
     const router = useRouter();
 
     const handleBack = () => {
@@ -23,22 +24,24 @@ export const PageHeader = ({ title, onBack, rightElement, className = "" }) => {
     };
 
     return (
-        <header className={`flex flex-col w-full items-start gap-2 px-0 py-3 mb-4 ${className}`}>
+        <header className={`flex flex-col w-full items-start gap-2 px-0 py-3 mb-4 `}>
             <div className="flex items-center justify-between gap-4 w-full">
                 <div className="flex items-center gap-4">
-                    <button
-                        className="relative w-6 h-6 flex-shrink-0"
-                        aria-label="Go back"
-                        onClick={handleBack}
-                    >
-                        <Image
-                            width={24}
-                            height={24}
-                            className="w-6 h-6"
-                            alt="Back"
-                            src="https://c.animaapp.com/V1uc3arn/img/arrow-back-ios-new@2x.png"
-                        />
-                    </button>
+                    {showBack && (
+                        <button
+                            className="relative w-6 h-6 flex-shrink-0"
+                            aria-label="Go back"
+                            onClick={handleBack}
+                        >
+                            <Image
+                                width={24}
+                                height={24}
+                                className="w-6 h-6"
+                                alt="Back"
+                                src="https://c.animaapp.com/V1uc3arn/img/arrow-back-ios-new@2x.png"
+                            />
+                        </button>
+                    )}
 
                     <h1 className="font-semibold text-white text-xl leading-5">
                         {title}

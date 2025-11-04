@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
 
 const RecommendationCard = React.memo(({ card, onCardClick }) => {
@@ -16,18 +17,22 @@ const RecommendationCard = React.memo(({ card, onCardClick }) => {
 
     return (
         <article
-            className="flex flex-col w-full rounded-md overflow-hidden shadow-lg cursor-pointer hover:scale-105 transition-all duration-200"
+            className="flex flex-col w-[158px] rounded-xl overflow-hidden shadow-lg cursor-pointer hover:scale-105 transition-all duration-200"
             onClick={() => onCardClick(card)}
         >
-            <div className="relative w-full aspect-square">
-                <img
-                    className="absolute inset-0 w-full h-full object-cover"
-                    alt={card.title || "Game promotion"}
-                    src={imageSrc}
-                    onError={handleImageError}
-                />
-                {imageError && (
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+            <div className="relative w-[158px] h-[158px]">
+                {!imageError ? (
+                    <Image
+                        className="object-cover rounded-t-xl"
+                        alt={card.title || "Game promotion"}
+                        src={imageSrc}
+                        fill
+                        sizes="158px"
+                        priority
+                        onError={handleImageError}
+                    />
+                ) : (
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center rounded-t-xl">
                         <div className="text-center text-white">
                             <div className="w-12 h-12 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
                                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -39,16 +44,32 @@ const RecommendationCard = React.memo(({ card, onCardClick }) => {
                     </div>
                 )}
             </div>
-            <div className="flex flex-col h-[60px] p-2  bg-[linear-gradient(180deg,rgba(81,98,182,0.9)_0%,rgba(63,56,184,0.9)_100%)]">
+            <div className="flex flex-col h-[60px] w-[158px] px-2 pt-2 pb-3 bg-[linear-gradient(180deg,rgba(81,98,182,0.9)_0%,rgba(63,56,184,0.9)_100%)]">
 
-                <div className="flex flex-col mt-auto">
-                    <div className="flex items-center gap-1">
-                        <p className="[font-family:'Poppins',Helvetica] font-medium text-white text-[14px]">Earn upto {card.earnings || "100"}</p>
-                        <img className="w-[18px] h-[19px]" alt="Coin" src="/dollor.png" />
+                <div className="flex flex-col mt-auto gap-0.5">
+                    <div className="flex items-center gap-1 min-w-0">
+                        <p className="[font-family:'Poppins',Helvetica] font-medium text-white text-[14px] whitespace-nowrap">Earn upto {card.earnings || "100"}</p>
+                        <Image
+                            className="w-[18px] h-[19px] flex-shrink-0"
+                            alt="Coin"
+                            src="/dollor.png"
+                            width={18}
+                            height={19}
+                            priority
+                            unoptimized
+                        />
                     </div>
-                    <div className="flex items-center gap-1">
-                        <p className="[font-family:'Poppins',Helvetica] font-medium text-white text-[14px]">and {card.xpPoints || "50"}</p>
-                        <img className="w-[21px] h-[16px]" alt="Reward icon" src="/xp.svg" />
+                    <div className="flex items-center gap-1 min-w-0">
+                        <p className="[font-family:'Poppins',Helvetica] font-medium text-white text-[14px] whitespace-nowrap">and {card.xpPoints || "50"}</p>
+                        <Image
+                            className="w-[21px] h-[16px] flex-shrink-0"
+                            alt="Reward icon"
+                            src="/xp.svg"
+                            width={21}
+                            height={16}
+                            priority
+                            unoptimized
+                        />
                     </div>
                 </div>
             </div>
@@ -68,15 +89,6 @@ export const ListGame = () => {
     // Extract games from the "Swipe" section (since that's what we're fetching)
     const swipeGames = gamesBySection?.["Swipe"] || [];
     const swipeStatus = gamesBySectionStatus?.["Swipe"] || "idle";
-
-    // Debug logging
-    console.log('🎮 ListGame Debug:', {
-        gamesBySection,
-        gamesBySectionStatus,
-        swipeGames: swipeGames?.length || 0,
-        swipeStatus,
-        inProgressGames: inProgressGames?.length || 0
-    });
 
     // Optimized: Pre-compute games data with both API games and downloaded games
     const recommendationCards = useMemo(() => {
@@ -156,18 +168,7 @@ export const ListGame = () => {
         }
     }, [router, dispatch]);
 
-    // Optimized: Simplified scale handling for mobile
-    useEffect(() => {
-        const updateScale = () => {
-            const width = window.innerWidth;
-            if (width >= 768) setCurrentScaleClass("scale-150");
-            else if (width >= 640) setCurrentScaleClass("scale-120");
-            else if (width >= 480) setCurrentScaleClass("scale-125");
-            else if (width >= 375) setCurrentScaleClass("scale-100");
-            else setCurrentScaleClass("scale-90");
-        };
-        updateScale();
-    }, []);
+
 
     // Reuse existing game data from homepage - no need to fetch again
     // The games are already loaded in the homepage GameCard component
@@ -208,47 +209,50 @@ export const ListGame = () => {
     // Users can still interact with the app even if games fail to load
 
     return (
-        <section className="flex flex-col justify-center items-center gap-2 w-full">
-            <div className="absolute w-full h-[49px] top-0 left-0 z-10 px-5">
-                <div className="absolute top-[10px] left-5 [font-family:'Poppins',Helvetica] font-normal text-white text-[10px] tracking-[0] leading-3 whitespace-nowrap">
-                    App Version: V0.0.1
-                </div>
+        <section className="relative w-full min-h-screen bg-black max-w-sm mx-auto flex flex-col items-center">
+            {/* App Version */}
+            <div className="absolute top-[2px] left-6 [font-family:'Poppins',Helvetica] font-light text-neutral-400 text-[10px] tracking-[0] leading-3 whitespace-nowrap">
+                App Version: V0.0.1
             </div>
-            <header className="flex flex-col w-[375px] items-start gap-2 px-5 py-6 absolute top-[14px] left-0">
-                <nav className="items-center gap-4 self-stretch w-full rounded-[32px] flex relative flex-[0_0_auto]">
+
+            {/* Header */}
+            <div className="flex flex-col w-full items-start gap-2 pl-7 pr-4 py-4 mt-4">
+                <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto] rounded-[32px]">
                     <button
                         aria-label="Go back"
+                        className="flex items-center justify-center w-6 h-6 flex-shrink-0"
                         onClick={() => {
                             router.back();
                         }}
                     >
                         <svg
-                            className="relative w-6 h-6 text-white cursor-pointer transition-transform duration-150 active:scale-95"
+                            className="w-6 h-6 text-white cursor-pointer transition-transform duration-150 active:scale-95"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
-                            strokeWidth={2.2}
+                            strokeWidth={2}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             aria-hidden="true"
                         >
                             <path
-                                d="M15 18l-6-6 6-6"
+                                d="M15 18L9 12L15 6"
                                 stroke="currentColor"
                                 strokeWidth={2}
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                fill="none"
                             />
                         </svg>
                     </button>
 
-                    <h1 className="relative w-[255px] [font-family:'Poppins',Helvetica] font-semibold text-white text-xl tracking-[0] leading-5">
+                    <h1 className="flex-1 [font-family:'Poppins',Helvetica] font-semibold text-white text-xl tracking-[0] leading-5">
                         Select Game
                     </h1>
-                </nav>
-            </header>
-            <div className="grid grid-cols-2 gap-4 w-full max-w-[400px] mx-auto px-4 mt-20 mb-8">
+                </div>
+            </div>
+
+            {/* Game Grid - Centered with proper spacing */}
+            <div className="grid grid-cols-2 gap-4 w-full max-w-[335px] mx-auto px-4 mt-4 mb-12 pb-4">
                 {recommendationCards.length > 0 ? (
                     recommendationCards.map((card) => (
                         <RecommendationCard

@@ -13,18 +13,18 @@ export default function SpinWheelPage() {
     return (
         <div className="min-h-screen bg-black flex flex-col">
             {/* Header Section */}
-            <div className="flex flex-col items-center  px-5 pb-2 w-full">
+            <div className="flex flex-col px-2 pb-2 w-full">
                 {/* App Version at Top */}
-                <div className="w-full flex justify-start">
+                <div className="w-full flex justify-start pl-4">
                     <span className="[font-family:'Poppins',Helvetica] font-normal text-white text-[10px]">
                         App Version: V0.0.1
                     </span>
                 </div>
                 {/* Back Button Below Version */}
-                <div className="w-full flex justify-start mr-4 pt-3 mt-3">
+                <div className="w-full flex justify-start pl-2 pt-3">
                     <button
                         onClick={handleBack}
-                        className="flex items-center gap-2  text-white hover:text-gray-300 transition-colors"
+                        className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
                     >
                         <svg
                             width="30"
@@ -38,7 +38,7 @@ export default function SpinWheelPage() {
                         >
                             <path d="m15 18-6-6 6-6" />
                         </svg>
-                        <span className="text-lg font-semibold">Spin and Win</span>
+                        <span className="text-lg mb-[1px] font-semibold">Spin and Win</span>
                     </button>
                 </div>
             </div>

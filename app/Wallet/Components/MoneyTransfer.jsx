@@ -20,6 +20,8 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
         recipientName: '',
         recipientEmail: ''
     });
+    const formContainerRef = React.useRef(null);
+    const submitButtonRef = React.useRef(null);
 
     // Function to refetch wallet data after successful payout
     const refetchWalletData = async () => {
@@ -70,8 +72,26 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
         }));
     };
 
+    // ✅ FIX: Scroll to button when keyboard opens (mobile)
+    const handleInputFocus = () => {
+        setTimeout(() => {
+            if (submitButtonRef.current) {
+                submitButtonRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }
+        }, 300); // Wait for keyboard to appear
+    };
+
 
     const handleSubmitPayout = async () => {
+        // CRITICAL FIX: Prevent double submission
+        if (isSubmitting) {
+            console.warn('⚠️ Money transfer submission already in progress');
+            return;
+        }
+
         // Clear previous errors
         setError(null);
         setFieldErrors({});
@@ -147,10 +167,16 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
             if (result.success) {
                 setSuccess('Money transfer request submitted successfully!');
 
-                // Refetch wallet data immediately after successful payout
-                await refetchWalletData();
+                // Stop showing processing state immediately when success is set
+                setIsSubmitting(false);
 
+                // Close modal after 2 seconds (don't wait for refetch)
                 setTimeout(() => onClose(), 2000);
+
+                // Refetch wallet data in background (don't await - let it run in parallel)
+                refetchWalletData().catch(err => {
+                    console.error('Background wallet refetch error:', err);
+                });
             } else {
                 // Handle different types of errors with user-friendly messages
                 let errorMessage = 'Failed to process money transfer.';
@@ -347,7 +373,7 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                             </div>
                         )}
 
-                        <div className="space-y-4">
+                        <div className="space-y-4" ref={formContainerRef}>
                             <div>
                                 <label className="block text-[#f4f3fc] text-sm font-medium mb-2">
                                     Transfer Amount (USD)
@@ -366,6 +392,7 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                             setFieldErrors(prev => ({ ...prev, amount: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     className={`w-full px-3 py-2 bg-[#2A2A2A] border rounded-lg text-[#f4f3fc] placeholder-[#A4A4A4] focus:outline-none ${fieldErrors.amount
                                         ? 'border-red-500 focus:border-red-500'
                                         : 'border-[#3C3C3C] focus:border-[#8b92de]'
@@ -393,6 +420,7 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                             setFieldErrors(prev => ({ ...prev, recipientName: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     className={`w-full px-3 py-2 bg-[#2A2A2A] border rounded-lg text-[#f4f3fc] placeholder-[#A4A4A4] focus:outline-none ${fieldErrors.recipientName
                                         ? 'border-red-500 focus:border-red-500'
                                         : 'border-[#3C3C3C] focus:border-[#8b92de]'
@@ -420,6 +448,7 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                             setFieldErrors(prev => ({ ...prev, recipientEmail: null }));
                                         }
                                     }}
+                                    onFocus={handleInputFocus}
                                     className={`w-full px-3 py-2 bg-[#2A2A2A] border rounded-lg text-[#f4f3fc] placeholder-[#A4A4A4] focus:outline-none ${fieldErrors.recipientEmail
                                         ? 'border-red-500 focus:border-red-500'
                                         : 'border-[#3C3C3C] focus:border-[#8b92de]'
@@ -430,13 +459,27 @@ export const MoneyTransfer = ({ isOpen, onClose, methods, fundingSources, token 
                                 )}
                             </div>
 
-                            <button
-                                onClick={handleSubmitPayout}
-                                disabled={isSubmitting || !!success}
-                                className="w-full bg-[#8B5CF6] text-white py-3 rounded-lg font-medium disabled:opacity-50"
-                            >
-                                {isSubmitting ? 'Processing...' : 'Transfer Now'}
-                            </button>
+                            <div ref={submitButtonRef} className="pb-4">
+                                <button
+                                    onClick={handleSubmitPayout}
+                                    disabled={isSubmitting || !!success}
+                                    className="w-full bg-[#8B5CF6] text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                                >
+                                    {isSubmitting ? (
+                                        success ? (
+                                            'Transfer Now'
+                                        ) : (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Processing...
+                                            </span>
+                                        )
+                                    ) : 'Transfer Now'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

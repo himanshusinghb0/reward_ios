@@ -301,13 +301,13 @@ export const DailyChallenge = () => {
             className="relative w-[375px] h-[640px] bg-black"
             data-model-id="3291:8378"
         >
-            <div className="absolute top-[5px] left-5 [font-family:'Poppins',Helvetica] font-normal text-neutral-400 text-[10px] tracking-[0] leading-3 whitespace-nowrap">
+            <div className="absolute top-[1px] left-5 [font-family:'Poppins',Helvetica] font-light text-neutral-400 text-[10px] tracking-[0] leading-3 whitespace-nowrap">
                 App Version: V0.0.1
             </div>
 
             {/* Removed status bar */}
 
-            <header className="flex flex-col w-[375px] items-start gap-2 px-5 py-3 absolute top-[20px] left-0">
+            <header className="flex flex-col w-[375px] items-start gap-2 px-5 py-3 absolute top-[20px] ">
                 <nav className="items-center gap-4 self-stretch w-full rounded-[32px] flex relative flex-[0_0_auto]">
                     <button aria-label="Go back">
                         <img

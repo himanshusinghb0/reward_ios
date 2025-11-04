@@ -4,8 +4,10 @@ import { ListGame } from "../components/ListGame";
 
 export default function ListGamePage() {
     return (
-        <div className="flex flex-col w-full min-h-screen bg-black">
-            <ListGame />
+        <div className="flex justify-center w-full">
+            <div className="relative w-full max-w-md min-h-screen bg-black mx-auto">
+                <ListGame />
+            </div>
         </div>
     );
 }

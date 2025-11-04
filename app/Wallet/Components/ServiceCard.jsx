@@ -5,19 +5,31 @@ import React from 'react';
 const ServiceCard = ({ card }) => {
     if (!card) return null;
 
+    // Special handling for Money Transfer and Donation & Charity cards to ensure correct background color and corner radius
+    const isMoneyTransfer = card.id === 1;
+    const isDonationCharity = card.id === 3;
+    const isCustomCard = isMoneyTransfer || isDonationCharity;
+
+    const backgroundStyle = isMoneyTransfer
+        ? { backgroundColor: 'rgba(185, 120, 14, 0.45)' }
+        : isDonationCharity
+            ? { background: 'linear-gradient(135deg, rgba(52, 168, 83, 0.24) 0%, rgba(52, 168, 83, 0.14) 100%)' }
+            : {};
+
     return (
         <div
             className={`
-                ${card.innerBgColor} 
+                ${!isCustomCard ? card.innerBgColor : ''} 
                 flex-shrink-0 snap-center 
                 w-[90px] h-[176px] 
-                rounded-[12px]
+                ${isCustomCard ? 'rounded-[8px]' : 'rounded-[12px]'}
                 opacity-100
                 flex flex-col items-center justify-center gap-2 py-4 px-2 
                 relative 
                 text-center 
                 transition-all duration-200 hover:scale-105
             `}
+            style={backgroundStyle}
             role="button"
             tabIndex={0}
             aria-label={`Service card for ${card.title}`}

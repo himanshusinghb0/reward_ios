@@ -730,24 +730,37 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                     </div>
                 ))}
             </div>
-
             {/* Claim Rewards Button */}
-            <div className="flex justify-center  ml-12">
-                <div className={`w-[216px] h-[30px] ml-2 flex gap-[3px] rounded-[0px_0px_10px_10px] overflow-hidden shadow-[0px_4px_4px_#00000040] bg-[linear-gradient(141deg,rgba(244,187,64,1)_0%,rgba(247,206,70,1)_64%,rgba(251,234,141,1)_80%,rgba(247,206,70,1)_98%)] ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
-                    <p className="mt-1.5 w-[214px] h-[18px] ml-[16px] [text-shadow:0px_4px_4px_#00000040] [font-family:'Poppins',Helvetica] font-semibold text-black text-xs text-center tracking-[0] leading-[normal]">
-                        Reach Here To Claim Your Rewards
-                    </p>
-                    <button
-                        onClick={() => setShowRulesModal(true)}
-                        disabled={isClaimed}
-                        className={`mt-[5px] w-[19px] h-[19px] flex bg-[#716ae7] rounded-[100px] overflow-hidden hover:bg-[#5a52d4] transition-colors cursor-pointer ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+            {/* FIX: Claim Rewards Button - Aligned with the level layout structure */}
+            <div className="flex w-full items-start gap-3 px-5 ">
+                {/* Spacer to align with level cards, matches width of the level number circle */}
+                <div className="w-[43px] flex-shrink-0" />
+
+                {/* Container for the button, matches width of level cards */}
+                <div className="w-[256px] flex justify-center">
+                    <div
+                        className={`flex items-center gap-2 px-1 py-2 rounded-b-md rounded-t-sm shadow-[0px_4px_4px_#00000040] 
+                             bg-[linear-gradient(141deg,#F4BB40_0%,#FBEA8D_80%,#F7CE46_98%,#F4BB40_100%)]
+                        transition-all duration-200
+                        ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'hover:scale-[1.02]'}`}
                     >
-                        <div className="w-2 h-2 ml-[1px] px [text-shadow:0px_4px_4px_#00000040] [font-family:'Poppins',Helvetica] font-bold text-white text-base text-center tracking-[0] leading-4 whitespace-nowrap">
-                            ﹖
-                        </div>
-                    </button>
+                        <p className="text-center text-[10px] sm:text-xs md:text-sm font-semibold text-black [text-shadow:0px_2px_2px_#00000040] font-[Poppins] leading-snug">
+                            Reach Here To Claim Your Rewards
+                        </p>
+
+                        <button
+                            onClick={() => setShowRulesModal(true)}
+                            disabled={isClaimed}
+                            className={`flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 bg-[#716ae7] rounded-full 
+                            hover:bg-[#5a52d4] transition-colors duration-200 
+                            ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                        >
+                            <span className="text-white text-sm sm:text-base font-bold leading-none">﹖</span>
+                        </button>
+                    </div>
                 </div>
             </div>
+
 
             {/* End & Claim Rewards Button - Hidden but functionality preserved */}
             <div className="hidden">

@@ -22,9 +22,10 @@ const SCALE_CONFIG = [
 const SERVICE_CARDS = [
     {
         id: 1,
-        innerBgColor: "bg-gradient-to-br from-[#1ee2d833] to-[#132434]",
+        innerBgColor: "bg-[#B9780E4D]",
         image: "/moeny1.png",
         title: "Money Transfer",
+        description: null,
         hasDescription: true,
     },
     {

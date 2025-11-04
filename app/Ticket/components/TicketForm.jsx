@@ -400,7 +400,11 @@ export const RaiseATicket = () => {
                                             className={`w-full px-4 py-3 text-left [font-family:'Poppins',Helvetica] text-sm hover:bg-[#2a2a2a] transition-colors first:rounded-t-lg last:rounded-b-lg ${selectedGame === option.id ? 'text-[#716ae7] bg-[#2a2a2a]' : 'text-neutral-400'
                                                 }`}
                                         >
-                                            {option.name}
+                                            {option.name
+                                                .replace(/\s*Android\s*/gi, '') // Removes "Android"
+                                                .replace(/-/g, ' ')             // Replaces all hyphens with a space
+                                                .trim()
+                                            }
                                         </button>
                                     ))
                                 ) : (

@@ -3,20 +3,22 @@ import Link from "next/link";
 import NextImage from "next/image";
 export const Header = () => {
     return (
-        <div className='w-[334px] h-full  flex-col justify-center items-center'>
-            <div className=" font-normal  w-[334px]  text-[#A4A4A4]  mr-1 text-[10px] leading-3">
-                App Version: V0.0.1
+        <>
+            <div className="absolute top-[10px] left-6 w-full h-[49px] z-10">
+                <div className="absolute top-[0px] left-0 [font-family:'Poppins',Helvetica] font-light text-[#A4A4A4] text-[10px] tracking-[0] leading-3 whitespace-nowrap">
+                    App Version: V0.0.1
+                </div>
             </div>
 
-            <header className="flex flex-col w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl items-center justify-center gap-2 pt-7 pb-2 mx-auto">
-                <div className="flex items-center w-full max-w-full px-0 sm:px-2 md:px-4 lg:px-6" /* moved left by reducing px padding */>
+            <header className="flex flex-col w-full items-start gap-2 pr-4 py-3 mt-[32px] mb-1">
+                <div className="flex items-center gap-4 w-full">
                     <Link
-                        className="relative w-6 h-6 flex-shrink-0"
+                        className="relative w-6 h-6 mt-[1px] flex-shrink-0"
                         aria-label="Go back"
                         href="/cash-coach"
                     >
                         <svg
-                            className="w-6 h-6 mt-[3px]"
+                            className="w-6 h-6"
                             viewBox="0 0 24 24"
                             fill="none"
                             xmlns="http://www.w3.org/2000/svg"
@@ -30,12 +32,11 @@ export const Header = () => {
                             />
                         </svg>
                     </Link>
-                    <h1 className="font-semibold text-[#FFFFFF] text-[20px] leading-5 flex-1 ml-2 text-left truncate">
+                    <h1 className="font-semibold text-white text-xl leading-5">
                         Achieve Your Goal
                     </h1>
                 </div>
             </header>
-
-        </div>
+        </>
     )
 }

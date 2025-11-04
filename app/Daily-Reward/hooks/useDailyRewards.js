@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { updateUserEarnings } from "@/lib/redux/slice/gameSlice";
-import { fetchWalletScreen } from "@/lib/redux/slice/walletTransactionsSlice";
+import { fetchWalletScreen, fetchWalletTransactions, fetchFullWalletTransactions } from "@/lib/redux/slice/walletTransactionsSlice";
 import { fetchProfileStats } from "@/lib/redux/slice/profileSlice";
 
 const BASE_URL = "https://rewardsapi.hireagent.co";
@@ -36,20 +36,22 @@ export const useDailyRewards = () => {
   }, []);
 
   // Fetch week data (with cache)
-  const fetchWeekData = useCallback(async (date = null) => {
+  const fetchWeekData = useCallback(async (date = null, forceRefresh = false) => {
     try {
       const cacheKey = date
         ? `week_${date.toISOString().split("T")[0]}`
         : "current_week";
       const cachedData = localStorage.getItem(`daily_rewards_${cacheKey}`);
 
-      if (cachedData && !date) {
+      // Only use cache if not forcing refresh and cache is fresh
+      if (cachedData && !date && !forceRefresh) {
         try {
           const parsedData = JSON.parse(cachedData);
           const cacheTime = parsedData.cacheTime;
           const now = Date.now();
 
-          if (now - cacheTime < 5 * 60 * 1000) {
+          // Use cache if less than 2 minutes old (reduced from 5 minutes for better freshness)
+          if (now - cacheTime < 2 * 60 * 1000) {
             setWeekData(parsedData.data);
             setCurrentWeekStart(new Date(parsedData.data.weekStart));
             return parsedData.data;
@@ -232,6 +234,18 @@ export const useDailyRewards = () => {
             // Don't throw error - reward was still claimed successfully
           }
 
+          // Refresh transaction history immediately after reward claim
+          try {
+            await Promise.all([
+              dispatch(fetchWalletTransactions({ token, limit: 5 })),
+              dispatch(fetchFullWalletTransactions({ token, page: 1, limit: 20, type: "all" }))
+            ]);
+            console.log("✅ Transaction history refreshed after reward claim");
+          } catch (transactionError) {
+            console.warn("⚠️ Failed to refresh transaction history:", transactionError);
+            // Don't throw error - reward was still claimed successfully
+          }
+
           // Refresh profile stats for homepage components (RewardProgress, XPTierTracker)
           try {
             await dispatch(fetchProfileStats(token));
@@ -240,7 +254,16 @@ export const useDailyRewards = () => {
             // Don't throw error - reward was still claimed successfully
           }
 
-          await fetchWeekData(currentWeekStart);
+          // Force refresh to get updated status and timer
+          // Clear cache for current week to force fresh fetch
+          const cacheKey = "current_week";
+          localStorage.removeItem(`daily_rewards_${cacheKey}`);
+          localStorage.removeItem(`daily_rewards_current_week`);
+          
+          // Small delay to ensure API has updated, then force refresh
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await fetchWeekData(currentWeekStart, true);
+          
           setSuccessMessage(
             `🎉 Reward claimed! You earned ${data.data.coins} coins and ${data.data.xp} XP!`
           );

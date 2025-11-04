@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,52 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Prevent overscroll behavior on mobile and hide scrollbars
+  useEffect(() => {
+    // Prevent body overscroll
+    document.body.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehaviorY = 'none';
+    document.body.style.msOverflowStyle = 'none';
+    document.body.style.scrollbarWidth = 'none';
+
+    // Prevent html overscroll
+    const html = document.documentElement;
+    html.style.overscrollBehavior = 'none';
+    html.style.overscrollBehaviorY = 'none';
+    html.style.msOverflowStyle = 'none';
+    html.style.scrollbarWidth = 'none';
+
+    // Hide scrollbars on mobile
+    let style = null;
+    if (typeof window !== 'undefined') {
+      style = document.createElement('style');
+      style.textContent = `
+        body::-webkit-scrollbar,
+        html::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    return () => {
+      // Restore original styles on unmount
+      document.body.style.overscrollBehavior = '';
+      document.body.style.overscrollBehaviorY = '';
+      document.body.style.msOverflowStyle = '';
+      document.body.style.scrollbarWidth = '';
+      html.style.overscrollBehavior = '';
+      html.style.overscrollBehaviorY = '';
+      html.style.msOverflowStyle = '';
+      html.style.scrollbarWidth = '';
+      if (style && document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -106,13 +152,40 @@ export default function LoginPage() {
   return (
     <div className="relative">
       {isRedirecting && <LoadingOverlay message="Redirecting to secure login..." />}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .login-scroll-container::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          background: transparent !important;
+        }
+        .login-scroll-container {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+        .login-content-wrapper > div {
+          padding-bottom: 0 !important;
+          margin-bottom: 0 !important;
+        }
+      `}} />
 
       <div
-        className="bg-[#272052] flex min-h-screen flex-row justify-center w-full overflow-y-auto overflow-x-hidden scroll-smooth "
+        className="bg-[#272052] flex flex-row justify-center w-full overflow-y-auto overflow-x-hidden scroll-smooth scrollbar-hide login-scroll-container"
+        style={{
+          overscrollBehavior: 'none',
+          overscrollBehaviorY: 'none',
+          WebkitOverflowScrolling: 'touch',
+          height: '100vh',
+          maxHeight: '100vh',
+          position: 'relative',
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none'
+        }}
         data-model-id="363:24235"
       >
-        <div className="bg-[#272052] w-full flex justify-center ">
-          <div className="relative w-[904px] -top-32">
+        <div className="bg-[#272052] w-full flex justify-center pb-0 mb-0 login-content-wrapper" style={{ paddingBottom: 0, marginBottom: 0 }}>
+          <div className="relative w-[904px] -top-32 pb-0 mb-0" style={{ paddingBottom: 0, marginBottom: 0, height: '900px' }}>
             <div className="absolute w-[358px] h-[358px] top-0 left-[229px] bg-[#af7de6] rounded-[179px] blur-[250px]" />
 
             <div className="absolute w-[904px] h-[700px] top-[184px] left-0">
@@ -121,7 +194,7 @@ export default function LoginPage() {
 
                 <div className="absolute w-[397px] h-[397px] top-[330px] left-0 rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(196,86,71,1)_0%,rgba(210,90,99,0)_100%)] opacity-[0.58]" />
 
-                <div className="absolute w-[440px] h-[770px] top-[70px]  rounded-tl-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
+                <div className="absolute w-[440px] h-[720px] top-[70px] rounded-tl-[59px] rounded-tr-[59px] backdrop-blur-2xl backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(40px)_brightness(100%)] [background:radial-gradient(50%_50%_at_68%_49%,rgba(179,121,223,0.2)_0%,rgba(204,88,84,0.02)_77%,rgba(179,121,223,0.2)_100%)]" />
 
                 <div className="absolute w-[397px] h-[397px] top-0 left-[507px] rounded-[198.5px] [background:radial-gradient(50%_50%_at_50%_50%,rgba(179,121,223,1)_0%,rgba(54,0,96,0)_100%)] opacity-[0.58]" />
               </div>
@@ -301,7 +374,7 @@ export default function LoginPage() {
               height={96}
             />
 
-            <div className="flex flex-col w-[303px] mt-2 items-start gap-[30px] absolute top-[755px] left-1/2 transform -translate-x-1/2">
+            <div className="flex flex-col w-[303px] mt-2 items-start gap-[30px] absolute top-[755px] left-1/2 transform -translate-x-1/2 pb-0 mb-0">
               <div className="flex flex-col items-center gap-[18px] relative self-stretch w-full flex-[0_0_auto]">
                 <div className="relative w-[305px] h-[17px] mr-[-2.00px]">
                   <div className="absolute top-0 left-[116px] [font-family:'Poppins',Helvetica] font-medium text-[#b5b5b5] text-[11.2px] tracking-[0] leading-[normal]">

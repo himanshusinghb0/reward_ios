@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { fetchUserData } from "@/lib/redux/slice/gameSlice";
@@ -277,22 +276,12 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
   const filteredDownloadedGames = filterGamesBySearch(downloadedGames, searchQuery);
 
   return (
-    <div className={`flex flex-col max-w-[335px] w-full mx-auto items-start gap-8 relative ${showSearch ? 'top-[180px]' : 'top-[130px]'}`}>
+    <div className={`flex flex-col w-full items-start gap-8 relative px-5 ${showSearch ? 'top-[180px]' : 'top-[134px]'}`}>
       {/* ==================== DOWNLOADED GAMES SECTION ==================== */}
-      <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto]">
+      <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto] max-w-sm mx-auto">
         <div className="flex flex-col w-full items-start gap-[49px] relative flex-[0_0_auto]">
-          <div className="inline-flex items-center gap-0.5 relative flex-[0_0_auto]">
-            <Image
-              className="relative w-5 h-5"
-              alt={downloadedGames.length > 0 ? "Badge check" : "Games icon"}
-              src={downloadedGames.length > 0
-                ? "https://c.animaapp.com/3mn7waJw/img/badgecheck.svg"
-                : "https://c.animaapp.com/3mn7waJw/img/gamepad.svg"
-              }
-              width={20}
-              height={20}
-            />
-            <div className="relative w-fit mt-[-1.00px] [font-family:'Poppins',Helvetica] font-medium text-[#4bba56] text-base tracking-[0] leading-[normal]">
+          <div className="relative flex-[0_0_auto]">
+            <div className="relative w-fit [font-family:'Poppins',Helvetica] font-medium text-[#4bba56] text-base tracking-[0] leading-[normal]">
               {downloadedGames.length > 0 ? "Downloaded" : "Downloaded Games"}
             </div>
           </div>

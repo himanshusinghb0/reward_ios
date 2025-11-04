@@ -110,7 +110,14 @@ const Leadership = () => {
                         <div className="flex flex-col w-[154px] gap-2 absolute top-[196px] left-0">
                             <div className="flex flex-col gap-1">
                                 <h4 className="font-semibold text-white text-base">
-                                    {(game.details?.name || game.name || game.title || "Game").split(' : ')[0]}
+                                    {(() => {
+                                        const title = game?.title || game?.details?.name;
+                                        // Remove "Android" text from the title
+                                        return title
+                                            .replace(/\s*Android\s*/gi, '') // Removes "Android"
+                                            .replace(/-/g, ' ')             // Replaces all hyphens with a space
+                                            .trim();
+                                    })()}
                                 </h4>
 
                                 <div className="w-[120px] h-[37px] rounded-[10px]  mb-6 overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)] flex items-center pl-2">

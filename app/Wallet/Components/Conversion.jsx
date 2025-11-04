@@ -200,12 +200,13 @@ export const Conversion = () => {
                 >
                     {/* Editable Coin Input Field */}
                     <div
-                        className={`relative h-[53px] flex items-center rounded-[8px] bg-[#1F1F1F] border px-3 transition-all duration-200 ${flowState === 'idle'
+                        className={`relative h-[53px] flex items-center justify-center gap-1.5 rounded-[8px] border px-3 transition-all duration-200 ${flowState === 'idle'
                             ? 'border-[#3C3C3C] hover:border-purple-500/50 focus-within:border-purple-500'
                             : 'border-[#3C3C3C] opacity-50'
                             }`}
                         style={{
-                            width: `${Math.max(80, Math.min(coinAmount.length * 14 + 50, 150))}px`
+                            width: `${Math.max(80, Math.min(coinAmount.length * 14 + 50, 150))}px`,
+                            background: 'linear-gradient(to right, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.15) 20%, rgba(0, 0, 0, 0.9) 100%)',
                         }}
                     >
                         <input
@@ -220,7 +221,7 @@ export const Conversion = () => {
                                     setCoinAmount(value || "1");
                                 }
                             }}
-                            className="w-full bg-transparent text-white text-[13px] outline-none text-center font-medium [appearance:none] [-webkit-appearance:none] [-moz-appearance:textfield]"
+                            className="bg-transparent text-white text-[13px] outline-none text-center font-medium [appearance:none] [-webkit-appearance:none] [-moz-appearance:textfield]"
                             placeholder="1"
                             disabled={flowState !== 'idle'}
                             style={{
@@ -229,7 +230,7 @@ export const Conversion = () => {
                             }}
                         />
                         <img
-                            className="w-[23px] h-[23px] ml-2 flex-shrink-0"
+                            className="w-[23px] h-[23px] flex-shrink-0"
                             alt="Coin"
                             src="https://c.animaapp.com/GgG4W9O5/img/image-3937@2x.png"
                         />
@@ -244,14 +245,15 @@ export const Conversion = () => {
 
                     {/* Second field: conversionAmount (Output result) */}
                     <div
-                        className={`relative h-[53px] flex items-center rounded-[8px] bg-[#1F1F1F] border px-3 transition-all duration-200 ${flowState === 'idle'
+                        className={`relative h-[53px] flex items-center rounded-[8px] border px-3 transition-all duration-200 ${flowState === 'idle'
                             ? 'border-[#3C3C3C] hover:border-purple-500/50 focus-within:border-purple-500'
                             : 'border-[#3C3C3C] opacity-50'
                             }`}
                         role="textbox"
                         aria-label="Converted amount"
                         style={{
-                            width: `${Math.max(80, Math.min(conversionAmount.length * 8 + 50, 120))}px`
+                            width: `${Math.max(80, Math.min(conversionAmount.length * 8 + 50, 120))}px`,
+                            background: 'linear-gradient(to right, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.15) 20%, rgba(0, 0, 0, 0.9) 100%)',
                         }}
                     >
                         <span
@@ -265,12 +267,15 @@ export const Conversion = () => {
 
                     {/* Currency Display (Static USD) */}
                     <div
-                        className={`relative h-[53px] w-[85px] flex items-center rounded-[8px] bg-[#1F1F1F] border px-3 transition-all duration-200 ${flowState === 'idle'
+                        className={`relative h-[53px] w-[85px] flex items-center rounded-[8px] border px-3 transition-all duration-200 ${flowState === 'idle'
                             ? 'border-[#3C3C3C] hover:border-purple-500/50'
                             : 'border-[#3C3C3C] opacity-50'
                             }`}
                         role="textbox"
                         aria-label="Target currency"
+                        style={{
+                            background: 'linear-gradient(to right, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.15) 20%, rgba(0, 0, 0, 0.9) 100%)',
+                        }}
                     >
                         <span className="[font-family:'Poppins',Helvetica] font-normal text-white text-[13px] tracking-[0] leading-[normal] text-center w-full">
                             USD

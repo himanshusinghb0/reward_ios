@@ -60,7 +60,7 @@ export const QuestCard = ({ game }) => {
     return (
         <>
             <div
-                className="relative w-[334px] h-[432px] mx-auto bg-[#7920cf] rounded-[20px] overflow-hidden shadow-lg"
+                className="relative w-[334px] h-[420px] mx-auto bg-[#7920cf] rounded-[20px] overflow-hidden shadow-lg"
                 data-model-id="2630:14132"
             >
                 <div className="absolute top-[142px] left-px w-[334px] h-[290px] bg-[#982fbb] rounded-[0px_0px_20px_20px]" />
@@ -76,16 +76,16 @@ export const QuestCard = ({ game }) => {
                     <>
                         <div className="absolute top-[102px] -left-px w-[334px] h-12 bg-[#80279e]" />
 
-                        <div className={`absolute top-[106px] left-[172px] w-[122px] h-[37px] flex items-center justify-center rounded-[10px] overflow-hidden ${isExpired
+                        <div className={`absolute top-[106px] left-[172px] w-[100px] h-[37px] flex items-center justify-center rounded-[10px] text-[16px] font-medium overflow-hidden ${isExpired
                             ? 'bg-[linear-gradient(107deg,rgba(255,0,0,0.8)_0%,rgba(139,0,0,1)_100%)]'
                             : 'bg-[linear-gradient(107deg,rgba(200,117,251,1)_0%,rgba(16,4,147,1)_100%)]'
                             }`}>
-                            <div className="[font-family:'Poppins',Helvetica] font-medium text-white text-sm tracking-[0] leading-[normal] text-center">
+                            <div className="[font-family:'Poppins',Helvetica] font-medium text-white text-sm tracking-[0]  text-[16px] leading-[normal] text-center">
                                 {isLoading ? 'Loading...' : (isExpired ? 'EXPIRED' : formatTime)}
                             </div>
                         </div>
 
-                        <div className="absolute top-[113px] left-[51px] [font-family:'Poppins',Helvetica] font-normal text-white text-sm tracking-[0] leading-6 whitespace-nowrap">
+                        <div className="absolute top-[113px] left-[51px] [font-family:'Poppins',Helvetica] font-normal text-white text-[16px]  tracking-[0] leading-6 whitespace-nowrap">
                             Quest ends in:
                         </div>
                     </>
@@ -110,23 +110,25 @@ export const QuestCard = ({ game }) => {
                 <div className="absolute top-[38px] left-[90px] w-[155px] h-[37px] flex items-center justify-center">
                     <span className="[font-family:'Poppins',Helvetica] font-bold text-white text-lg tracking-[0] leading-[normal] text-center">
                         {(() => {
-                            const title = game?.title || game?.details?.name || "BINGO BLITZ";
+                            const title = game?.title || game?.details?.name;
                             // Remove "Android" text from the title
-                            return title.replace(/\s*Android\s*/gi, '').trim();
+                            return title
+                                .replace(/\s*Android\s*/gi, '') // Removes "Android"
+                                .replace(/-/g, ' ')             // Replaces all hyphens with a space
+                                .trim();
                         })()}
                     </span>
                 </div>
-
                 {questItems.map((quest, index) => (
                     <div
                         key={quest.id}
-                        className="flex items-center justify-center absolute left-1/2 transform -translate-x-1/2"
+                        className="flex items-center justify-center absolute left-1/2 -translate-x-1/2"
                         style={{ top: `${158 + index * 87}px` }}
                     >
                         <div
                             className={`relative w-[304px] h-[75px] px-2 ${quest.hasBorder ? "border-b [border-bottom-style:solid] border-[#cacaca80]" : ""}`}
                         >
-                            <div className="flex w-[14.14%] h-[57.33%] items-center justify-around gap-[12.59px] px-[12.59px] py-[10.49px] absolute top-[14.00%] left-0 bg-[#4a347a] rounded-[50px] shadow-[0px_4px_4px_#00000040]">
+                            <div className="flex w-[14.14%] mt-[1px] h-[57.33%] items-center justify-around gap-[12.59px] px-[12.59px] py-[10.49px] absolute top-[14.00%] left-0 bg-[#4a347a] rounded-[50px] shadow-[0px_4px_4px_#00000040]">
                                 {quest.status === "Pending" ? (
                                     <div className="flex w-[43px] h-[43px] items-center justify-around gap-[12.59px] px-[12.59px] py-[10.49px] absolute top-0 left-0.5 bg-[#2f344a] rounded-[104.88px]">
                                         <div className="absolute top-px -left-0.5 w-[43px] h-[43px]">
@@ -135,7 +137,7 @@ export const QuestCard = ({ game }) => {
                                                 alt="Lock"
                                                 src="https://c.animaapp.com/FYtIEbRF/img/image-3943@2x.png"
                                             />
-                                            <div className="absolute top-0 left-0 w-[43px] h-[43px] bg-[#d6d6d680] rounded-[21.5px]" />
+                                            <div className="absolute top-0 left-[1px] w-[44px] h-[44px] bg-[#d6d6d680] rounded-[21.5px]" />
                                         </div>
                                     </div>
                                 ) : (
@@ -146,7 +148,7 @@ export const QuestCard = ({ game }) => {
                             </div>
 
                             <p
-                                className={`absolute ${quest.isLocked ? "w-[50%] h-[48.00%]" : "w-[50%] h-[29.33%]"} top-[9.33%] left-[18%]  mt-2 [font-family:'Poppins',Helvetica] font-bold text-white text-sm tracking-[0.02px] leading-[normal] break-words text-center flex items-center justify-center`}
+                                className={`absolute ${quest.isLocked ? "w-[50%] h-[48.00%]" : "w-[50%] h-[29.33%]"} top-1/2 left-[18%] transform -translate-y-1/2 [font-family:'Poppins',Helvetica] font-bold text-white text-sm tracking-[0.02px] leading-[normal] break-words text-center flex items-center justify-center`}
                             >
                                 {quest.title}
                             </p>

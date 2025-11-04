@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { CoinInfoModal } from "./CoinInfoModal";
 import { OptInModal } from "./OptInModal";
 import { transferGameEarnings } from "../../../lib/api";
+import { fetchWalletTransactions, fetchFullWalletTransactions } from "@/lib/redux/slice/walletTransactionsSlice";
 
 
 export const Coin = ({
@@ -30,6 +31,8 @@ export const Coin = ({
     // Get authentication data from AuthContext
     const { token } = useAuth();
     const router = useRouter();
+    const dispatch = useDispatch();
+
 
     // Progressive reward system based on task completion groups
     const calculateProgressiveRewards = (completedTasks) => {
@@ -75,12 +78,11 @@ export const Coin = ({
 
     const availableXP = availableGroups * 50;
 
-    const maxCoins = rewardData.totalCoins;
-    const coinProgressPercentage = maxCoins > 0 ? (sessionCoins / maxCoins) * 100 : 0;
+    const taskProgressPercentage = rewardData.nextGroupTarget > 0
+        ? (rewardData.nextGroupProgress / rewardData.nextGroupTarget) * 100
+        : 0;
 
-    // Estimate max XP based on coin value (10% rule)
-    const maxXP = maxCoins > 0 ? Math.floor(maxCoins * 0.1) : 0;
-    const xpProgressPercentage = maxXP > 0 ? (sessionXP / maxXP) * 100 : 0;
+    const finalProgressPercentage = locallyClaimed || availableGroups > 0 ? 100 : taskProgressPercentage;
 
     /**
      * Get simple user-friendly error message
@@ -173,6 +175,18 @@ export const Coin = ({
             // Update claimed groups count
             setClaimedGroups(claimedGroups + availableGroups);
 
+            // Refresh transaction history immediately after reward claim
+            try {
+                await Promise.all([
+                    dispatch(fetchWalletTransactions({ token, limit: 5 })),
+                    dispatch(fetchFullWalletTransactions({ token, page: 1, limit: 20, type: "all" }))
+                ]);
+                console.log("✅ Transaction history refreshed after reward claim");
+            } catch (transactionError) {
+                console.warn("⚠️ Failed to refresh transaction history:", transactionError);
+                // Don't throw error - reward was still claimed successfully
+            }
+
             // Show success message with better UI
             setShowSuccessMessage(true);
 
@@ -254,49 +268,45 @@ export const Coin = ({
                         alt="Level icon"
                         src="https://c.animaapp.com/WucpRujl/img/pic.svg"
                     />
-
-
                 </div>
 
-                <div
-                    className="w-[52.20%] h-[5.50%] top-[42.54%] left-[5.28%] bg-gray-700 rounded-full overflow-hidden relative"
-                    role="progressbar"
-                    aria-valuenow={locallyClaimed ? claimedCoins : availableCoins}
-                    aria-valuemin={0}
-                    aria-valuemax={maxCoins}
-                    aria-label={`Coin Progress: $${locallyClaimed ? claimedCoins.toFixed(2) : availableCoins.toFixed(2)} out of $${maxCoins.toFixed(2)}`}
-                >
+                {/* --- **MODIFIED** Progress Bar --- */}
+                {/* MODIFIED: Increased left and right padding to shorten the bar's length */}
+                <div className="absolute top-[90px] left-6 right-30 my-1">
                     <div
-                        className={`h-full rounded-full transition-all duration-500 ease-out ${locallyClaimed
-                            ? 'bg-gradient-to-r from-green-400 to-green-500'
-                            : 'bg-gradient-to-r from-[#80e76a] to-[#4ade80]'
-                            }`}
-                        style={{ width: `${locallyClaimed ? 100 : Math.min((availableCoins / maxCoins) * 100, 100)}%` }}
-                    />
-
-                    {/* Circular Progress Indicator */}
-                    <div
-                        className={`absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-xl border-3 transform -translate-y-1/2 -translate-x-1/2 z-10 ${locallyClaimed ? 'border-green-400' : 'border-[#80e76a]'
-                            }`}
-                        style={{
-                            left: `${locallyClaimed ? 100 : Math.min((availableCoins / maxCoins) * 100, 100)}%`,
-                            boxShadow: locallyClaimed
-                                ? '0 6px 12px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(34, 197, 94, 0.3)'
-                                : '0 6px 12px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(128, 231, 106, 0.3)'
-                        }}
+                        className="relative w-full"
+                        role="progressbar"
+                        aria-valuenow={rewardData.nextGroupProgress}
+                        aria-valuemin={0}
+                        aria-valuemax={rewardData.nextGroupTarget}
+                        aria-label={`Task Progress: ${rewardData.nextGroupProgress} of ${rewardData.nextGroupTarget} tasks completed for next reward.`}
                     >
-                        {/* Inner glow effect */}
-                        <div className="absolute inset-1 bg-gradient-to-br from-white to-gray-100 rounded-full"></div>
+                        {/* 1. Background Track */}
+                        {/* MODIFIED: Reduced height from h-5 to h-3 to make it thinner */}
+                        <div className="w-full h-4 bg-[#373737] rounded-full border border-gray-700">
+                            {/* 2. Dynamic Progress Fill */}
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-[#25D42D] to-[#9DEF0F] transition-all duration-500 ease-out"
+                                style={{ width: `${finalProgressPercentage}%` }}
+                            />
+                        </div>
 
-                        {/* Top and bottom extending lines */}
-                        <div className="absolute top-0 left-1/2 w-0.5 h-2 bg-[#80e76a] transform -translate-x-1/2 -translate-y-full"></div>
-                        <div className="absolute bottom-0 left-1/2 w-0.5 h-2 bg-[#80e76a] transform -translate-x-1/2 translate-y-full"></div>
-
-                        {/* Side extending lines */}
-                        <div className="absolute top-1/2 left-0 w-2 h-0.5 bg-[#80e76a] transform -translate-y-1/2 -translate-x-full"></div>
-                        <div className="absolute top-1/2 right-0 w-2 h-0.5 bg-[#80e76a] transform -translate-y-1/2 translate-x-full"></div>
+                        {/* 3. Dynamic Thumb/Indicator */}
+                        {/* MODIFIED: Reduced thumb size from w-8 h-8 to w-6 h-6 for proportion */}
+                        <div
+                            className="absolute top-1/2 w-7 h-7 rounded-full bg-[#25D42D] flex items-center justify-center transition-all duration-500 ease-out"
+                            style={{
+                                left: `${finalProgressPercentage}%`,
+                                transform: 'translate(-50%, -50%)'
+                            }}
+                        >
+                            {/* 4. Inner White Circle of the Thumb */}
+                            {/* MODIFIED: Reduced inner circle size from w-5 h-5 to w-3 h-3 */}
+                            <div className="w-4 h-4 bg-white rounded-full" />
+                        </div>
                     </div>
                 </div>
+                {/* --- End of Modified Progress Bar --- */}
 
                 <button
                     onClick={() => setShowOptInModal(true)}
@@ -343,7 +353,7 @@ export const Coin = ({
                                     ? `🎉 Ready to claim $${availableCoins.toFixed(2)} + ${availableXP} XP from ${availableGroups} group${availableGroups > 1 ? 's' : ''}!`
                                     : sessionCoins > 0
                                         ? `💰 Complete ${rewardData.nextGroupTarget - rewardData.nextGroupProgress} more tasks to unlock the next reward group!`
-                                        : '🎯 Keep playing to earn coins and reach the next milestone!'}
+                                        : '*Complete level 3 to claim your reward.'}
                         </p>
 
                         {/* Progress indicator when coins are available but milestone not reached */}
@@ -376,7 +386,7 @@ export const Coin = ({
                                     >
                                         <div
                                             className="bg-gradient-to-r from-yellow-400 to-orange-400 h-full rounded-full transition-all duration-500"
-                                            style={{ width: `${Math.min((availableCoins / (availableCoins + 10)) * 100, 100)}%` }}
+                                            style={{ width: `${availableGroups > 0 ? 100 : 0}%` }}
                                         />
                                     </div>
                                     <span

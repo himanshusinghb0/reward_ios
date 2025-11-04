@@ -9,6 +9,7 @@ import { BigRewardAnimation } from "./BigRewardAnimation";
 export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onClaimReward }) => {
     const [error, setError] = useState(null);
     const [showBigRewardAnimation, setShowBigRewardAnimation] = useState(false);
+    const [claimingDay, setClaimingDay] = useState(null);
 
     // Memoized reward configuration
     const getRewardConfig = useCallback((status, dayNumber, isBigRewardEligible = false) => {
@@ -274,6 +275,66 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
         return dailyRewards.length >= 7 ? dailyRewards[6] : null;
     }, [dailyRewards]);
 
+    // Calculate which day should show the timer (only ONE day should show timer)
+    const nextUnlockableDay = useMemo(() => {
+        if (!isCurrentWeek || isFutureWeek || !weekData?.days || !Array.isArray(weekData.days)) {
+            return null;
+        }
+
+        // Only show timer if we have countdown data
+        const hasCountdownData = weekData?.countdown && weekData.countdown > 0;
+        if (!hasCountdownData) return null;
+
+        const today = new Date();
+        const weekStart = new Date(weekData.weekStart);
+
+        // Find the last claimed day
+        let lastClaimedDay = 0;
+        for (let dayNum = 1; dayNum <= 7; dayNum++) {
+            const dayData = weekData.days.find(day => day.dayNumber === dayNum);
+            if (dayData && dayData.status === 'claimed') {
+                lastClaimedDay = dayNum;
+            }
+        }
+
+        // If no day is claimed yet, timer should show on day 1 if it's locked
+        if (lastClaimedDay === 0) {
+            const day1Data = weekData.days.find(day => day.dayNumber === 1);
+            const day1Date = new Date(weekStart);
+            const isDay1Future = day1Date > today;
+            if (day1Data && (day1Data.status === 'locked' || isDay1Future)) {
+                return 1;
+            }
+            return null;
+        }
+
+        // Timer should show on the NEXT day after the last claimed day
+        const nextDayNumber = lastClaimedDay + 1;
+
+        // If next day is day 7, check if it's locked
+        if (nextDayNumber === 7) {
+            const day7Data = weekData.days.find(day => day.dayNumber === 7);
+            if (day7Data && day7Data.status === 'locked') {
+                return 7;
+            }
+            return null;
+        }
+
+        // For days 1-6, check if the next day exists and is locked
+        if (nextDayNumber <= 6) {
+            const nextDayData = weekData.days.find(day => day.dayNumber === nextDayNumber);
+            const nextDayDate = new Date(weekStart);
+            nextDayDate.setDate(nextDayDate.getDate() + (nextDayNumber - 1));
+            const isNextDayFuture = nextDayDate > today;
+
+            if (nextDayData && (nextDayData.status === 'locked' || isNextDayFuture)) {
+                return nextDayNumber;
+            }
+        }
+
+        return null;
+    }, [isCurrentWeek, isFutureWeek, weekData]);
+
     // Handle big reward animation (AC7: Only if days 1-6 were all claimed)
     const handleBigRewardAnimation = useCallback(() => {
         if (isBigRewardEligible && day7Data?.status === 'claimable') {
@@ -288,7 +349,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
     }, [weekData]);
 
     // Handle claim click with error handling
-    const handleClaimClick = useCallback((dayNumber) => {
+    const handleClaimClick = useCallback(async (dayNumber) => {
         try {
             if (dayNumber >= 1 && dayNumber <= 7) {
                 // Check if viewing future week
@@ -311,15 +372,29 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                     return;
                 }
 
-                onClaimReward(dayNumber);
+                // Set claiming state
+                setClaimingDay(dayNumber);
+                setError(null);
 
-                // Trigger big reward animation if claiming day 7 and eligible
-                if (dayNumber === 7 && isBigRewardEligible) {
-                    handleBigRewardAnimation();
+                try {
+                    await onClaimReward(dayNumber);
+
+                    // Trigger big reward animation if claiming day 7 and eligible
+                    if (dayNumber === 7 && isBigRewardEligible) {
+                        handleBigRewardAnimation();
+                    }
+                } catch (claimError) {
+                    setError(claimError.message || "Failed to claim reward");
+                } finally {
+                    // Clear claiming state after a short delay to show the transition
+                    setTimeout(() => {
+                        setClaimingDay(null);
+                    }, 500);
                 }
             }
         } catch (err) {
             setError(err.message);
+            setClaimingDay(null);
         }
     }, [onClaimReward, isBigRewardEligible, handleBigRewardAnimation, weekData, shouldLockReward, shouldMarkAsMissed, isFutureWeek]);
 
@@ -330,44 +405,16 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
         return (
             <div
                 key={reward.day}
-                className={`relative w-40 h-[170px] rounded-[21.82px] overflow-hidden ${reward.bgColor}`}
+                className={`relative w-40 h-[170px] rounded-[21.82px] overflow-hidden ${reward.bgColor} ${reward.status === 'claimable' && !reward.isLocked && !reward.isMissed && !reward.isFutureWeek ? 'shadow-[0_0_20px_rgba(168,85,247,0.6),0_0_10px_rgba(168,85,247,0.4)]' : ''}`}
             >
-                {/* Timer Badge for next day unlock (AC6) - Show on NEXT day after claiming current day */}
-                {(() => {
-                    // Only show timer for current week, not future weeks
-                    if (!isCurrentWeek || isFutureWeek) return null;
-
-                    const today = new Date();
-                    const weekStart = new Date(weekData.weekStart);
-                    const dayDate = new Date(weekStart);
-                    dayDate.setDate(dayDate.getDate() + (reward.day - 1));
-
-                    // Check if this is a future day (next day or later)
-                    const isFutureDay = dayDate > today;
-
-                    // Check if this day is locked
-                    const isLocked = reward.status === 'locked';
-
-                    // Check if previous day was claimed (to show timer on next day)
-                    const previousDay = weekData?.days?.find(day => day.dayNumber === reward.day - 1);
-                    const previousDayClaimed = previousDay?.status === 'claimed';
-
-                    // Only show timer if we have countdown data
-                    const hasCountdownData = weekData?.countdown && weekData.countdown > 0;
-
-                    // Show timer for next day after claiming current day
-                    // OR for day 7 if it's locked and day 6 was claimed
-                    const showTimer = (isFutureDay && isLocked && hasCountdownData) ||
-                        (reward.day === 7 && isLocked && previousDayClaimed && hasCountdownData);
-
-                    return showTimer && (
-                        <TimerBadge
-                            nextUnlockTime={reward.nextUnlockTime}
-                            isClaimed={false}
-                            countdown={weekData?.countdown}
-                        />
-                    );
-                })()}
+                {/* Timer Badge - Show ONLY on the next unlockable day */}
+                {isCurrentWeek && !isFutureWeek && nextUnlockableDay === reward.day && (
+                    <TimerBadge
+                        nextUnlockTime={reward.nextUnlockTime}
+                        isClaimed={false}
+                        countdown={weekData?.countdown}
+                    />
+                )}
 
                 {/* Missed Day Indicator - Red cross for missed days (AC4) */}
                 <MissedDayIndicator isMissed={reward.status === 'missed'} />
@@ -389,7 +436,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
 
                 <MemoizedButton
                     onClick={() => handleClaimClick(reward.day)}
-                    disabled={reward.status !== 'claimable' || reward.isLocked || reward.isMissed || reward.isFutureWeek}
+                    disabled={reward.status !== 'claimable' || reward.isLocked || reward.isMissed || reward.isFutureWeek || claimingDay === reward.day}
                     className={`w-[166px] ${reward.buttonBg} absolute top-[126px] left-0 h-11 rounded-[0px_0px_3.13px_3.13px] overflow-hidden ${reward.status === 'claimable' && !reward.isLocked && !reward.isMissed && !reward.isFutureWeek
                         ? 'cursor-pointer'
                         : 'cursor-not-allowed opacity-75'
@@ -403,14 +450,24 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                     />
 
                     <div
-                        className={`absolute top-[13px] left-[calc(50.00%_-_31px)] [font-family:'Poppins',Helvetica] font-medium ${reward.buttonTextColor} text-sm tracking-[0] leading-[18.8px] whitespace-nowrap text-center`}
+                        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 [font-family:'Poppins',Helvetica] font-medium ${reward.buttonTextColor} text-sm tracking-[0] leading-[18.8px] whitespace-nowrap text-center flex items-center gap-2 justify-center`}
                     >
-                        {reward.buttonText}
+                        {claimingDay === reward.day ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Claiming...</span>
+                            </>
+                        ) : (
+                            reward.buttonText
+                        )}
                     </div>
                 </MemoizedButton>
             </div>
         );
-    }, [handleClaimClick]);
+    }, [handleClaimClick, claimingDay, nextUnlockableDay, isCurrentWeek, isFutureWeek, weekData?.countdown]);
 
     // Handle missing or invalid data
     if (!weekData || !weekData.days || !Array.isArray(weekData.days)) {
@@ -428,7 +485,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
 
     return (
         <section
-            className="flex flex-col w-full max-w-[335px] items-center gap-4 px-4 py-4 pb-8"
+            className="flex flex-col w-full max-w-[335px] items-center gap-4 px-4 py-4 pb-12"
             aria-label="Daily Rewards"
         >
             {/* Streak Progress Bar */}
@@ -489,48 +546,57 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
 
             {/* Day 7 Big Reward */}
             {day7Data && (
-                <article className={`relative w-full max-w-[335px] h-[170px] rounded-[21.82px] overflow-hidden ${day7Data.status === 'claimed'
+                <article className={`relative w-full max-w-[335px] h-[170px] rounded-[21.82px] overflow-hidden mb-6 ${day7Data.status === 'claimed'
                     ? "bg-[linear-gradient(180deg,rgba(18,24,60,1)_0%,rgba(18,24,60,1)_100%)]"
                     : day7Data.status === 'missed'
                         ? "bg-[linear-gradient(180deg,rgba(18,24,60,1)_0%,rgba(18,24,60,1)_100%)]"
                         : "bg-[linear-gradient(180deg,rgba(18,24,60,1)_0%,rgba(18,24,60,1)_100%)]"
                     }`}>
 
+                    {/* Timer Badge - Show ONLY on Day 7 if it's the next unlockable day */}
+                    {isCurrentWeek && !isFutureWeek && nextUnlockableDay === 7 && (
+                        <TimerBadge
+                            nextUnlockTime={day7Data.nextUnlockTime}
+                            isClaimed={false}
+                            countdown={weekData?.countdown}
+                        />
+                    )}
+
                     {/* Display different content based on week type and bigRewardEligible */}
                     {isFutureWeek ? (
                         // Future Week - Show only golden treasure box
-                        <div className="absolute top-[calc(50.00%_-_62px)] left-[calc(50.00%_-_68px)] w-[136px] h-[88px] flex">
+                        <div className="absolute top-[calc(50.00%_-_50px)] left-1/2 transform -translate-x-1/2 w-[136px] h-[88px] flex items-center justify-center">
                             <MemoizedImage
-                                className="mt-[-4.4px] w-[92.41px] h-[92.41px] ml-[21.9px] object-cover"
+                                className="w-[92.41px] h-[92.41px] object-cover"
                                 alt="Future week treasure reward"
                                 src="https://c.animaapp.com/ciot1lOr/img/png-clipart-buried-treasure-treasure-miscellaneous-treasure-tran@2x.png"
                                 loading="lazy"
                             />
                         </div>
                     ) : isBigRewardEligible ? (
-                        // Big Reward Eligible - Show single golden chest (nudged further upward)
-                        <div className="absolute top-[calc(50.00%_-_62px)] left-[calc(50.00%_-_68px)] w-[136px] h-[88px] flex">
+                        // Big Reward Eligible - Show single golden chest (centered, moved down)
+                        <div className="absolute top-[calc(50.00%_-_50px)] left-1/2 -translate-x-1/2 w-[136px] h-[88px] flex items-center justify-center">
                             <MemoizedImage
-                                className="mt-[-4.4px] w-[92.41px] h-[92.41px] ml-[21.9px] object-cover"
+                                className="w-[92.41px] h-[92.41px] object-cover"
                                 alt="Big treasure reward"
                                 src="https://c.animaapp.com/ciot1lOr/img/png-clipart-buried-treasure-treasure-miscellaneous-treasure-tran@2x.png"
                                 loading="lazy"
                             />
                         </div>
                     ) : (
-                        // Big Reward NOT Eligible - Show golden chest with X → arrow → normal chest (nudged further upward and tighter gap)
-                        <div className="absolute top-[calc(50.00%_-_58px)] left-[166px] transform -translate-x-1/2 flex items-center justify-center gap-4 w-[320px]">
+                        // Big Reward NOT Eligible - Show golden chest with X → arrow → normal chest (centered)
+                        <div className="absolute top-[calc(50.00%_-_58px)] left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-4 w-full max-w-[320px] px-2">
                             {/* Golden chest with red X */}
-                            <div className="relative w-[96px] h-[96px] -mt-2 flex-shrink-0">
+                            <div className="relative w-[96px] h-[96px] flex-shrink-0 flex items-center justify-center">
                                 <MemoizedImage
                                     className="w-full h-full object-contain"
                                     alt="Cancelled big reward"
                                     src="https://c.animaapp.com/ciot1lOr/img/png-clipart-buried-treasure-treasure-miscellaneous-treasure-tran@2x.png"
                                     loading="lazy"
                                 />
-                                {/* Red X overlay with custom SVG */}
+                                {/* Red X overlay with custom SVG - centered */}
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg width="44" height="33" viewBox="0 0 44 33" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10">
+                                    <svg width="44" height="33" viewBox="0 0 44 33" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[44px] h-[33px]">
                                         <g filter="url(#filter0_dd_2035_6990)">
                                             <path d="M3.03229 2.47884C3.09565 1.64458 3.79104 1 4.62769 1H41.2295C42.1609 1 42.8955 1.79244 42.8249 2.72117L40.9234 27.7594C40.86 28.5937 40.1646 29.2383 39.328 29.2383H2.72612C1.79473 29.2383 1.06018 28.4458 1.13072 27.5171L3.03229 2.47884Z" fill="#E6311F" />
                                             <path d="M41.2295 0.700195C42.3355 0.700195 43.2078 1.64128 43.124 2.74414L41.2227 27.7822C41.1474 28.7728 40.3216 29.538 39.3281 29.5381H2.72656C1.62053 29.5381 0.748273 28.597 0.832031 27.4941L2.7334 2.45605C2.80868 1.46542 3.63443 0.700195 4.62793 0.700195H41.2295Z" stroke="black" strokeWidth="0.6" />
@@ -574,14 +640,14 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                             </div>
 
                             {/* Better looking arrow */}
-                            <div className="flex items-center justify-center -mt-2">
-                                <svg className="w-16 h-8 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="flex items-center justify-center flex-shrink-0">
+                                <svg className="w-16 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
                             </div>
 
                             {/* Normal green chest - no background */}
-                            <div className="w-[110px] h-[110px] -mt-2 flex-shrink-0">
+                            <div className="w-[96px] h-[96px] flex-shrink-0 flex items-center justify-center">
                                 <MemoizedImage
                                     className="w-full h-full object-contain"
                                     alt="Normal reward"
@@ -607,7 +673,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
 
                     <MemoizedButton
                         onClick={() => handleClaimClick(7)}
-                        disabled={day7Data.status !== 'claimable' || day7Data.isMissed || day7Data.isFutureWeek}
+                        disabled={day7Data.status !== 'claimable' || day7Data.isMissed || day7Data.isFutureWeek || claimingDay === 7}
                         className={`w-full ${day7Data.status === 'claimed'
                             ? "bg-[#2a2f50]"
                             : day7Data.status === 'missed'
@@ -615,7 +681,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                                 : day7Data.status === 'claimable'
                                     ? "bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)]"
                                     : "bg-[#ef890f4c]"
-                            } absolute top-[126px] left-0 h-11 rounded-[0px_0px_3.13px_3.13px] overflow-hidden ${day7Data.status === 'claimable' && !day7Data.isMissed && !day7Data.isFutureWeek
+                            } absolute top-[126px] left-0 h-11 rounded-[0px_0px_3.13px_3.13px] overflow-hidden ${day7Data.status === 'claimable' && !day7Data.isMissed && !day7Data.isFutureWeek && claimingDay !== 7
                                 ? 'cursor-pointer'
                                 : 'cursor-not-allowed opacity-75'
                             }`}
@@ -627,23 +693,32 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                             src="https://c.animaapp.com/ciot1lOr/img/clip-path-group-6@2x.png"
                         />
 
-                        <div className={`absolute top-[13px] left-[calc(50.00%_-_60px)] w-[120px] ${day7Data.status === 'claimed'
+                        <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${day7Data.status === 'claimed'
                             ? "text-[#8b92de]"
                             : day7Data.status === 'missed' || day7Data.isMissed
                                 ? "text-[#8b92de]"
                                 : day7Data.status === 'claimable'
                                     ? "text-white"
                                     : "text-[#ffffff66]"
-                            } text-[15.6px] [font-family:'Poppins',Helvetica] font-medium tracking-[0] leading-[18.8px] whitespace-nowrap text-center ${day7Data.status === 'claimable' && !day7Data.isMissed && !day7Data.isFutureWeek ? 'opacity-100' : 'opacity-40'
+                            } text-[15.6px] [font-family:'Poppins',Helvetica] font-medium tracking-[0] leading-[18.8px] whitespace-nowrap text-center flex items-center gap-2 justify-center ${day7Data.status === 'claimable' && !day7Data.isMissed && !day7Data.isFutureWeek ? 'opacity-100' : 'opacity-40'
                             }`}>
-                            {day7Data.status === 'claimed'
-                                ? (!isBigRewardEligible ? 'NORMAL REWARD CLAIMED' : 'CLAIMED')
-                                : day7Data.status === 'missed' || day7Data.isMissed
-                                    ? 'UNCLAIMED'
-                                    : day7Data.status === 'claimable' && !day7Data.isFutureWeek
-                                        ? 'CLAIM NOW'
-                                        : 'LOCKED'
-                            }
+                            {claimingDay === 7 ? (
+                                <>
+                                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Claiming...</span>
+                                </>
+                            ) : (
+                                day7Data.status === 'claimed'
+                                    ? (!isBigRewardEligible ? 'NORMAL REWARD CLAIMED' : 'CLAIMED')
+                                    : day7Data.status === 'missed' || day7Data.isMissed
+                                        ? 'UNCLAIMED'
+                                        : day7Data.status === 'claimable' && !day7Data.isFutureWeek
+                                            ? 'CLAIM NOW'
+                                            : 'LOCKED'
+                            )}
                         </div>
                     </MemoizedButton>
                 </article>

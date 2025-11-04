@@ -87,11 +87,11 @@ export const HighestEarningGame = () => {
             <section className="flex flex-col w-full max-w-[335px] justify-center items-start gap-2.5 mx-auto ">
                 <h3 className="font-semibold text-[#F4F3FC] text-[16px] opacity-[100%]">Highest Earning Games</h3>
                 <div
-                    className="flex items-center gap-[15px] w-full overflow-hidden pb-6"
+                    className="flex items-center gap-[15px] w-full overflow-hidden pb-4"
                 >
                     <div className="flex items-center gap-[15px] w-full">
                         {processedGames.length > 0 ? processedGames.map((game) => (
-                            <article key={game.id} className="relative w-40 h-[300px] flex-shrink-0 cursor-pointer hover:scale-105 transition-all duration-200" onClick={() => handleGameClick(game)}>
+                            <article key={game.id} className="relative w-40 min-h-[320px] flex-shrink-0 cursor-pointer hover:scale-105 transition-all duration-200" onClick={() => handleGameClick(game)}>
                                 <img
                                     className="absolute w-40 h-[180px] top-0 left-0 object-fit rounded-[20px]"
                                     src={game.image || game.square_image || '/placeholder-game.png'}
@@ -108,7 +108,7 @@ export const HighestEarningGame = () => {
 
                                         <div className="text-[#FFFFFF] mb-2 font-normal text-[13px]">{String(game.category || 'Action')}</div>
                                         <div
-                                            className="relative w-[154px] h-[70px] rounded-[10px] overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)]"
+                                            className="relative w-[154px] h-[60px] rounded-[10px] overflow-hidden bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)]"
                                             data-model-id="2255:6425"
                                             role="banner"
                                             aria-label="Earn rewards banner"
@@ -118,7 +118,7 @@ export const HighestEarningGame = () => {
                                             </div>
 
                                             <img
-                                                className="absolute w-[20px] h-[20px] top-[7px] left-[132px] aspect-[0.97]"
+                                                className="absolute w-[20px] h-[20px] top-[7px] left-[124px] aspect-[0.97]"
                                                 alt="Dollar coin icon"
                                                 src="/dollor.png"
                                             />

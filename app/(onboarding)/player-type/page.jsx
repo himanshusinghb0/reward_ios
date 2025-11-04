@@ -23,7 +23,7 @@ export default function PlayerTypeSelection() {
 
   return (
     <div className='relative w-screen h-screen bg-[#272052] overflow-hidden'>
-      <div className='absolute w-[300px] h-[300px] top-10 left-1/2 transform -translate-x-1/2 bg-[#af7de6] rounded-full blur-[150px] opacity-50' />
+      <div className='absolute w-[542px] h-[542px] top-0 left-0 bg-[#af7de6] rounded-full blur-[250px]' />
 
       <div className='relative w-full max-w-[375px] h-full mx-auto flex flex-col items-center px-6 pt-20 pb-6'>
         <div className='w-full max-w-sm flex flex-col items-center space-y-2'>

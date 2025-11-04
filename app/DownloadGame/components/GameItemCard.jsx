@@ -39,7 +39,8 @@ const GameItemCard = ({
     }
 
     // Clean game name - remove platform suffix after "-"
-    const cleanGameName = game.name.split(' - ')[0].trim();
+    // Clean game name: remove platform suffix after "-" or ":"
+    const cleanGameName = game.name.split(/[-:]/)[0].trim();
 
     // Get genre from game object
     const genre = game.genre || game.category || "Game";
@@ -116,9 +117,9 @@ const GameItemCard = ({
             </div>
 
             {/* Right Section - Download Button */}
-            <div className="flex-shrink-0 ml-5">
+            <div className="flex-shrink-0 ml-5 w-[110px] flex justify-end">
                 <button
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] cursor-pointer hover:opacity-90 transition-opacity"
+                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] cursor-pointer hover:opacity-90 transition-opacity min-w-[100px] h-[36px]"
                     type="button"
                     aria-label={`Download ${cleanGameName} game`}
                     onClick={(e) => {
@@ -131,12 +132,12 @@ const GameItemCard = ({
                     }}
                 >
                     <img
-                        className="w-[15px] h-[15px]"
+                        className="w-[15px] h-[15px] flex-shrink-0"
                         alt=""
                         src="https://c.animaapp.com/3btkjiTJ/img/download.svg"
                         aria-hidden="true"
                     />
-                    <span className="[font-family:'Poppins',Helvetica] font-normal text-white text-sm">
+                    <span className="[font-family:'Poppins',Helvetica] font-normal text-white text-sm whitespace-nowrap">
                         Download
                     </span>
                 </button>
