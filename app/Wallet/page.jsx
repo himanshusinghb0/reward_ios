@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import MyEarningCard from "./Components/MyEarningCard";
 import { HighestEarningGame } from "./Components/HighestEarningGame";
 import TransactionHistory from "./Components/TransactionHistory";
@@ -9,14 +9,17 @@ import { Conversion } from "./Components/Conversion";
 import { HomeIndicator } from "../../components/HomeIndicator";
 import WalletHeader from "./Components/WalletHeader";
 import SpinWin from "../myprofile/components/SpinWin";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useVipStatus } from "@/hooks/useVipStatus";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchProfileStats } from "@/lib/redux/slice/profileSlice";
+import { fetchWalletScreen } from "@/lib/redux/slice/walletTransactionsSlice";
 
 
 export default function WalletPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { token } = useAuth();
 
   const {
@@ -30,18 +33,56 @@ export default function WalletPage() {
 
 
   // Get wallet screen data from Redux store
-  const { walletScreen } = useSelector((state) => state.walletTransactions);
+  const { walletScreen, walletScreenStatus } = useSelector((state) => state.walletTransactions);
   const coinBalance = walletScreen?.wallet?.balance || 0;
   const balance = coinBalance || 0;
+
+  // Refresh wallet and balance data when page is visited (to get admin updates)
+  // Do this in background without blocking UI - show cached data immediately
+  useEffect(() => {
+    if (!token) return;
+
+    // Use setTimeout to refresh in background after showing cached data
+    // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+    const refreshTimer = setTimeout(() => {
+      console.log("🔄 [WalletPage] Refreshing wallet and balance data in background to get admin updates...");
+      dispatch(fetchWalletScreen({ token, force: true }));
+      dispatch(fetchProfileStats({ token, force: true }));
+    }, 100); // Small delay to let cached data render first
+
+    return () => clearTimeout(refreshTimer);
+  }, [token, dispatch]);
+
+  // Refresh when app comes to foreground
+  useEffect(() => {
+    if (!token) return;
+
+    const handleFocus = () => {
+      console.log("🔄 [WalletPage] App focused - refreshing wallet and balance to get admin updates");
+      dispatch(fetchWalletScreen({ token, force: true }));
+      dispatch(fetchProfileStats({ token, force: true }));
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [token, dispatch]);
 
   const handleVipUpgrade = () => {
     router.prefetch("/BuySubscription");
     router.push("/BuySubscription");
   };
 
-  const isLoading = detailsStatus === 'loading' || statsStatus === 'loading' || vipLoadingStatus === 'loading';
-  const hasFailed = detailsStatus === 'failed' || statsStatus === 'failed' || vipLoadingStatus === 'failed';
+  // Only show loading if we have NO cached data at all
+  // This allows showing cached data immediately while refreshing in background
+  const hasCachedData = walletScreen || statsStatus === 'succeeded' || detailsStatus === 'succeeded' || vipStatus;
+  const isLoading = !hasCachedData && (detailsStatus === 'loading' || statsStatus === 'loading' || walletScreenStatus === 'loading' || vipLoadingStatus === 'loading');
+  const hasFailed = detailsStatus === 'failed' || statsStatus === 'failed' || walletScreenStatus === 'failed' || vipLoadingStatus === 'failed';
 
+  // Only show loading screen if we have absolutely no data
+  // Otherwise, show cached data immediately and refresh in background
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex justify-center items-center text-white text-xl">
@@ -49,7 +90,9 @@ export default function WalletPage() {
       </div>
     );
   }
-  if (hasFailed) {
+
+  // Only show error if we have no cached data to fall back to
+  if (hasFailed && !hasCachedData) {
     return (
       <div className="min-h-screen bg-black flex justify-center items-center text-red-500 text-xl">
         Error: {error || "Failed to load data. Please try again later."}

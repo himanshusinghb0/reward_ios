@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSelector, useDispatch } from "react-redux";
-import { updateUserProfile } from "@/lib/redux/slice/profileSlice";
+import { updateUserProfile, fetchUserProfile, fetchVipStatus } from "@/lib/redux/slice/profileSlice";
 import { useVipStatus } from "@/hooks/useVipStatus";
 import Vip from "./components/Vip";
 import Settings from "./components/Settings";
@@ -62,6 +62,46 @@ export default function MyProfile() {
     router.prefetch("/spin-wheel");
   }, [router]);
 
+  // Refresh profile and wallet data when page is visited (to get admin updates)
+  // Do this in background without blocking UI - show cached data immediately
+  useEffect(() => {
+    if (!token) return;
+
+    // Use setTimeout to refresh in background after showing cached data
+    // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+    const refreshTimer = setTimeout(() => {
+      console.log("🔄 [MyProfile] Refreshing profile, wallet, and VIP data in background to get admin updates...");
+      dispatch(fetchUserProfile({ token, force: true }));
+      dispatch(fetchVipStatus(token));
+      // Also refresh wallet/balance/XP to get admin coin/XP updates
+      dispatch(fetchWalletScreen({ token, force: true }));
+      dispatch(fetchProfileStats({ token, force: true }));
+    }, 100); // Small delay to let cached data render first
+
+    return () => clearTimeout(refreshTimer);
+  }, [token, dispatch]);
+
+  // Refresh profile and wallet when app comes to foreground (admin might have updated)
+  useEffect(() => {
+    if (!token) return;
+
+    const handleFocus = () => {
+      console.log("🔄 [MyProfile] App focused - refreshing profile, wallet, and VIP to get admin updates");
+      dispatch(fetchUserProfile({ token, force: true }));
+      dispatch(fetchVipStatus(token));
+      // Also refresh wallet/balance/XP to get admin coin/XP updates
+      dispatch(fetchWalletScreen({ token, force: true }));
+      dispatch(fetchProfileStats({ token, force: true }));
+    };
+
+    // Listen for window focus (app comes to foreground)
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [token, dispatch]);
+
   const handleToggleNotifications = async () => {
     if (!profile || !token) return;
     const original = profile.profile?.notifications ?? false;
@@ -80,9 +120,14 @@ export default function MyProfile() {
 
 
 
-  const isLoading = detailsStatus === 'loading' || statsStatus === 'loading' || vipLoadingStatus === 'loading';
+  // Only show loading if we have NO cached data at all
+  // This allows showing cached data immediately while refreshing in background
+  const hasCachedData = profile || stats || vipStatus;
+  const isLoading = !hasCachedData && (detailsStatus === 'loading' || statsStatus === 'loading' || vipLoadingStatus === 'loading');
   const hasFailed = detailsStatus === 'failed' || statsStatus === 'failed' || vipLoadingStatus === 'failed';
 
+  // Only show loading screen if we have absolutely no data
+  // Otherwise, show cached data immediately and refresh in background
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex justify-center items-center text-white text-xl">
@@ -90,7 +135,9 @@ export default function MyProfile() {
       </div>
     );
   }
-  if (hasFailed) {
+
+  // Only show error if we have no cached data to fall back to
+  if (hasFailed && !hasCachedData) {
     return (
       <div className="min-h-screen bg-black flex justify-center items-center text-red-500 text-xl">
         Error: {error || "Failed to load profile data."}

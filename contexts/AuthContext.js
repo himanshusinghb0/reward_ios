@@ -308,6 +308,28 @@ export function AuthProvider({ children }) {
     }, 500);
   }, [token, dispatch, user]);
 
+  // Refresh profile and wallet when app comes to foreground (to get admin updates)
+  useEffect(() => {
+    if (!token) return;
+
+    const handleFocus = () => {
+      console.log(
+        "🔄 [AuthContext] App focused - refreshing profile, wallet, and VIP to get admin updates"
+      );
+      dispatch(fetchUserProfile({ token, force: true }));
+      dispatch(fetchVipStatus(token));
+      // Also refresh wallet/balance/XP when app comes to foreground
+      dispatch(fetchWalletScreen({ token, force: true }));
+      dispatch(fetchProfileStats({ token, force: true }));
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [token, dispatch]);
+
   useEffect(() => {
     // Only fetch if we haven't fetched before
     if (onboardingStatus === "idle") {
