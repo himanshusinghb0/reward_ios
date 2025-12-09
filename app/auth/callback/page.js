@@ -59,46 +59,125 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const processAuth = async () => {
+      // Get all URL parameters for debugging
       const token = searchParams.get("token");
-      const authError = searchParams.get("message");
+      const authError =
+        searchParams.get("message") || searchParams.get("error");
+      const provider = searchParams.get("provider");
+      const userId = searchParams.get("userId");
+
+      console.log("🔐 [Auth Callback] Processing authentication:", {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        authError,
+        provider,
+        userId,
+        isNative: Capacitor.isNativePlatform(),
+        allParams: Object.fromEntries(searchParams.entries()),
+      });
+
+      // Handle native platform deep link redirect
       if (Capacitor.isNativePlatform()) {
         let deepLink = "com.jackson.app://auth/callback";
         if (token) {
-          deepLink += `?token=${token}`;
+          deepLink += `?token=${encodeURIComponent(token)}`;
+          if (provider) deepLink += `&provider=${encodeURIComponent(provider)}`;
+          if (userId) deepLink += `&userId=${encodeURIComponent(userId)}`;
         } else {
           const message = authError || "Authentication token not found.";
           deepLink += `?message=${encodeURIComponent(message)}`;
         }
-        window.location.href = deepLink;
-        setTimeout(() => {
-          Browser.close();
-        }, 500);
+        console.log("📱 [Auth Callback] Processing deep link redirect:", deepLink);
+        
+        // For mobile apps, we need to:
+        // 1. Close the Capacitor Browser
+        // 2. Redirect to the deep link which will be caught by the app's deep link handler
+        
+        try {
+          // Close the browser FIRST
+          await Browser.close();
+          console.log("✅ [Auth Callback] Browser closed successfully");
+          
+          // Wait a bit for browser to fully close, then redirect to deep link
+          setTimeout(() => {
+            console.log("📱 [Auth Callback] Redirecting to deep link:", deepLink);
+            try {
+              // Try to redirect to deep link
+              window.location.href = deepLink;
+              
+              // Fallback: If deep link doesn't work, try using App plugin
+              setTimeout(() => {
+                // If we're still here after 1 second, the deep link might not have worked
+                // Try alternative method using App.openUrl if available
+                if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+                  window.Capacitor.Plugins.App.openUrl({ url: deepLink }).catch((err) => {
+                    console.error("❌ [Auth Callback] Failed to open deep link via App plugin:", err);
+                  });
+                }
+              }, 1000);
+            } catch (redirectError) {
+              console.error("❌ [Auth Callback] Failed to redirect to deep link:", redirectError);
+              setErrorMessage("Failed to redirect to app. Please try again.");
+              setStatus("error");
+            }
+          }, 500); // Increased delay to ensure browser is fully closed
+          
+        } catch (closeError) {
+          console.warn("⚠️ [Auth Callback] Browser close error (may already be closed):", closeError);
+          // Even if closing fails, try to redirect to deep link
+          setTimeout(() => {
+            console.log("📱 [Auth Callback] Attempting deep link redirect after close error");
+            window.location.href = deepLink;
+          }, 300);
+        }
         return;
       }
 
+      // Handle errors from backend
       if (authError) {
+        console.error("❌ [Auth Callback] Authentication error:", authError);
         setErrorMessage(authError || "An unknown error occurred.");
         setStatus("error");
         setTimeout(() => router.replace("/login"), 4000);
         return;
       }
 
+      // Process token if available
       if (token) {
-        const result = await handleSocialAuthCallback(token);
-        if (result.ok) {
-          setStatus("success");
-          setAuthCompleted(true);
-          // Wait for auth state to be fully set before redirecting
-          // This prevents the login page from flashing
-        } else {
+        try {
+          console.log("✅ [Auth Callback] Token received, processing...");
+          const result = await handleSocialAuthCallback(token);
+          if (result.ok) {
+            console.log("✅ [Auth Callback] Authentication successful");
+            setStatus("success");
+            setAuthCompleted(true);
+            // Wait for auth state to be fully set before redirecting
+            // This prevents the login page from flashing
+          } else {
+            console.error(
+              "❌ [Auth Callback] Authentication failed:",
+              result.error
+            );
+            setErrorMessage(
+              result.error ||
+                "Failed to process authentication. Please try again."
+            );
+            setStatus("error");
+            setTimeout(() => router.replace("/login"), 4000);
+          }
+        } catch (error) {
+          console.error(
+            "❌ [Auth Callback] Exception during authentication:",
+            error
+          );
           setErrorMessage(
-            result.error ||
-              "Failed to process authentication. Please try again."
+            error.message || "An unexpected error occurred. Please try again."
           );
           setStatus("error");
           setTimeout(() => router.replace("/login"), 4000);
         }
       } else {
+        console.error("❌ [Auth Callback] No token found in URL parameters");
         setErrorMessage(
           "Authentication token not found. Redirecting to login..."
         );
@@ -115,7 +194,7 @@ function AuthCallbackContent() {
     if (authCompleted && !isLoading && user) {
       // Small delay to ensure state is fully propagated
       const redirectTimer = setTimeout(() => {
-        router.replace("/homepage");
+        router.replace("/location");
       }, 500);
       return () => clearTimeout(redirectTimer);
     }

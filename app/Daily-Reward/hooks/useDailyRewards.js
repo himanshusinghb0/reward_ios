@@ -7,8 +7,11 @@ import {
   fetchFullWalletTransactions,
 } from "@/lib/redux/slice/walletTransactionsSlice";
 import { fetchProfileStats } from "@/lib/redux/slice/profileSlice";
-
-const BASE_URL = "https://rewardsapi.hireagent.co";
+import {
+  getDailyRewardsWeek,
+  claimDailyReward,
+  recoverMissedDailyReward,
+} from "@/lib/api";
 
 export const useDailyRewards = () => {
   const dispatch = useDispatch();
@@ -40,6 +43,13 @@ export const useDailyRewards = () => {
           if (parsed.data.weekStart) {
             setCurrentWeekStart(new Date(parsed.data.weekStart));
           }
+          // Also set isCurrentWeek and isFutureWeek based on cached data
+          const now = new Date();
+          const weekStart = new Date(parsed.data.weekStart);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          setIsCurrentWeek(now >= weekStart && now <= weekEnd);
+          setIsFutureWeek(weekStart > now);
         }
       }
     } catch (_e) {
@@ -65,9 +75,22 @@ export const useDailyRewards = () => {
 
             // Use cache if less than 2 minutes old (reduced from 5 minutes for better freshness)
             if (now - cacheTime < 2 * 60 * 1000) {
-              setWeekData(parsedData.data);
-              setCurrentWeekStart(new Date(parsedData.data.weekStart));
-              return parsedData.data;
+              const cachedWeekData = parsedData.data;
+              setWeekData(cachedWeekData);
+              setCurrentWeekStart(new Date(cachedWeekData.weekStart));
+              setLoading(false); // Ensure loading is false when using cache
+
+              // Also set isCurrentWeek and isFutureWeek based on cached data
+              const currentNow = new Date();
+              const weekStart = new Date(cachedWeekData.weekStart);
+              const weekEnd = new Date(weekStart);
+              weekEnd.setDate(weekEnd.getDate() + 6);
+              setIsCurrentWeek(
+                currentNow >= weekStart && currentNow <= weekEnd
+              );
+              setIsFutureWeek(weekStart > currentNow);
+
+              return cachedWeekData;
             }
           } catch (e) {
             // Ignore cache parse error
@@ -83,40 +106,14 @@ export const useDailyRewards = () => {
           throw new Error("Please log in to view daily rewards.");
         }
 
-        const url = date
-          ? `${BASE_URL}/api/daily-rewards/week?date=${
-              date.toISOString().split("T")[0]
-            }`
-          : `${BASE_URL}/api/daily-rewards/week`;
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
+        // Use centralized API function instead of hardcoded URL
+        const dateString = date ? date.toISOString().split("T")[0] : null;
+        const data = await getDailyRewardsWeek(dateString, token);
 
         if (!data.success) {
           throw new Error(
             data.error || data.message || "Failed to load week data"
           );
-        }
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error("Session expired. Please log in again.");
-          } else if (response.status === 404) {
-            throw new Error("No reward data found for this week.");
-          } else {
-            throw new Error(
-              data.error ||
-                data.message ||
-                `Failed to load week data (${response.status})`
-            );
-          }
         }
 
         if (data.success && data.data) {
@@ -223,45 +220,13 @@ export const useDailyRewards = () => {
           throw new Error("Please log in to claim rewards.");
         }
 
-        const response = await fetch(`${BASE_URL}/api/daily-rewards/claim`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ day: dayNumber }),
-        });
-
-        const data = await response.json();
+        // Use centralized API function instead of hardcoded URL
+        const data = await claimDailyReward(dayNumber, token);
 
         if (!data.success) {
           throw new Error(
             data.error || data.message || "Failed to claim reward"
           );
-        }
-
-        if (!response.ok) {
-          if (response.status === 400) {
-            throw new Error(
-              data.error ||
-                data.message ||
-                "Invalid request. Please check if this reward is claimable."
-            );
-          } else if (response.status === 401) {
-            throw new Error("Session expired. Please log in again.");
-          } else if (response.status === 403) {
-            throw new Error("You don't have permission to claim this reward.");
-          } else if (response.status === 404) {
-            throw new Error("Reward not found for this day.");
-          } else if (response.status === 409) {
-            throw new Error("This reward has already been claimed.");
-          } else {
-            throw new Error(
-              data.error ||
-                data.message ||
-                `Server error (${response.status}). Please try again.`
-            );
-          }
         }
 
         if (data.success && data.data) {
@@ -311,20 +276,43 @@ export const useDailyRewards = () => {
             // Don't throw error - reward was still claimed successfully
           }
 
-          // Force refresh to get updated status and timer
+          // Set success message immediately so user sees it right away
+          // Use actual earned amounts from API response
+          const earnedCoins = data.data.coins || data.data.rewardCoins || 0;
+          // Use baseXp instead of xp for display in modal
+          const baseXp =
+            data.data.baseXp ||
+            data.data.baseXP ||
+            data.data.xp ||
+            data.data.rewardXp ||
+            0;
+
+          setSuccessMessage(
+            `Reward claimed! You earned ${earnedCoins} coins and ${baseXp} XP!`
+          );
+          setError(null);
+
+          // Force refresh to get updated status and timer from backend
           // Clear cache for current week to force fresh fetch
           const cacheKey = "current_week";
           localStorage.removeItem(`daily_rewards_${cacheKey}`);
           localStorage.removeItem(`daily_rewards_current_week`);
 
-          // Small delay to ensure API has updated, then force refresh
-          await new Promise((resolve) => setTimeout(resolve, 300));
-          await fetchWeekData(currentWeekStartRef.current, true);
+          // Wait for API to update, then refresh to show "CLAIMED" status and timer
+          // This ensures the button only changes to "CLAIMED" after successful API confirmation
+          // Don't await this - let it happen in background so modal can show immediately
+          setTimeout(async () => {
+            try {
+              await fetchWeekData(currentWeekStartRef.current, true);
+            } catch (refreshError) {
+              console.warn(
+                "Failed to refresh week data after claim:",
+                refreshError
+              );
+              // Don't throw - reward was already claimed successfully
+            }
+          }, 500);
 
-          setSuccessMessage(
-            `Reward claimed! You earned ${data.data.coins} coins and ${data.data.xp} XP!`
-          );
-          setError(null);
           return data.data;
         } else {
           throw new Error(

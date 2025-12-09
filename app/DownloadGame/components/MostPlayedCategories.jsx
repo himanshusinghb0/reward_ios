@@ -7,7 +7,8 @@ import { fetchMostPlayedScreenGames, fetchGameById } from "@/lib/redux/slice/gam
 import { useAuth } from "@/contexts/AuthContext";
 import GameItemCard from "./GameItemCard";
 import WatchAdCard from "./WatchAdCard";
-import { getAgeGroupFromProfile, getGenderFromProfile } from "@/lib/utils/ageGroupUtils";
+// Note: This file uses fetchMostPlayedScreenGames, not fetchGamesBySection
+// If fetchMostPlayedScreenGames also needs user object support, it should be updated separately
 
 export const MostPlayedCategories = ({ searchQuery = "", showSearch = false }) => {
     // Redux state management
@@ -109,7 +110,7 @@ export const MostPlayedCategories = ({ searchQuery = "", showSearch = false }) =
             try {
                 // Fetch detailed game data with goals/levels using getGameById
                 console.log('🎮 MostPlayedCategories: Fetching detailed game data for:', game.id);
-                await dispatch(fetchGameById(game.id));
+                await dispatch(fetchGameById({ gameId: game.id }));
 
                 // Navigate to game details page
                 router.push(`/gamedetails?id=${game.id}`);

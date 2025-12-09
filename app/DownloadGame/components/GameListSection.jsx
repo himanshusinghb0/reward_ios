@@ -7,7 +7,7 @@ import { fetchUserData, fetchGamesBySection } from "@/lib/redux/slice/gameSlice"
 import { useAuth } from "@/contexts/AuthContext";
 import GameItemCard from "./GameItemCard";
 import WatchAdCard from "./WatchAdCard";
-import { getAgeGroupFromProfile, getGenderFromProfile } from "@/lib/utils/ageGroupUtils";
+// Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 // Static data for non-gaming offers carousel
 const nonGamingOffers = [
@@ -94,61 +94,136 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
   };
 
   // Fetch games from new API for "Most Played" section
+  // Uses stale-while-revalidate: shows cached data immediately, fetches fresh if needed
   React.useEffect(() => {
-    // Get dynamic age group and gender from user profile
-    const ageGroup = getAgeGroupFromProfile(userProfile);
-    const gender = getGenderFromProfile(userProfile);
-
-    console.log('🎮 GameListSection: Using dynamic user profile:', {
+    console.log('🎮 GameListSection: Using user profile:', {
       age: userProfile?.age,
-      calculatedAgeGroup: ageGroup,
-      calculatedGender: gender
+      ageRange: userProfile?.ageRange,
+      gender: userProfile?.gender
     });
 
-    // Only fetch if we don't have data and status is idle
-    if (mostPlayedStatus === "idle" && (!mostPlayedGames || mostPlayedGames.length === 0)) {
+    // Always dispatch - stale-while-revalidate will handle cache logic automatically
+    // Pass user object directly - API will extract age and gender dynamically
+    dispatch(fetchGamesBySection({
+      uiSection: "Most Played",
+      user: userProfile,
+      page: 1,
+      limit: 50
+    }));
+  }, [dispatch, userProfile]);
+
+  // Refresh games in background after showing cached data (to get admin updates)
+  React.useEffect(() => {
+    if (!userProfile) return;
+
+    const refreshTimer = setTimeout(() => {
+      console.log("🔄 [DownloadGame/GameListSection] Refreshing games in background to get admin updates...");
       dispatch(fetchGamesBySection({
         uiSection: "Most Played",
-        ageGroup,
-        gender,
+        user: userProfile,
         page: 1,
-        limit: 50
+        limit: 50,
+        force: true,
+        background: true
       }));
-    }
-  }, [dispatch, mostPlayedStatus, mostPlayedGames, userProfile]);
+    }, 100);
+
+    return () => clearTimeout(refreshTimer);
+  }, [dispatch, userProfile]);
+
+  // Refresh games in background when app comes to foreground
+  React.useEffect(() => {
+    if (!userProfile) return;
+
+    const handleFocus = () => {
+      console.log("🔄 [DownloadGame/GameListSection] App focused - refreshing games to get admin updates");
+      dispatch(fetchGamesBySection({
+        uiSection: "Most Played",
+        user: userProfile,
+        page: 1,
+        limit: 50,
+        force: true,
+        background: true
+      }));
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && userProfile) {
+        console.log("🔄 [DownloadGame/GameListSection] App visible - refreshing games to get admin updates");
+        dispatch(fetchGamesBySection({
+          uiSection: "Most Played",
+          user: userProfile,
+          page: 1,
+          limit: 50,
+          force: true,
+          background: true
+        }));
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [dispatch, userProfile]);
 
   // Fetch user data from Redux when component mounts (lazy loading) - fallback
+  // Uses stale-while-revalidate: shows cached data immediately, fetches fresh if needed
   React.useEffect(() => {
     const userId = getUserId();
-    if (userId && userDataStatus === "idle" && mostPlayedStatus === "failed") {
+    if (userId && userDataStatus === "idle") {
       dispatch(fetchUserData({ userId, token }));
     }
-  }, [dispatch, userDataStatus, mostPlayedStatus]);
+  }, [dispatch, userDataStatus, token]);
 
-  // Process games from new API into the same format
+  // Refresh user data in background after showing cached data
+  React.useEffect(() => {
+    const userId = getUserId();
+    if (!userId) return;
+
+    const refreshTimer = setTimeout(() => {
+      console.log("🔄 [DownloadGame/GameListSection] Refreshing user data in background to get admin updates...");
+      dispatch(fetchUserData({ userId, token, force: true, background: true }));
+    }, 100);
+
+    return () => clearTimeout(refreshTimer);
+  }, [dispatch, token]);
+
+  // Process games from new API into the same format - using besitosRawData
   const processNewApiGames = (games) => {
     return games.map((game, index) => {
+      // Use besitosRawData if available, otherwise fallback to existing structure
+      const rawData = game.besitosRawData || {};
+
       // Clean game name - remove platform suffix after "-"
-      const cleanGameName = (game.details?.name || game.name || game.title || "Game").split(' - ')[0].trim();
+      const cleanGameName = (rawData.title || game.details?.name || game.name || game.title || "Game").split(' - ')[0].trim();
 
       return {
-        id: game._id || game.id,
+        id: game._id || game.id || game.gameId,
         name: cleanGameName,
-        genre: game.details?.category || "Game",
+        genre: rawData.categories?.[0]?.name || game.details?.category || "Game",
         subtitle: "Available to Download",
-        image: game.images?.banner || game.images?.large_image || game.details?.square_image || game.details?.image || "/placeholder-game.png",
-        overlayImage: game.details?.image || game.details?.square_image,
-        amount: game.rewards?.coins || game.amount || "50", // Use rewards from new API
-        score: game.rewards?.coins || game.amount || "50", // Also set score for backward compatibility
-        bonus: game.rewards?.xp || "100", // Use XP from new API
+        // Use besitosRawData images first
+        image: rawData.square_image || rawData.image || game.images?.banner || game.images?.large_image || game.details?.square_image || game.details?.image || "/placeholder-game.png",
+        overlayImage: rawData.image || rawData.square_image || game.details?.image || game.details?.square_image,
+        // Use besitosRawData amount first, then rewards
+        amount: rawData.amount ? `$${rawData.amount}` : (game.rewards?.coins ? `$${game.rewards.coins}` : "$50"),
+        score: rawData.amount || game.rewards?.coins || game.amount || "50",
+        bonus: game.rewards?.xp || game.xpRewardConfig?.baseXP || "100",
         coinIcon: "/dollor.png",
         picIcon: "/xp.svg",
-        hasStatusDot: false, // New API games don't have active status
-        backgroundImage: game.images?.banner || game.details?.large_image || game.details?.image,
-        isGradientBg: !game.details?.square_image,
-        downloadUrl: game.details?.downloadUrl,
+        hasStatusDot: false,
+        // Use besitosRawData large_image for background
+        backgroundImage: rawData.large_image || rawData.image || game.images?.banner || game.details?.large_image || game.details?.image,
+        isGradientBg: !rawData.square_image && !game.details?.square_image,
+        downloadUrl: rawData.url || game.details?.downloadUrl,
+        // Store full game data including besitosRawData
         fullData: game,
-        isNewApi: true, // Mark as new API game
+        isNewApi: true,
       };
     });
   };
@@ -237,9 +312,19 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       // For featured games, we use localStorage (not API), so clear Redux state
       dispatch({ type: 'games/clearCurrentGameDetails' });
 
-      // Store game data in localStorage for immediate access
-      localStorage.setItem('selectedGameData', JSON.stringify(game.fullData));
-      router.push(`/gamedetails?id=${game.id}`);
+      // Store full game data including besitosRawData in localStorage for immediate access
+      try {
+        localStorage.setItem('selectedGameData', JSON.stringify(game.fullData));
+        console.log('💾 [GameListSection] Stored full game data with besitosRawData:', {
+          hasBesitosRawData: !!game.fullData.besitosRawData,
+          gameId: game.id
+        });
+      } catch (error) {
+        console.error('❌ Failed to store game data:', error);
+      }
+
+      const gameId = game.id || game.fullData?.gameId || game.fullData?._id;
+      router.push(`/gamedetails?gameId=${gameId}&source=mostPlayed`);
     }
   };
 
@@ -298,22 +383,19 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
             mostPlayedStatus === "failed" ? (
               <div className="text-red-400 text-center py-4 w-full">
                 <p>Failed to load games</p>
-                  <button
-                    onClick={() => {
-                      const ageGroup = getAgeGroupFromProfile(userProfile);
-                      const gender = getGenderFromProfile(userProfile);
-                      dispatch(fetchGamesBySection({
-                        uiSection: "Most Played",
-                        ageGroup,
-                        gender,
-                        page: 1,
-                        limit: 50
-                      }));
-                    }}
-                    className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
-                  >
-                    Retry
-                  </button>
+                <button
+                  onClick={() => {
+                    dispatch(fetchGamesBySection({
+                      uiSection: "Most Played",
+                      user: userProfile,
+                      page: 1,
+                      limit: 50
+                    }));
+                  }}
+                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+                >
+                  Retry
+                </button>
               </div>
             ) : filteredGames.length > 0 ? (
               filteredGames.map((game) => (
@@ -325,7 +407,14 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 />
               ))
             ) : (
-              <GameItemCard isEmpty={true} />
+              <div className="flex flex-col items-center justify-center w-full py-6 px-4">
+                <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg mb-2 text-center">
+                  Gaming - Most Played
+                </h3>
+                <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-sm text-center">
+                  No games available
+                </p>
+              </div>
             )
           ) : isFromFeatured ? (
             // Show featured games
@@ -339,7 +428,14 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 />
               ))
             ) : (
-              <GameItemCard isEmpty={true} />
+              <div className="flex flex-col items-center justify-center w-full py-6 px-4">
+                <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg mb-2 text-center">
+                  Gaming - Most Played
+                </h3>
+                <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-sm text-center">
+                  No games available
+                </p>
+              </div>
             )
           ) : (
             // Show downloaded games - REMOVED loading state for better Android UX
@@ -368,7 +464,14 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
                 />
               ))
             ) : (
-              <GameItemCard isEmpty={true} />
+              <div className="flex flex-col items-center justify-center w-full py-6 px-4">
+                <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg mb-2 text-center">
+                  Gaming - Most Played
+                </h3>
+                <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-sm text-center">
+                  No games available
+                </p>
+              </div>
             )
           )}
         </div>

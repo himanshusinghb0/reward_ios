@@ -15,16 +15,21 @@ import { HomeIndicator } from "@/components/HomeIndicator";
 import { SessionStatus } from "./components/SessionStatus";
 import { LoadingOverlay } from "@/components/AndroidOptimizedLoader";
 
-// Optimized Image Component for Android
+// Optimized Image Component for Android - using besitosRawData
 const OptimizedGameImage = ({ game, isLoaded, onLoad, onError, className }) => {
-    const imageUrl = game?.square_image || game?.image || game?.images?.banner || game?.images?.large_image;
+    // Use besitosRawData images first (highest priority)
+    const rawData = game?.besitosRawData || {};
+    const imageUrl = rawData.square_image || rawData.image || rawData.large_image ||
+        game?.square_image || game?.image || game?.images?.banner || game?.images?.large_image;
+
+    const displayTitle = rawData.title || game?.title || game?.name || game?.details?.name;
 
     if (!imageUrl) return null;
 
     return (
         <img
             className={`w-[335px] h-[164px] object-cover rounded-lg transition-opacity duration-300 game-image image-fade-in ${className || ''}`}
-            alt={`${game?.title || game?.name || game?.details?.name} banner`}
+            alt={`${displayTitle} banner`}
             src={imageUrl}
             onLoad={onLoad}
             onError={onError}
@@ -60,7 +65,9 @@ function GameDetailsContent() {
         offersStatus,
         currentGameDetails,
         gameDetailsStatus,
-        inProgressGames
+        inProgressGames,
+        userData,
+        userDataStatus
     } = useSelector((state) => state.games);
 
     // Component state
@@ -75,6 +82,13 @@ function GameDetailsContent() {
         gameId,
         selectedGame: !!selectedGame
     });
+    // Capitalize tier name (junior -> Junior, senior -> Senior, mid -> Mid)
+    const capitalizeTier = (tier) => {
+        if (!tier) return 'Junior';
+        return tier.charAt(0).toUpperCase() + tier.slice(1);
+    };
+
+    // Initialize selectedTier - will be updated when displayGame or userData is available
     const [selectedTier, setSelectedTier] = useState('Junior');
     const [isGameInstalled, setIsGameInstalled] = useState(false);
     const [sessionData, setSessionData] = useState({
@@ -114,6 +128,17 @@ function GameDetailsContent() {
                     setIsInitialLoading(false); // Stop initial loading
                     await initializeSession(parsedGame);
 
+                    // Ensure userData is loaded for userXpTier (for downloaded games)
+                    // userData contains userXpTier from getUserData API
+                    if (!userData || userDataStatus === 'idle') {
+                        const userId = getUserId();
+                        const token = localStorage.getItem('authToken');
+                        if (userId && token) {
+                            console.log('🔄 [GameDetails] Fetching userData for userXpTier...');
+                            dispatch(fetchUserData({ userId, token }));
+                        }
+                    }
+
                     // Clean up localStorage after loading
                     localStorage.removeItem('selectedGameData');
                     return;
@@ -124,15 +149,12 @@ function GameDetailsContent() {
             }
 
             // Priority 2: Fetch from API if no localStorage data
-            // Clear Redux state first to ensure we fetch fresh data
+            // Uses stale-while-revalidate: shows cached data immediately, fetches fresh if needed
             if (gameId && !loadedFromLocalStorage) {
-                // Always clear Redux state when using Method 2 to ensure fresh fetch
-                console.log('🎮 GameDetails: Clearing Redux state before fetching from API');
-                dispatch({ type: 'games/clearCurrentGameDetails' });
-                // Wait a tick for state to clear before fetching
-                await new Promise(resolve => setTimeout(resolve, 0));
-                console.log('🎮 GameDetails: Fetching game from API:', { gameId });
-                dispatch(fetchGameById(gameId));
+                console.log('🎮 GameDetails: Fetching game from API (stale-while-revalidate):', { gameId });
+                // Don't clear Redux state - stale-while-revalidate will handle cache
+                // This ensures cached data shows immediately if available
+                dispatch(fetchGameById({ gameId }));
             } else if (!gameId) {
                 // No gameId provided, stop loading
                 setIsInitialLoading(false);
@@ -141,6 +163,47 @@ function GameDetailsContent() {
 
         loadGameData();
     }, [dispatch, gameId]);
+
+    // Refresh game details in background after showing cached data (to get admin updates)
+    // Do this in background without blocking UI - show cached data immediately
+    useEffect(() => {
+        if (!gameId || loadedFromLocalStorage) return;
+
+        // Use setTimeout to refresh in background after showing cached data
+        // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+        const refreshTimer = setTimeout(() => {
+            console.log("🔄 [GameDetails] Refreshing game details in background to get admin updates...");
+            dispatch(fetchGameById({ gameId, force: true, background: true }));
+        }, 100); // Small delay to let cached data render first
+
+        return () => clearTimeout(refreshTimer);
+    }, [dispatch, gameId, loadedFromLocalStorage]);
+
+    // Refresh game details in background when app comes to foreground (admin might have updated)
+    useEffect(() => {
+        if (!gameId || loadedFromLocalStorage) return;
+
+        const handleFocus = () => {
+            console.log("🔄 [GameDetails] App focused - refreshing game details to get admin updates");
+            dispatch(fetchGameById({ gameId, force: true, background: true }));
+        };
+
+        window.addEventListener("focus", handleFocus);
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden && gameId && !loadedFromLocalStorage) {
+                console.log("🔄 [GameDetails] App visible - refreshing game details to get admin updates");
+                dispatch(fetchGameById({ gameId, force: true, background: true }));
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [dispatch, gameId, loadedFromLocalStorage]);
 
     // Handle game details from new API
     useEffect(() => {
@@ -231,52 +294,117 @@ function GameDetailsContent() {
     const displayGame = useMemo(() => {
         if (!rawGame) return null;
 
+        // Use besitosRawData if available - it has the most complete data
+        const rawData = rawGame.besitosRawData || {};
+
         // If game has nested gameDetails, merge it with root properties
-        if (rawGame.gameDetails) {
+        // Priority: besitosRawData > gameDetails > root properties
+        if (rawGame.gameDetails || rawData.id) {
             const normalized = {
                 ...rawGame,
                 ...rawGame.gameDetails,
+                // Use besitosRawData properties first (highest priority)
                 // Keep root-level properties that might be important
                 _id: rawGame._id,
-                gameId: rawGame.gameId || rawGame.gameDetails.id,
-                title: rawGame.title || rawGame.gameDetails.name || rawGame.gameDetails.title,
-                // Merge goals and points from gameDetails
-                goals: rawGame.gameDetails.goals || rawGame.goals,
-                points: rawGame.gameDetails.points || rawGame.points,
-                // Merge images (prioritize gameDetails images)
-                image: rawGame.gameDetails.image || rawGame.image,
-                square_image: rawGame.gameDetails.square_image || rawGame.square_image,
-                large_image: rawGame.gameDetails.large_image || rawGame.large_image,
-                // Merge amount and cpi from gameDetails
-                amount: rawGame.gameDetails.amount || rawGame.amount,
-                cpi: rawGame.gameDetails.cpi || rawGame.cpi,
-                // Merge category
-                category: rawGame.gameDetails.category || rawGame.category || rawGame.metadata?.genre,
+                gameId: rawGame.gameId || rawData.id || rawGame.gameDetails?.id,
+                title: rawData.title || rawGame.title || rawGame.gameDetails?.name || rawGame.gameDetails?.title,
+                // Merge goals and points - use besitosRawData first
+                goals: rawData.goals || rawGame.gameDetails?.goals || rawGame.goals,
+                points: rawData.points || rawGame.gameDetails?.points || rawGame.points,
+                // Merge images - use besitosRawData first
+                image: rawData.image || rawGame.gameDetails?.image || rawGame.image,
+                square_image: rawData.square_image || rawGame.gameDetails?.square_image || rawGame.square_image,
+                large_image: rawData.large_image || rawGame.gameDetails?.large_image || rawGame.large_image,
+                // Merge amount and cpi - use besitosRawData first
+                amount: rawData.amount || rawGame.gameDetails?.amount || rawGame.amount,
+                cpi: rawData.cpi || rawGame.gameDetails?.cpi || rawGame.cpi,
+                // Merge category - use besitosRawData first
+                category: rawData.categories?.[0]?.name || rawGame.gameDetails?.category || rawGame.category || rawGame.metadata?.genre,
                 // Keep rewards from root level (they're already there)
-                rewards: rawGame.rewards || rawGame.gameDetails.rewards,
+                rewards: rawGame.rewards || rawGame.gameDetails?.rewards,
+                // Keep xpRewardConfig for XP calculation
+                xpRewardConfig: rawGame.xpRewardConfig || { baseXP: 1, multiplier: 1 },
+                // Keep besitosRawData for full access
+                besitosRawData: rawGame.besitosRawData || rawData,
                 // Keep gameDetails for backward compatibility
-                gameDetails: rawGame.gameDetails
+                gameDetails: rawGame.gameDetails,
+                // Keep description from besitosRawData
+                description: rawData.description || rawGame.description || rawGame.gameDetails?.description,
+                // Keep URL from besitosRawData
+                url: rawData.url || rawGame.url || rawGame.gameDetails?.downloadUrl,
+                // Keep bundle_id from besitosRawData
+                bundle_id: rawData.bundle_id || rawGame.bundle_id,
+                // Keep taskProgression and userXpTier
+                taskProgression: rawGame.taskProgression || null,
+                userXpTier: rawGame.userXpTier || null
             };
 
-            console.log('🔄 Normalized game data:', {
+            console.log('🔄 Normalized game data with besitosRawData:', {
+                hasBesitosRawData: !!normalized.besitosRawData,
                 hasGoals: !!normalized.goals,
                 goalsLength: normalized.goals?.length || 0,
                 hasImage: !!normalized.square_image,
                 imageUrl: normalized.square_image,
                 hasAmount: !!normalized.amount,
-                amount: normalized.amount
+                amount: normalized.amount,
+                title: normalized.title
             });
 
             return normalized;
         }
 
+        // If no gameDetails, still use besitosRawData if available
+        if (rawData.id) {
+            return {
+                ...rawGame,
+                // Override with besitosRawData values
+                title: rawData.title || rawGame.title,
+                image: rawData.image || rawGame.image,
+                square_image: rawData.square_image || rawGame.square_image,
+                large_image: rawData.large_image || rawGame.large_image,
+                amount: rawData.amount || rawGame.amount,
+                description: rawData.description || rawGame.description,
+                goals: rawData.goals || rawGame.goals,
+                points: rawData.points || rawGame.points,
+                category: rawData.categories?.[0]?.name || rawGame.category,
+                url: rawData.url || rawGame.url,
+                bundle_id: rawData.bundle_id || rawGame.bundle_id,
+                // Keep rewards and xpRewardConfig
+                rewards: rawGame.rewards,
+                xpRewardConfig: rawGame.xpRewardConfig || { baseXP: 1, multiplier: 1 },
+                // Keep taskProgression and userXpTier
+                taskProgression: rawGame.taskProgression || null,
+                userXpTier: rawGame.userXpTier || null,
+                besitosRawData: rawGame.besitosRawData || rawData
+            };
+        }
+
         return rawGame;
     }, [rawGame]);
 
-    // Preload game image to prevent delay
+    // Update selectedTier based on userXpTier from displayGame or userData
+    // Priority: displayGame.userXpTier (from game discovery API) > userData.userXpTier (from getUserData API)
+    useEffect(() => {
+        const tier = displayGame?.userXpTier || userData?.userXpTier || null;
+        if (tier) {
+            const capitalizedTier = capitalizeTier(tier);
+            setSelectedTier(capitalizedTier);
+            console.log('🎯 [GameDetails] Setting tier from userXpTier:', {
+                tier,
+                capitalizedTier,
+                source: displayGame?.userXpTier ? 'displayGame' : 'userData'
+            });
+        }
+    }, [displayGame?.userXpTier, userData?.userXpTier]);
+
+    // Preload game image to prevent delay - use besitosRawData image first
     useEffect(() => {
         if (displayGame) {
-            const imageUrl = displayGame.square_image || displayGame.image || displayGame.images?.banner || displayGame.images?.large_image;
+            // Priority: besitosRawData images > displayGame images
+            const rawData = displayGame.besitosRawData || {};
+            const imageUrl = rawData.square_image || rawData.image || rawData.large_image ||
+                displayGame.square_image || displayGame.image ||
+                displayGame.images?.banner || displayGame.images?.large_image;
             if (imageUrl) {
                 setIsImageLoaded(false);
                 setImageError(false);
@@ -338,7 +466,8 @@ function GameDetailsContent() {
                 }
             } else {
                 // Create new session
-                console.log('🆕 Creating new session for game:', game.title || game.name);
+                const rawData = game?.besitosRawData || {};
+                console.log('🆕 Creating new session for game:', rawData.title || game.title || game.name);
                 const sessionId = sessionManager.createSession(gameIdForSession, userId, game);
                 const session = sessionManager.getSession(sessionId);
                 setCurrentSession(session);
@@ -414,9 +543,16 @@ function GameDetailsContent() {
     const handleBack = () => router.back();
 
     const handleGameAction = async () => {
-        if (selectedGame) {
+        if (displayGame || selectedGame) {
+            // Use displayGame (which has besitosRawData merged) or selectedGame
+            const gameToDownload = displayGame || selectedGame;
             try {
-                await handleGameDownload(selectedGame);
+                // Use besitosRawData URL if available
+                const rawData = gameToDownload?.besitosRawData || {};
+                const downloadUrl = rawData.url || gameToDownload?.url || gameToDownload?.details?.downloadUrl;
+                const gameWithUrl = downloadUrl ? { ...gameToDownload, url: downloadUrl } : gameToDownload;
+
+                await handleGameDownload(gameWithUrl);
 
                 // Refresh downloaded games list after a short delay to allow server to update
                 // This ensures the button updates to "Start Playing" after download
@@ -760,20 +896,35 @@ function GameDetailsContent() {
                 {/* Game Info */}
                 <div className="flex flex-col w-[375px] items-start justify-center mt-6 px-6 py-2 relative">
                     <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[20px] ">
-                        {(selectedGame?.title || selectedGame?.name || selectedGame?.details?.name || 'Game Title')
+                        {(displayGame?.title || displayGame?.name || displayGame?.details?.name || 'Game Title')
                             .split(' - ')[0]
                             .split(':')[0]}
 
                     </h2>
-                    <span className="[font-family:'Poppins',Helvetica] font-regular text-[#f4f3fc] mt-1 text-[13px]">
-                        {selectedGame?.category || selectedGame?.details?.category || 'Casual'}
-                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="[font-family:'Poppins',Helvetica] font-regular text-[#f4f3fc] text-[13px]">
+                            {displayGame?.category || displayGame?.details?.category || 'Casual'}
+                        </span>
+                        {displayGame?.userXpTier && (
+                            <>
+                                <span className="text-[#f4f3fc] text-[13px]">•</span>
+                                <span className="[font-family:'Poppins',Helvetica] font-medium text-[#A4A4A4] text-[13px] capitalize">
+                                    {displayGame.userXpTier} Tier
+                                </span>
+                            </>
+                        )}
+                    </div>
                     <div className="flex w-[266px] items-center justify-start  mt-3 relative ">
                         <div className="flex flex-row items-center justify-center gap-2 bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)] rounded-[10px] py-2 w-full">
                             <span className="[font-family:'Poppins',Helvetica] font-medium text-white text-[16px] flex items-center justify-center gap-2 flex-wrap">
                                 <span className="whitespace-nowrap text-[16px] font-medium">Earn up to</span>
                                 <span className="flex items-center gap-1">
-                                    <span className="font-semibold text-[16px]">{displayGame?.amount || displayGame?.rewards?.coins || 0}</span>
+                                    <span className="font-semibold text-[16px]">
+                                        {(() => {
+                                            // Use rewards.coins first, then fallback to amount
+                                            return displayGame?.rewards?.coins || displayGame?.besitosRawData?.amount || displayGame?.amount || 0;
+                                        })()}
+                                    </span>
                                     <img
                                         className="w-[23px] h-[22px] object-contain"
                                         alt="Coin icon"
@@ -782,7 +933,29 @@ function GameDetailsContent() {
                                 </span>
                                 <span className="whitespace-nowrap">and</span>
                                 <span className="flex items-center gap-1">
-                                    <span className="font-semibold">{displayGame?.cpi || displayGame?.rewards?.xp || 0}</span>
+                                    <span className="font-semibold">
+                                        {(() => {
+                                            // Calculate total XP: baseXP * multiplier * totalTasks
+                                            // Or use rewards.xp if available
+                                            if (displayGame?.rewards?.xp) {
+                                                return displayGame.rewards.xp;
+                                            }
+
+                                            // Calculate from xpRewardConfig
+                                            const xpConfig = displayGame?.xpRewardConfig || { baseXP: 1, multiplier: 1 };
+                                            const baseXP = xpConfig.baseXP || 1;
+                                            const multiplier = xpConfig.multiplier || 1;
+
+                                            // Get total number of tasks/goals
+                                            const goals = displayGame?.besitosRawData?.goals || displayGame?.goals || [];
+                                            const totalTasks = goals.length || 0;
+
+                                            // Calculate: baseXP * multiplier * totalTasks
+                                            const totalXP = baseXP * multiplier * totalTasks;
+
+                                            return totalXP > 0 ? totalXP : 0;
+                                        })()}
+                                    </span>
                                     <img
                                         className="w-[22px] h-[23px] object-contain"
                                         alt="XP icon"

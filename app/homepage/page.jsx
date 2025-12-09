@@ -14,6 +14,8 @@ import GameCard from "./components/GameCard";
 import VipBanner from "./components/VipBanner";
 import RaceSection from "./components/RaceSection";
 import StreakSection from "./components/StreakSection";
+import SurveysSection from "./components/SurveysSection";
+import NonGameOffersSection from "./components/NonGameOffersSection";
 
 const Homepage = () => {
   const { token, user } = useAuth();
@@ -60,6 +62,8 @@ const Homepage = () => {
         <MostPlayedGames />
         <WelcomeOfferSection />
         <GameCard />
+        <SurveysSection />
+        <NonGameOffersSection />
         <VipBanner />
         <RaceSection />
         <StreakSection />

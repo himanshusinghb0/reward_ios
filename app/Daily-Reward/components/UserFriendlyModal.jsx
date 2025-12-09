@@ -1,19 +1,40 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
-export const UserFriendlyModal = ({ isVisible, onClose, title, children, showCloseButton = true, autoClose = false, autoCloseDelay = 3000 }) => {
-    if (!isVisible) return null;
+export const UserFriendlyModal = ({ isVisible, onClose, title, children, showCloseButton = true, autoClose = false, autoCloseDelay = 3000, onRedirect = null }) => {
+    const hasRedirected = useRef(false);
 
-    // Auto-close functionality
+    // Auto-close functionality with optional redirect
+    // Hooks must be called before any early returns
     useEffect(() => {
-        if (autoClose && isVisible) {
+        if (!isVisible) {
+            // Reset redirect flag when modal is hidden
+            hasRedirected.current = false;
+            return;
+        }
+
+        if (autoClose && isVisible && !hasRedirected.current) {
             const timer = setTimeout(() => {
+                // Close modal first
                 onClose();
+
+                // Redirect after closing if redirect callback is provided
+                if (onRedirect && !hasRedirected.current) {
+                    hasRedirected.current = true;
+                    // Increased delay to ensure modal closes and state updates complete
+                    setTimeout(() => {
+                        onRedirect();
+                    }, 300); // Increased delay for smoother transition
+                }
             }, autoCloseDelay);
             return () => clearTimeout(timer);
         }
-    }, [isVisible, autoClose, autoCloseDelay, onClose]);
+    }, [isVisible, autoClose, autoCloseDelay, onClose, onRedirect]);
+
+    if (!isVisible) {
+        return null;
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -48,7 +69,19 @@ export const UserFriendlyModal = ({ isVisible, onClose, title, children, showClo
                 {showCloseButton && (
                     <div className="mt-2 flex justify-center">
                         <button
-                            onClick={onClose}
+                            onClick={() => {
+                                // Close modal first
+                                onClose();
+
+                                // Redirect after closing if redirect callback is provided
+                                if (onRedirect && !hasRedirected.current) {
+                                    hasRedirected.current = true;
+                                    // Increased delay to ensure modal closes and state updates complete
+                                    setTimeout(() => {
+                                        onRedirect();
+                                    }, 300); // Increased delay for smoother transition
+                                }
+                            }}
                             className="bg-gray-600/50 hover:bg-gray-500/50 text-white px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200"
                         >
                             OK

@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
-import { getAgeGroupFromProfile, getGenderFromProfile } from "@/lib/utils/ageGroupUtils";
+// Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 const RecommendationCard = ({ card, onCardClick }) => {
     return (
@@ -70,52 +70,161 @@ export const TaskListSection = () => {
 
     // STALE-WHILE-REVALIDATE: Always fetch - will use cache if available and fresh
     useEffect(() => {
-        // Get dynamic age group and gender from user profile
-        const ageGroup = getAgeGroupFromProfile(userProfile);
-        const gender = getGenderFromProfile(userProfile);
+        // Validate userProfile - don't pass error objects
+        const isValidUser = userProfile &&
+            typeof userProfile === "object" &&
+            !Array.isArray(userProfile) &&
+            userProfile.success !== false && // Not an error response
+            !userProfile.error && // Not an error object
+            (userProfile.age !== undefined || userProfile.ageRange !== undefined || userProfile.gender !== undefined || userProfile._id !== undefined); // Has user properties
 
-        console.log('🎮 TaskListSection: Using dynamic user profile:', {
-            age: userProfile?.age,
-            ageRange: userProfile?.ageRange,
-            gender: userProfile?.gender,
-            calculatedAgeGroup: ageGroup,
-            calculatedGender: gender
+        console.log('🔍 [COMPONENT] TaskListSection - User Profile Debug:', {
+            hasUserProfile: !!userProfile,
+            isValidUser,
+            userProfileType: typeof userProfile,
+            userProfileIsNull: userProfile === null,
+            userProfileIsUndefined: userProfile === undefined,
+            isErrorObject: userProfile && userProfile.success === false,
+            errorMessage: userProfile?.error,
+            userProfileKeys: userProfile ? Object.keys(userProfile) : [],
+            userProfileAge: userProfile?.age,
+            userProfileAgeType: typeof userProfile?.age,
+            userProfileAgeRange: userProfile?.ageRange,
+            userProfileGender: userProfile?.gender,
+            userProfileGenderType: typeof userProfile?.gender,
+            fullUserProfile: userProfile,
+            userProfileStringified: userProfile ? JSON.stringify(userProfile).substring(0, 300) : 'null/undefined'
         });
 
+        // Only pass user object if it's valid, otherwise pass null to use defaults
+        const userToPass = isValidUser ? userProfile : null;
+
         // Always dispatch - stale-while-revalidate will handle cache logic automatically
+        // Pass user object directly - API will extract age and gender dynamically
         // This ensures:
         // 1. Shows cached data immediately if available (< 5 min old)
         // 2. Refreshes in background if cache is stale or 80% expired
         // 3. Fetches fresh if no cache exists
+        console.log('🔍 [COMPONENT] TaskListSection - Dispatching fetchGamesBySection with:', {
+            uiSection: sectionKey,
+            user: userToPass,
+            hasUser: !!userToPass,
+            isValidUser,
+            page: 1,
+            limit: 10
+        });
+
         dispatch(fetchGamesBySection({
             uiSection: sectionKey,
-            ageGroup,
-            gender,
+            user: userToPass, // Pass null if invalid, API will use defaults
             page: 1,
             limit: 10
         }));
     }, [dispatch, sectionKey, userProfile]);
 
-    // Map the new API data to component format
+    // Refresh games in background after showing cached data (to get admin updates)
+    // Do this in background without blocking UI - show cached data immediately
+    useEffect(() => {
+        if (!userProfile) return;
+
+        // Use setTimeout to refresh in background after showing cached data
+        // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+        const refreshTimer = setTimeout(() => {
+            console.log("🔄 [TaskListSection] Refreshing games in background to get admin updates...");
+            dispatch(fetchGamesBySection({
+                uiSection: sectionKey,
+                user: userProfile,
+                page: 1,
+                limit: 10,
+                force: true,
+                background: true
+            }));
+        }, 100); // Small delay to let cached data render first
+
+        return () => clearTimeout(refreshTimer);
+    }, [dispatch, sectionKey, userProfile]);
+
+    // Refresh games in background when app comes to foreground (admin might have updated)
+    useEffect(() => {
+        if (!userProfile) return;
+
+        const handleFocus = () => {
+            console.log("🔄 [TaskListSection] App focused - refreshing games to get admin updates");
+            dispatch(fetchGamesBySection({
+                uiSection: sectionKey,
+                user: userProfile,
+                page: 1,
+                limit: 10,
+                force: true,
+                background: true
+            }));
+        };
+
+        window.addEventListener("focus", handleFocus);
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden && userProfile) {
+                console.log("🔄 [TaskListSection] App visible - refreshing games to get admin updates");
+                dispatch(fetchGamesBySection({
+                    uiSection: sectionKey,
+                    user: userProfile,
+                    page: 1,
+                    limit: 10,
+                    force: true,
+                    background: true
+                }));
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [dispatch, sectionKey, userProfile]);
+
+    // Map the new API data to component format - using besitosRawData
     const recommendationCards = Array.isArray(sectionGames)
-        ? sectionGames.map((game) => ({
-            id: game._id || game.id,
-            title: game.details?.name,
-            category: game.details?.category || (typeof game.categories?.[0] === 'string' ? game.categories[0] : 'Action'),
-            image: game.images?.icon,
-            earnings: game.rewards?.coins ? `$${game.rewards.coins}` : (game.amount ? `$${game.amount}` : '$5'),
-            xpPoints: game.rewards?.xp || "0"
-        }))
+        ? sectionGames.map((game) => {
+            // Use besitosRawData if available, otherwise fallback to existing structure
+            const rawData = game.besitosRawData || {};
+
+            return {
+                id: game._id || game.id || game.gameId,
+                title: rawData.title || game.details?.name || game.title,
+                category: rawData.categories?.[0]?.name || game.details?.category || (typeof game.categories?.[0] === 'string' ? game.categories[0] : 'Action'),
+                image: rawData.square_image || rawData.image || game.images?.icon || game.images?.banner,
+                earnings: rawData.amount ? `$${rawData.amount}` : (game.rewards?.coins ? `$${game.rewards.coins}` : (game.amount ? `$${game.amount}` : '$5')),
+                xpPoints: game.rewards?.xp || game.xpRewardConfig?.baseXP || "0",
+                fullGameData: game // Store full game including besitosRawData
+            };
+        })
         : [];
 
     // Handle game click - navigate to game details
-    const handleGameClick = (game) => {
+    const handleGameClick = useCallback((game) => {
         // Clear Redux state BEFORE navigation to prevent showing old data
         dispatch({ type: 'games/clearCurrentGameDetails' });
+
+        // Store full game data including besitosRawData in localStorage
+        const fullGame = game.fullGameData || game;
+        if (fullGame) {
+            try {
+                localStorage.setItem('selectedGameData', JSON.stringify(fullGame));
+                console.log('💾 [TaskListSection] Stored full game data with besitosRawData:', {
+                    hasBesitosRawData: !!fullGame.besitosRawData,
+                    gameId: game.id || game._id
+                });
+            } catch (error) {
+                console.error('❌ Failed to store game data:', error);
+            }
+        }
+
         // Use 'id' field first (as expected by API), fallback to '_id'
-        const gameId = game.id || game._id;
-        router.push(`/gamedetails?gameId=${gameId}`);
-    };
+        const gameId = game.id || game._id || game.gameId;
+        router.push(`/gamedetails?gameId=${gameId}&source=cashCoach`);
+    }, [router, dispatch]);
 
 
     // Show loading state only if games are loading AND we have no cached data
@@ -158,10 +267,12 @@ export const TaskListSection = () => {
                     ))
                 ) : (
                     <div className="w-full flex flex-col items-center justify-center py-6 px-4">
-                        <h4 className="[font-family:'Poppins',Helvetica] font-semibold text-[#F4F3FC] text-[14px] text-center mb-2">
-                            No Recommendations Available
-                        </h4>
-
+                        <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg mb-2 text-center">
+                            Gaming - Cash Coach Recommendation
+                        </h3>
+                        <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-sm text-center">
+                            No games available
+                        </p>
                     </div>
                 )}
             </div>

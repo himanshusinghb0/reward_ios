@@ -7,8 +7,15 @@ export const HighestTransctionCard = ({
     status,
     coins,
     xpBonus,
+    xp,
+    finalXp,
     gameLogoSrc,
+    metadata,
 }) => {
+    // Priority: metadata.xp > finalXp > xpBonus
+    // Use metadata.xp if available (for Daily Rewards), otherwise use finalXp, then xpBonus
+    const displayXp = (xp !== null && xp !== undefined) ? xp : 
+                      (finalXp !== null && finalXp !== undefined ? finalXp : xpBonus);
     return (
         <article
             className="relative w-[335px] h-[92px] bg-black  rounded-[10px] shadow-[0_0_10px_6px_rgba(255,255,255,0.15)]"
@@ -65,7 +72,7 @@ export const HighestTransctionCard = ({
 
             <div
                 className="absolute w-[89px] h-[22px] top-[70px] left-[123px]"
-                aria-label={`Plus ${xpBonus} XP bonus`}
+                aria-label={`Plus ${displayXp} XP bonus${finalXp ? ' (Final XP with multiplier)' : ''}`}
             >
                 <div className="relative w-[110px] h-7 -top-0.5 -left-1.5">
                     <div className="absolute w-[57px] h-6 top-0 left-[27px] bg-[#201f59] rounded-[4px_4px_0px_0px] shadow-[0px_0px_4px_#fef47e33]" />
@@ -87,7 +94,7 @@ export const HighestTransctionCard = ({
                     />
 
                     <span className="absolute h-5 top-1 left-[30px] [font-family:'Poppins',Helvetica] font-medium text-white text-[13px] tracking-[0] leading-[normal]">
-                        +{xpBonus}
+                        +{displayXp}
                     </span>
 
                     <Image

@@ -151,7 +151,7 @@ export const Coin = ({
                 gameId: game.id,
                 coins: availableCoins,
                 xp: availableXP,
-                reason: `Game session completion - ${game.title || 'Unknown Game'} - ${availableGroups} groups claimed`
+                reason: `Game session completion - ${game.besitosRawData?.title || game.title || 'Unknown Game'} - ${availableGroups} groups claimed`
             };
 
 

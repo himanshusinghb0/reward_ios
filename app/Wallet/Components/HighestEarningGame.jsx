@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { handleGameDownload } from "@/lib/gameDownloadUtils";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
-import { getAgeGroupFromProfile, getGenderFromProfile } from "@/lib/utils/ageGroupUtils";
+// Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 const SCALE_CONFIG = [
     { minWidth: 0, scaleClass: "scale-90" },
     { minWidth: 320, scaleClass: "scale-90" },
@@ -33,49 +33,125 @@ export const HighestEarningGame = () => {
 
     // STALE-WHILE-REVALIDATE: Always fetch - will use cache if available and fresh
     useEffect(() => {
-        // Get dynamic age group and gender from user profile
-        const ageGroup = getAgeGroupFromProfile(userProfile);
-        const gender = getGenderFromProfile(userProfile);
-
-        console.log('🎮 HighestEarningGame: Using dynamic user profile:', {
+        console.log('🎮 HighestEarningGame: Using user profile:', {
             age: userProfile?.age,
             ageRange: userProfile?.ageRange,
-            gender: userProfile?.gender,
-            calculatedAgeGroup: ageGroup,
-            calculatedGender: gender
+            gender: userProfile?.gender
         });
 
         // Always dispatch - stale-while-revalidate will handle cache logic automatically
+        // Pass user object directly - API will extract age and gender dynamically
         // This ensures:
         // 1. Shows cached data immediately if available (< 5 min old)
         // 2. Refreshes in background if cache is stale or 80% expired
         // 3. Fetches fresh if no cache exists
         dispatch(fetchGamesBySection({
             uiSection: sectionName,
-            ageGroup,
-            gender,
+            user: userProfile,
             page: 1,
             limit: 10
         }));
     }, [dispatch, sectionName, userProfile]);
 
-    // Map the new API data to component format
-    const processedGames = highestEarningGames?.slice(0, 2).map((game) => ({
-        id: game._id || game.id,
-        title: game.details?.name || game.name || game.title || 'Game',
-        category: game.details?.category || (typeof game.categories?.[0] === 'string' ? game.categories[0] : 'Action'),
-        image: game.images?.banner || game.images?.large_image || game.image || game.square_image,
-        earnings: game.rewards?.coins ? `$${game.rewards.coins}` : (game.amount ? `$${game.amount}` : '$5'),
-    })) || [];
+    // Refresh games in background after showing cached data (to get admin updates)
+    // Do this in background without blocking UI - show cached data immediately
+    useEffect(() => {
+        if (!userProfile) return;
+
+        // Use setTimeout to refresh in background after showing cached data
+        // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+        const refreshTimer = setTimeout(() => {
+            console.log("🔄 [HighestEarningGame] Refreshing games in background to get admin updates...");
+            dispatch(fetchGamesBySection({
+                uiSection: sectionName,
+                user: userProfile,
+                page: 1,
+                limit: 10,
+                force: true,
+                background: true
+            }));
+        }, 100); // Small delay to let cached data render first
+
+        return () => clearTimeout(refreshTimer);
+    }, [dispatch, sectionName, userProfile]);
+
+    // Refresh games in background when app comes to foreground (admin might have updated)
+    useEffect(() => {
+        if (!userProfile) return;
+
+        const handleFocus = () => {
+            console.log("🔄 [HighestEarningGame] App focused - refreshing games to get admin updates");
+            dispatch(fetchGamesBySection({
+                uiSection: sectionName,
+                user: userProfile,
+                page: 1,
+                limit: 10,
+                force: true,
+                background: true
+            }));
+        };
+
+        window.addEventListener("focus", handleFocus);
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden && userProfile) {
+                console.log("🔄 [HighestEarningGame] App visible - refreshing games to get admin updates");
+                dispatch(fetchGamesBySection({
+                    uiSection: sectionName,
+                    user: userProfile,
+                    page: 1,
+                    limit: 10,
+                    force: true,
+                    background: true
+                }));
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [dispatch, sectionName, userProfile]);
+
+    // Map the new API data to component format - using besitosRawData
+    const processedGames = highestEarningGames?.slice(0, 2).map((game) => {
+        // Use besitosRawData if available
+        const rawData = game.besitosRawData || {};
+
+        return {
+            id: game._id || game.id || game.gameId,
+            title: rawData.title || game.details?.name || game.name || game.title || 'Game',
+            category: rawData.categories?.[0]?.name || game.details?.category || (typeof game.categories?.[0] === 'string' ? game.categories[0] : 'Action'),
+            image: rawData.square_image || rawData.image || game.images?.banner || game.images?.large_image || game.image || game.square_image,
+            earnings: rawData.amount ? `$${rawData.amount}` : (game.rewards?.coins ? `$${game.rewards.coins}` : (game.amount ? `$${game.amount}` : '$5')),
+            fullGameData: game // Store full game including besitosRawData
+        };
+    }) || [];
 
     // Handle game click - navigate to game details
     const handleGameClick = (game) => {
         // Clear Redux state BEFORE navigation to prevent showing old data
         dispatch({ type: 'games/clearCurrentGameDetails' });
 
+        // Store full game data including besitosRawData in localStorage
+        const fullGame = game.fullGameData || game;
+        if (fullGame) {
+            try {
+                localStorage.setItem('selectedGameData', JSON.stringify(fullGame));
+                console.log('💾 [HighestEarningGame] Stored full game data with besitosRawData:', {
+                    hasBesitosRawData: !!fullGame.besitosRawData,
+                    gameId: game.id || game._id
+                });
+            } catch (error) {
+                console.error('❌ Failed to store game data:', error);
+            }
+        }
+
         // Use the id from the API response for navigation
-        const gameId = game.id || game._id;
-        router.push(`/gamedetails?gameId=${gameId}`);
+        const gameId = game.id || game._id || game.gameId;
+        router.push(`/gamedetails?gameId=${gameId}&source=highestEarning`);
     };
 
     const getScaleClass = useCallback((width) => {
@@ -155,12 +231,11 @@ export const HighestEarningGame = () => {
                             </article>
                         )) : (
                             <div className="w-full flex flex-col items-center justify-center py-6 px-4">
-
-                                <h4 className="[font-family:'Poppins',Helvetica] font-semibold text-[#F4F3FC] text-[14px] text-center mb-2">
-                                    No Games Available
-                                </h4>
-                                <p className="[font-family:'Poppins',Helvetica] font-normal text-white text-[12px] text-center opacity-90">
-                                    Check back later for new earning opportunities!
+                                <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg mb-2 text-center">
+                                    Gaming - Highest Earning
+                                </h3>
+                                <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-sm text-center">
+                                    No games available
                                 </p>
                             </div>
                         )}

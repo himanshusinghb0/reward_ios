@@ -2,14 +2,20 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { XPPointsModal } from "../../../components/XPPointsModal";
 import { useWalletUpdates } from "@/hooks/useWalletUpdates";
+import { getXPTierProgressBar } from "@/lib/api";
 
 const XPTierTracker = ({ stats, token }) => {
     const [isXPModalOpen, setIsXPModalOpen] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [xpTierData, setXPTierData] = useState(null);
     const buttonRef = useRef(null);
     const { realTimeXP } = useWalletUpdates(token);
     const xpCurrent = realTimeXP;
+
+    // Cache key for localStorage
+    const CACHE_KEY = 'xpTierProgressBar';
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
 
     // Prevent body scroll when modal is open
     useEffect(() => {
@@ -39,23 +45,205 @@ const XPTierTracker = ({ stats, token }) => {
         return () => window.removeEventListener('keydown', handleEscape);
     }, [isXPModalOpen]);
 
-    // OPTIMIZED: Memoize tier goals and calculations
-    const tierGoals = useMemo(() => ({ junior: 0, mid: 5000, senior: 10000 }), []);
+    // Load cached data immediately on mount (non-blocking)
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
 
+        try {
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                const parsed = JSON.parse(cachedData);
+                const cacheAge = Date.now() - (parsed.timestamp || 0);
+
+                // Use cache if it's fresh (< 5 minutes)
+                if (cacheAge < CACHE_TTL && parsed.data) {
+                    console.log(`✅ [XPTierTracker] Using cached data (age: ${Math.round(cacheAge / 1000)}s)`);
+                    setXPTierData(parsed.data);
+                } else if (parsed.data) {
+                    // Cache is stale but exists - show it while refreshing in background
+                    console.log(`⚠️ [XPTierTracker] Cache is stale (age: ${Math.round(cacheAge / 1000)}s), showing cached data while refreshing`);
+                    setXPTierData(parsed.data);
+                }
+            }
+        } catch (err) {
+            console.warn("⚠️ [XPTierTracker] Failed to load cache:", err);
+        }
+    }, []);
+
+    // Fetch fresh data in background (non-blocking UI)
+    useEffect(() => {
+        if (!token) return;
+
+        // Use setTimeout to refresh in background after showing cached data
+        // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+        const refreshTimer = setTimeout(async () => {
+            try {
+                console.log("🔄 [XPTierTracker] Fetching fresh XP tier data in background...");
+                const response = await getXPTierProgressBar(token);
+
+                if (response.success && response.data) {
+                    // Update cache and state silently
+                    const cacheData = {
+                        data: response.data,
+                        timestamp: Date.now(),
+                    };
+                    try {
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+                    } catch (err) {
+                        console.warn("⚠️ [XPTierTracker] Failed to save cache:", err);
+                    }
+                    setXPTierData(response.data);
+                    console.log("✅ [XPTierTracker] Fresh data loaded and cached");
+                }
+            } catch (err) {
+                console.error("❌ [XPTierTracker] Failed to fetch fresh data (non-blocking):", err);
+                // Don't show error to user - just log it, cached data is still shown
+            }
+        }, 100); // Small delay to let cached data render first
+
+        return () => clearTimeout(refreshTimer);
+    }, [token]);
+
+    // Refresh when app comes to foreground (similar to profile)
+    useEffect(() => {
+        if (!token) return;
+
+        const handleFocus = async () => {
+            console.log("🔄 [XPTierTracker] App focused - refreshing XP tier data in background");
+            try {
+                const response = await getXPTierProgressBar(token);
+                if (response.success && response.data) {
+                    const cacheData = {
+                        data: response.data,
+                        timestamp: Date.now(),
+                    };
+                    try {
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+                    } catch (err) {
+                        console.warn("⚠️ [XPTierTracker] Failed to save cache:", err);
+                    }
+                    setXPTierData(response.data);
+                }
+            } catch (err) {
+                console.error("❌ [XPTierTracker] Failed to refresh on focus:", err);
+            }
+        };
+
+        window.addEventListener("focus", handleFocus);
+        return () => {
+            window.removeEventListener("focus", handleFocus);
+        };
+    }, [token]);
+
+    // OPTIMIZED: Memoize progress data from API response with real-time XP updates
     const progressData = useMemo(() => {
-        console.log("🔍 [XPTierTracker] Stats:", stats);
-        const currentXp = stats?.currentXP ?? 2592;
-        const totalXpGoal = tierGoals.senior;
+        // Use API data if available, otherwise fallback to stats prop
+        if (xpTierData) {
+            // Use real-time XP if available (from useWalletUpdates), otherwise use API data
+            const currentXP = (xpCurrent !== null && xpCurrent !== undefined) ? xpCurrent : (xpTierData.currentXP || 0);
+            const currentTier = xpTierData.currentTier || null;
+            const tiers = xpTierData.tiers || [];
+
+            // Progress bar dimensions (288px is the usable width)
+            const BAR_WIDTH = 288;
+            // Label positions on the bar (relative to the 288px width)
+            const JUNIOR_POS = 0;
+            const MID_LEVEL_POS = 114;
+            const SENIOR_POS = 259;
+
+            let progressBarStart = 0; // Start position of progress bar fill
+            let progressBarWidth = 0; // Width of progress bar fill
+            let indicatorPosition = 0; // Position of the indicator circle
+            let totalXP = 1000;
+
+            if (currentTier && tiers.length > 0) {
+                // Find the maximum tier's xpMax for totalXP display
+                const maxTier = tiers.reduce((max, tier) =>
+                    (tier.xpMax > (max?.xpMax || 0)) ? tier : max, tiers[0]
+                );
+                totalXP = maxTier.xpMax || currentTier.xpMax || 1000;
+
+                const tierName = currentTier.name || "";
+                const tierRange = currentTier.xpMax - currentTier.xpMin;
+
+                // Calculate progress within current tier (0-100%)
+                const tierProgress = tierRange > 0
+                    ? Math.min(Math.max((currentXP - currentTier.xpMin) / tierRange, 0), 1)
+                    : 0;
+
+                // Determine bar position and width based on tier
+                if (tierName === "Junior" || tierName.toLowerCase() === "junior") {
+                    // Junior tier: Show progress between Junior and Mid-level labels
+                    progressBarStart = JUNIOR_POS;
+                    const segmentWidth = MID_LEVEL_POS - JUNIOR_POS; // 114px
+                    progressBarWidth = segmentWidth * tierProgress;
+                    indicatorPosition = JUNIOR_POS + progressBarWidth;
+                } else if (tierName === "Middle" || tierName === "Mid-level" || tierName.toLowerCase() === "middle" || tierName.toLowerCase() === "mid-level") {
+                    // Middle tier: Show progress between Mid-level and Senior labels
+                    progressBarStart = MID_LEVEL_POS;
+                    const segmentWidth = SENIOR_POS - MID_LEVEL_POS; // 145px
+                    progressBarWidth = segmentWidth * tierProgress;
+                    indicatorPosition = MID_LEVEL_POS + progressBarWidth;
+                } else if (tierName === "Senior" || tierName.toLowerCase() === "senior") {
+                    // Senior tier: Show full progress bar from Junior to Senior
+                    progressBarStart = JUNIOR_POS;
+                    const segmentWidth = SENIOR_POS - JUNIOR_POS; // 259px
+                    progressBarWidth = segmentWidth * tierProgress;
+                    indicatorPosition = JUNIOR_POS + progressBarWidth;
+                } else {
+                    // Fallback: Show progress from start
+                    progressBarStart = 0;
+                    progressBarWidth = BAR_WIDTH * tierProgress;
+                    indicatorPosition = progressBarWidth;
+                }
+
+                // Ensure values are within bounds
+                progressBarWidth = Math.min(progressBarWidth, BAR_WIDTH - progressBarStart);
+                indicatorPosition = Math.max(0, Math.min(indicatorPosition, BAR_WIDTH - 6));
+            } else {
+                // Fallback calculation
+                totalXP = currentTier?.xpMax || xpTierData.totalXP || 1000;
+                const progressPercentage = totalXP > 0 ? Math.min((currentXP / totalXP) * 100, 100) : 0;
+                progressBarStart = 0;
+                progressBarWidth = (BAR_WIDTH * progressPercentage) / 100;
+                indicatorPosition = progressBarWidth;
+            }
+
+            return {
+                title: xpTierData.title || "You're off to a great start!",
+                currentXP: currentXP,
+                totalXP: totalXP,
+                levels: xpTierData.levels || ["Junior"],
+                progressPercentage: 0, // Not used anymore, kept for compatibility
+                currentTier: currentTier,
+                tiers: tiers,
+                // New properties for tier-based progress bar
+                progressBarStart: progressBarStart,
+                progressBarWidth: progressBarWidth,
+                indicatorPosition: indicatorPosition,
+            };
+        }
+
+        // Fallback to stats prop if API data not loaded yet
+        const currentXp = (xpCurrent !== null && xpCurrent !== undefined) ? xpCurrent : (stats?.currentXP ?? 0);
+        const totalXpGoal = 1000;
         const progressPercentage = Math.min((currentXp / totalXpGoal) * 100, 100);
+        const BAR_WIDTH = 288;
+        const progressBarWidth = (BAR_WIDTH * progressPercentage) / 100;
 
         return {
             title: "You're off to a great start!",
             currentXP: currentXp,
             totalXP: totalXpGoal,
-            levels: ["Junior", "Mid-level", "Senior"],
+            levels: ["Junior"],
             progressPercentage: progressPercentage,
+            currentTier: null,
+            tiers: [],
+            progressBarStart: 0,
+            progressBarWidth: progressBarWidth,
+            indicatorPosition: progressBarWidth,
         };
-    }, [stats?.currentXP, tierGoals]);
+    }, [xpTierData, stats?.currentXP, xpCurrent]);
 
     // OPTIMIZED: Memoize event handler with smooth animation
     const handleModalOpen = useCallback(() => {
@@ -89,25 +277,48 @@ const XPTierTracker = ({ stats, token }) => {
                         {/* Progress bar background */}
                         <div className="absolute w-full h-[19px] top-0.5 left-0 bg-[#373737] rounded-[32px] border-4 border-solid border-[#ffffff33]" />
 
-                        {/* Progress bar fill */}
+                        {/* Progress bar fill - positioned based on current tier */}
                         <div
-                            className="absolute h-[11px] top-1.5 left-1 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-[32px]"
+                            className="absolute h-[11px] top-1.5 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-[32px]"
                             style={{
-                                width: `${Math.min((progressData.progressPercentage / 100) * 288, 288)}px`,
+                                left: `${1 + (progressData.progressBarStart || 0)}px`,
+                                width: `${Math.max(0, Math.min(progressData.progressBarWidth || 0, 288 - (progressData.progressBarStart || 0)))}px`,
                             }}
-                        />
-                        <div
-                            className="absolute w-6 h-6 top-0 bg-white rounded-full border-5 border-[#FFD700]"
-                            style={{ left: "280px" }}
                         />
 
-                        {/* Current progress indicator */}
+                        {/* Current progress indicator - moves along with progress */}
                         <div
-                            className="absolute w-6 h-6 top-0 bg-white rounded-full border-5 border-[#FFD700]"
+                            className="absolute w-6 h-6 top-0 bg-white rounded-full border-5 border-[#FFD700] z-10"
                             style={{
-                                left: `${Math.min((progressData.progressPercentage / 100) * 278, 278)}px`,
+                                left: `${Math.max(0, Math.min(1 + (progressData.indicatorPosition || 0) - 6, 288 - 6))}px`,
                             }}
                         />
+
+                        {/* Right side circle - positioned at end of current tier segment */}
+                        {(() => {
+                            const tierName = progressData.currentTier?.name || "";
+                            let endPosition = 288 - 6; // Default to end (Senior position)
+
+                            if (tierName === "Junior" || tierName.toLowerCase() === "junior") {
+                                // Junior tier: circle at Mid-level position (114px)
+                                endPosition = 114 - 6;
+                            } else if (tierName === "Middle" || tierName === "Mid-level" || tierName.toLowerCase() === "middle" || tierName.toLowerCase() === "mid-level") {
+                                // Middle tier: circle at Senior position (259px)
+                                endPosition = 259 - 6;
+                            } else if (tierName === "Senior" || tierName.toLowerCase() === "senior") {
+                                // Senior tier: circle at end (288px)
+                                endPosition = 288 - 6;
+                            }
+
+                            return (
+                                <div
+                                    className="absolute w-6 h-6 top-0 bg-white rounded-full border-5 border-[#FFD700] z-10"
+                                    style={{
+                                        left: `${Math.max(0, Math.min(endPosition, 288 - 6))}px`,
+                                    }}
+                                />
+                            );
+                        })()}
 
                     </div>
                 </div>
@@ -131,7 +342,7 @@ const XPTierTracker = ({ stats, token }) => {
 
                 <div className="absolute w-[153px] h-[21px] top-[113px] left-[18px] flex items-center">
                     <div className="font-medium text-[#d2d2d2] leading-[normal] [font-family:'Poppins',Helvetica] text-sm tracking-[0]">
-                        {xpCurrent}
+                        {progressData.currentXP}
                     </div>
 
                     <img
@@ -177,19 +388,18 @@ const XPTierTracker = ({ stats, token }) => {
                 </button>
 
                 <nav className="absolute w-[303px] h-[15px] top-[63px] left-4">
-                    {progressData.levels.map((level, index) => (
-                        <div
-                            key={level}
-                            className={`h-3.5 font-light text-[#FFFFFF] leading-[14px] whitespace-nowrap absolute -top-px [font-family:'Poppins',Helvetica] text-[13px] tracking-[0] ${index === 0
-                                ? "left-0"
-                                : index === 1
-                                    ? "left-[114px]"
-                                    : "left-[259px]"
-                                }`}
-                        >
-                            {level}
-                        </div>
-                    ))}
+                    {["Junior", "Mid-level", "Senior"].map((level, index) => {
+                        const positions = ["left-0", "left-[114px]", "left-[259px]"];
+
+                        return (
+                            <div
+                                key={level}
+                                className={`h-3.5 font-light text-[#FFFFFF] leading-[14px] whitespace-nowrap absolute -top-px [font-family:'Poppins',Helvetica] text-[13px] tracking-[0] ${positions[index] || "left-0"}`}
+                            >
+                                {level}
+                            </div>
+                        );
+                    })}
                 </nav>
 
                 {/* Expanded content - Inline like WelcomeOffer */}
@@ -276,11 +486,18 @@ const XPTierTracker = ({ stats, token }) => {
                                 </div>
 
                                 <div className="flex items-start justify-between w-full gap-1">
-                                    {[
-                                        { name: "Junior", reward: "Reward:", width: "80px" },
-                                        { name: "Mid-level", reward: "1.2x", width: "55px" },
-                                        { name: "Senior", reward: "1.5x", width: "58px" }
-                                    ].map((level, index) => (
+                                    {(progressData.tiers && progressData.tiers.length > 0
+                                        ? progressData.tiers.map((tier) => ({
+                                            name: tier.name,
+                                            reward: tier.reward || `${tier.multiplier}x`,
+                                            width: tier.name === "Junior" ? "80px" : tier.name === "Mid-level" ? "55px" : "58px"
+                                        }))
+                                        : [
+                                            { name: "Junior", reward: "Reward:", width: "80px" },
+                                            { name: "Mid-level", reward: "1.2x", width: "55px" },
+                                            { name: "Senior", reward: "1.5x", width: "58px" }
+                                        ]
+                                    ).map((level, index) => (
                                         <div key={index} className="inline-flex flex-col items-start gap-0.5">
                                             <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[13px] tracking-[0] leading-[normal]">
                                                 {level.name}
@@ -294,9 +511,9 @@ const XPTierTracker = ({ stats, token }) => {
                                                         {level.reward}
                                                     </div>
                                                     <img
-                                                        className="w-[14px] h-[15px] aspect-[0.97] flex-shrink-0"
+                                                        className="w-[14px] h-[15px] mb-0.5 object-contain"
                                                         alt=""
-                                                        src={`https://c.animaapp.com/rTwEmiCB/img/image-3937-${index + 3}@2x.png`}
+                                                        src="/dollor.png"
                                                         aria-hidden="true"
                                                     />
                                                 </div>
@@ -320,11 +537,27 @@ const XPTierTracker = ({ stats, token }) => {
                                 </p>
 
                                 <div className="flex items-start justify-between w-full gap-1">
-                                    {[
-                                        { name: "Junior", points: "5", width: "42px" },
-                                        { name: "Mid-level", points: "8", width: "75px" },
-                                        { name: "Senior", points: "10", width: "48px" },
-                                    ].map((item, index) => (
+                                    {(progressData.tiers && progressData.tiers.length > 0
+                                        ? progressData.tiers.map((tier) => {
+                                            // Map tier names to example points: Junior=5, Mid-level=10, Senior=15
+                                            const getExamplePoints = (tierName) => {
+                                                if (tierName === "Junior") return "5";
+                                                if (tierName === "Mid-level" || tierName === "Middle") return "10";
+                                                if (tierName === "Senior") return "15";
+                                                return tier.examplePoints?.toString() || "5";
+                                            };
+                                            return {
+                                                name: tier.name,
+                                                points: getExamplePoints(tier.name),
+                                                width: tier.name === "Junior" ? "42px" : tier.name === "Mid-level" ? "75px" : "48px"
+                                            };
+                                        })
+                                        : [
+                                            { name: "Junior", points: "5", width: "42px" },
+                                            { name: "Mid-level", points: "10", width: "75px" },
+                                            { name: "Senior", points: "15", width: "48px" },
+                                        ]
+                                    ).map((item, index) => (
                                         <div
                                             key={index}
                                             className="flex flex-col items-start gap-0.5"
@@ -471,11 +704,20 @@ const XPTierTracker = ({ stats, token }) => {
                                     </div>
 
                                     <div className="flex items-start justify-between w-full gap-1 sm:gap-2">
-                                        {[
-                                            { name: "Junior", reward: "Reward:", width: "80px", smWidth: "85px", mdWidth: "90px" },
-                                            { name: "Mid-level", reward: "1.2x", width: "55px", smWidth: "58px", mdWidth: "61px" },
-                                            { name: "Senior", reward: "1.5x", width: "58px", smWidth: "62px", mdWidth: "66px" }
-                                        ].map((level, index) => (
+                                        {(progressData.tiers && progressData.tiers.length > 0
+                                            ? progressData.tiers.map((tier) => ({
+                                                name: tier.name,
+                                                reward: tier.reward || `${tier.multiplier}x`,
+                                                width: tier.name === "Junior" ? "80px" : tier.name === "Mid-level" ? "55px" : "58px",
+                                                smWidth: tier.name === "Junior" ? "85px" : tier.name === "Mid-level" ? "58px" : "62px",
+                                                mdWidth: tier.name === "Junior" ? "90px" : tier.name === "Mid-level" ? "61px" : "66px"
+                                            }))
+                                            : [
+                                                { name: "Junior", reward: "Reward:", width: "80px", smWidth: "85px", mdWidth: "90px" },
+                                                { name: "Mid-level", reward: "1.2x", width: "55px", smWidth: "58px", mdWidth: "61px" },
+                                                { name: "Senior", reward: "1.5x", width: "58px", smWidth: "62px", mdWidth: "66px" }
+                                            ]
+                                        ).map((level, index) => (
                                             <div key={index} className="inline-flex flex-col items-start gap-0.5 sm:gap-1">
                                                 <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[13px] sm:text-[14px] md:text-[15px] tracking-[0] leading-[normal]">
                                                     {level.name}
@@ -489,9 +731,9 @@ const XPTierTracker = ({ stats, token }) => {
                                                             {level.reward}
                                                         </div>
                                                         <img
-                                                            className="w-[14px] h-[15px] sm:w-[16px] sm:h-[17px] md:w-[18px] md:h-[19px] aspect-[0.97] flex-shrink-0"
+                                                            className="w-[14px] h-[15px] sm:w-[16px] sm:h-[17px] md:w-[18px] md:h-[19px] mb-0.5 sm:mb-1 object-contain"
                                                             alt=""
-                                                            src={`https://c.animaapp.com/rTwEmiCB/img/image-3937-${index + 3}@2x.png`}
+                                                            src="/dollor.png"
                                                             aria-hidden="true"
                                                         />
                                                     </div>
@@ -515,11 +757,29 @@ const XPTierTracker = ({ stats, token }) => {
                                     </p>
 
                                     <div className="flex items-start justify-between w-full gap-1 sm:gap-2">
-                                        {[
-                                            { name: "Junior", points: "5", width: "42px", smWidth: "45px", mdWidth: "49px" },
-                                            { name: "Mid-level", points: "8", width: "75px", smWidth: "82px", mdWidth: "90px" },
-                                            { name: "Senior", points: "10", width: "48px", smWidth: "51px", mdWidth: "54px" },
-                                        ].map((item, index) => (
+                                        {(progressData.tiers && progressData.tiers.length > 0
+                                            ? progressData.tiers.map((tier) => {
+                                                // Map tier names to example points: Junior=5, Mid-level=10, Senior=15
+                                                const getExamplePoints = (tierName) => {
+                                                    if (tierName === "Junior") return "5";
+                                                    if (tierName === "Mid-level" || tierName === "Middle") return "10";
+                                                    if (tierName === "Senior") return "15";
+                                                    return tier.examplePoints?.toString() || "5";
+                                                };
+                                                return {
+                                                    name: tier.name,
+                                                    points: getExamplePoints(tier.name),
+                                                    width: tier.name === "Junior" ? "42px" : tier.name === "Mid-level" ? "75px" : "48px",
+                                                    smWidth: tier.name === "Junior" ? "45px" : tier.name === "Mid-level" ? "82px" : "51px",
+                                                    mdWidth: tier.name === "Junior" ? "49px" : tier.name === "Mid-level" ? "90px" : "54px"
+                                                };
+                                            })
+                                            : [
+                                                { name: "Junior", points: "5", width: "42px", smWidth: "45px", mdWidth: "49px" },
+                                                { name: "Mid-level", points: "10", width: "75px", smWidth: "82px", mdWidth: "90px" },
+                                                { name: "Senior", points: "15", width: "48px", smWidth: "51px", mdWidth: "54px" },
+                                            ]
+                                        ).map((item, index) => (
                                             <div
                                                 key={index}
                                                 className="flex flex-col items-start gap-0.5 sm:gap-1"

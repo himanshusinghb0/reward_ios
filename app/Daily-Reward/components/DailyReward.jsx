@@ -259,7 +259,7 @@ const DailyReward = () => {
                 title="Reward Claimed!"
                 showCloseButton={true}
                 autoClose={true}
-                autoCloseDelay={3000}
+                autoCloseDelay={5000}
             >
                 <div className="text-center">
                     <div className="text-green-500 text-4xl mb-3">🎉</div>

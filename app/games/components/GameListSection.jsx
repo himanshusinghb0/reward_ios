@@ -100,21 +100,37 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
     }
   }, [isClient, hasNavigated, dispatch]);
 
-  // Also fetch data when page becomes visible (focus)
+  // Refresh user data in background when app comes to foreground (admin might have updated)
   useEffect(() => {
+    if (!isClient) return;
+
     const handleFocus = () => {
-      if (isClient) {
-        const userId = getUserId();
-        if (userId) {
-          console.log('🎮 [GameListSection] Page focused, refreshing game data');
-          dispatch(fetchUserData({ userId, token }));
-        }
+      const userId = getUserId();
+      if (userId) {
+        console.log('🔄 [GameListSection] App focused - refreshing user data to get admin updates');
+        dispatch(fetchUserData({ userId, token, force: true, background: true }));
       }
     };
 
     window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [isClient, dispatch]);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isClient) {
+        const userId = getUserId();
+        if (userId) {
+          console.log('🔄 [GameListSection] App visible - refreshing user data to get admin updates');
+          dispatch(fetchUserData({ userId, token, force: true, background: true }));
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isClient, dispatch, token]);
 
   // Helper to get userId
   const getUserId = () => {
@@ -140,6 +156,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
   const refreshingRef = useRef(false);
 
   // When component is mounted or userDataStatus changes (client-side only)
+  // Uses stale-while-revalidate: shows cached data immediately, fetches fresh if needed
   useEffect(() => {
     // Only run on client side
     if (!isClient) {
@@ -156,14 +173,32 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
       gamesCount: inProgressGames?.length || 0
     });
 
-    // ALWAYS fetch data when navigating to games page - ignore previous status
+    // ALWAYS fetch data when navigating to games page - stale-while-revalidate will handle cache
     if (userId) {
-      console.log('🚀 [GameListSection] ALWAYS fetching data on navigation to games page');
-      dispatch(fetchUserData({ userId, devicePlatform: "android" }));
+      console.log('🚀 [GameListSection] Fetching data (stale-while-revalidate)');
+      dispatch(fetchUserData({ userId, token }));
     } else {
       console.warn('⚠️ [GameListSection] No userId found in localStorage');
     }
-  }, [dispatch, isClient]);
+  }, [dispatch, isClient, token]);
+
+  // Refresh user data in background after showing cached data (to get admin updates)
+  // Do this in background without blocking UI - show cached data immediately
+  useEffect(() => {
+    if (!isClient) return;
+
+    const userId = getUserId();
+    if (!userId) return;
+
+    // Use setTimeout to refresh in background after showing cached data
+    // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+    const refreshTimer = setTimeout(() => {
+      console.log("🔄 [GameListSection] Refreshing user data in background to get admin updates...");
+      dispatch(fetchUserData({ userId, token, force: true, background: true }));
+    }, 100); // Small delay to let cached data render first
+
+    return () => clearTimeout(refreshTimer);
+  }, [dispatch, isClient, token]);
 
   // Main fix: Listen to game download event - refetch without full refresh
   useGameDownloadedRefetch((event) => {

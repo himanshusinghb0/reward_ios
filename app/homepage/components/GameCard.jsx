@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
 import { useRouter } from "next/navigation";
 import { handleGameDownload } from "@/lib/gameDownloadUtils";
-import { getAgeGroupFromProfile, getGenderFromProfile } from "@/lib/utils/ageGroupUtils";
+// Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 const GameCard = ({ onClose: onCloseProp }) => {
     const dispatch = useDispatch();
@@ -194,15 +194,27 @@ const GameCard = ({ onClose: onCloseProp }) => {
             // Clear Redux state BEFORE navigation to prevent showing old data
             dispatch({ type: 'games/clearCurrentGameDetails' });
 
+            // Store full game data including besitosRawData in localStorage
+            try {
+                localStorage.setItem('selectedGameData', JSON.stringify(currentGame));
+                console.log('💾 [GameCard] Stored full game data with besitosRawData:', {
+                    hasBesitosRawData: !!currentGame.besitosRawData,
+                    gameId: currentGame.id || currentGame._id
+                });
+            } catch (error) {
+                console.error('❌ Failed to store game data:', error);
+            }
+
             // Use 'id' field first (as expected by API), fallback to '_id'
-            const gameId = currentGame.id || currentGame._id;
+            const gameId = currentGame.id || currentGame._id || currentGame.gameId;
             console.log('🎮 GameCard: Navigating to game details for:', {
-                title: currentGame.details?.name || currentGame.title,
+                title: currentGame.besitosRawData?.title || currentGame.details?.name || currentGame.title,
                 _id: currentGame._id,
                 id: currentGame.id,
-                usingId: gameId
+                usingId: gameId,
+                hasBesitosRawData: !!currentGame.besitosRawData
             });
-            router.push(`/gamedetails?gameId=${gameId}`);
+            router.push(`/gamedetails?gameId=${gameId}&source=swipe`);
         }
     }, [currentGameIndex, swipeGames, logSwipePreference, router]);
 
@@ -257,9 +269,13 @@ const GameCard = ({ onClose: onCloseProp }) => {
         const currentGame = swipeGames[currentGameIndex];
         if (currentGame) {
             try {
+                // Use besitosRawData URL if available
+                const downloadUrl = currentGame.besitosRawData?.url || currentGame.url || currentGame.details?.downloadUrl;
+                const gameToDownload = downloadUrl ? { ...currentGame, url: downloadUrl } : currentGame;
+
                 // FIXED: Download game without affecting undo state
-                await handleGameDownload(currentGame);
-                console.log('Game download initiated:', currentGame.details?.name || currentGame.title);
+                await handleGameDownload(gameToDownload);
+                console.log('Game download initiated:', currentGame.besitosRawData?.title || currentGame.details?.name || currentGame.title);
 
                 // FIXED: Don't reset undo state when downloading - just log the download
                 // The undo count and swipe history should remain intact
@@ -270,9 +286,10 @@ const GameCard = ({ onClose: onCloseProp }) => {
                 });
             } catch (error) {
                 console.error('Error downloading game:', error);
-                // Fallback to direct URL opening
-                if (currentGame.url) {
-                    window.open(currentGame.url, '_blank');
+                // Fallback to direct URL opening - use besitosRawData URL first
+                const downloadUrl = currentGame.besitosRawData?.url || currentGame.url;
+                if (downloadUrl) {
+                    window.open(downloadUrl, '_blank');
                 }
             }
         }
@@ -371,30 +388,86 @@ const GameCard = ({ onClose: onCloseProp }) => {
 
     // STALE-WHILE-REVALIDATE: Always fetch - will use cache if available and fresh
     useEffect(() => {
-        // Get dynamic age group and gender from user profile
-        const ageGroup = getAgeGroupFromProfile(userProfile);
-        const gender = getGenderFromProfile(userProfile);
-
-        console.log('🎮 GameCard: Using dynamic user profile:', {
+        console.log('🎮 GameCard: Using user profile:', {
             age: userProfile?.age,
             ageRange: userProfile?.ageRange,
-            gender: userProfile?.gender,
-            calculatedAgeGroup: ageGroup,
-            calculatedGender: gender
+            gender: userProfile?.gender
         });
 
         // Always dispatch - stale-while-revalidate will handle cache logic
+        // Pass user object directly - API will extract age and gender dynamically
         // This ensures:
         // 1. Shows cached data immediately if available (< 5 min old)
         // 2. Refreshes in background if cache is stale or 80% expired
         // 3. Fetches fresh if no cache exists
         dispatch(fetchGamesBySection({
             uiSection: sectionName,
-            ageGroup,
-            gender,
+            user: userProfile,
             page: 1,
             limit: 10
         }));
+    }, [dispatch, sectionName, userProfile]);
+
+    // Refresh games in background after showing cached data (to get admin updates)
+    // Do this in background without blocking UI - show cached data immediately
+    useEffect(() => {
+        if (!userProfile) return;
+
+        // Use setTimeout to refresh in background after showing cached data
+        // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+        const refreshTimer = setTimeout(() => {
+            console.log("🔄 [GameCard] Refreshing games in background to get admin updates...");
+            dispatch(fetchGamesBySection({
+                uiSection: sectionName,
+                user: userProfile,
+                page: 1,
+                limit: 10,
+                force: true,
+                background: true
+            }));
+        }, 100); // Small delay to let cached data render first
+
+        return () => clearTimeout(refreshTimer);
+    }, [dispatch, sectionName, userProfile]);
+
+    // Refresh games in background when app comes to foreground (admin might have updated)
+    useEffect(() => {
+        if (!userProfile) return;
+
+        const handleFocus = () => {
+            console.log("🔄 [GameCard] App focused - refreshing games to get admin updates");
+            dispatch(fetchGamesBySection({
+                uiSection: sectionName,
+                user: userProfile,
+                page: 1,
+                limit: 10,
+                force: true,
+                background: true
+            }));
+        };
+
+        window.addEventListener("focus", handleFocus);
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden && userProfile) {
+                console.log("🔄 [GameCard] App visible - refreshing games to get admin updates");
+                dispatch(fetchGamesBySection({
+                    uiSection: sectionName,
+                    user: userProfile,
+                    page: 1,
+                    limit: 10,
+                    force: true,
+                    background: true
+                }));
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, [dispatch, sectionName, userProfile]);
 
     useEffect(() => {
@@ -476,16 +549,22 @@ const GameCard = ({ onClose: onCloseProp }) => {
         return { totalGames: swipeGames?.length, currentIndex: currentGameIndex };
     }, [swipeGames, currentGameIndex, currentGame]);
 
-    // OPTIMIZED: Memoize game data processing with image optimization
+    // OPTIMIZED: Memoize game data processing with image optimization - using besitosRawData
     const gameData = useMemo(() => {
         if (!currentGame) return null;
 
-        // OPTIMIZED: Prioritize smaller images for faster loading
+        // Use besitosRawData if available, otherwise fallback to existing structure
+        const rawData = currentGame.besitosRawData || {};
+
+        // OPTIMIZED: Prioritize smaller images for faster loading - use besitosRawData first
         const getOptimizedImage = () => {
             const imageSources = [
-                currentGame?.images?.square_image, // Smallest, fastest to load
+                rawData.square_image, // From besitosRawData
+                rawData.image, // From besitosRawData
+                currentGame?.images?.square_image,
                 currentGame?.images?.banner,
                 currentGame?.images?.large_image,
+                rawData.large_image, // From besitosRawData
                 currentGame?.image,
                 currentGame?.square_image,
                 currentGame?.details?.image
@@ -495,12 +574,14 @@ const GameCard = ({ onClose: onCloseProp }) => {
         };
 
         return {
-            title: currentGame.details?.name || currentGame.title || 'Unknown Game',
+            title: rawData.title || currentGame.details?.name || currentGame.title || 'Unknown Game',
             image: getOptimizedImage(),
-            description: currentGame.details?.description || currentGame.description || '',
-            category: currentGame.category || 'Games',
-            genre: currentGame.genre || 'Casual',
-            id: currentGame._id || currentGame.id
+            description: rawData.description || currentGame.details?.description || currentGame.description || '',
+            category: rawData.categories?.[0]?.name || currentGame.category || 'Games',
+            genre: rawData.categories?.[0]?.name || currentGame.genre || 'Casual',
+            id: currentGame._id || currentGame.id || currentGame.gameId,
+            amount: rawData.amount || currentGame.rewards?.coins,
+            fullGameData: currentGame // Store full game including besitosRawData
         };
     }, [currentGame]);
 
@@ -641,6 +722,20 @@ const GameCard = ({ onClose: onCloseProp }) => {
 
     if (!isVisible) {
         return null;
+    }
+
+    // Show empty state if no games available
+    if (!swipeGames || swipeGames.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center w-[335px] h-[549px] mx-auto p-6">
+                <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-xl mb-2 text-center">
+                    Gaming - Swipe
+                </h2>
+                <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-base text-center">
+                    No games available
+                </p>
+            </div>
+        );
     }
 
     return (

@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
-import { getAgeGroupFromProfile, getGenderFromProfile } from "@/lib/utils/ageGroupUtils";
+// Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 const RecommendationCard = React.memo(({ card, onCardClick }) => {
     const [imageError, setImageError] = useState(false);
@@ -96,20 +96,27 @@ export const ListGame = () => {
     const recommendationCards = useMemo(() => {
         const allGames = [];
 
-        // Add API games (not downloaded)
+        // Add API games (not downloaded) - using besitosRawData
         if (swipeGames && swipeGames.length > 0) {
-            const apiGames = swipeGames.map((game, index) => ({
-                id: game.id || game._id || `api-game-${index}`,
-                originalId: game.id || game._id,
-                title: game.name || game.title || 'Game',
-                category: game.categories?.[0] || 'Action',
-                image: game.image || game.square_image || game.background_image || game.icon || game.thumbnail || game.logo || game.banner,
-                backgroundImage: game.image || game.square_image || game.background_image || game.icon || game.thumbnail || game.logo || game.banner,
-                earnings: game.amount ? `$${game.amount}` : (game.currency || '$5'),
-                xpPoints: "50",
-                isDownloaded: false,
-                source: 'api'
-            }));
+            const apiGames = swipeGames.map((game, index) => {
+                // Use besitosRawData if available, otherwise fallback to existing structure
+                const rawData = game.besitosRawData || {};
+
+                return {
+                    id: game.id || game._id || game.gameId || `api-game-${index}`,
+                    originalId: game.id || game._id || game.gameId,
+                    title: rawData.title || game.name || game.title || game.details?.name || 'Game',
+                    category: rawData.categories?.[0]?.name || game.categories?.[0] || 'Action',
+                    // Use besitosRawData images first
+                    image: rawData.square_image || rawData.image || game.image || game.square_image || game.background_image || game.icon || game.thumbnail || game.logo || game.banner,
+                    backgroundImage: rawData.large_image || rawData.image || game.image || game.square_image || game.background_image || game.icon || game.thumbnail || game.logo || game.banner,
+                    earnings: rawData.amount ? `$${rawData.amount}` : (game.amount ? `$${game.amount}` : (game.currency || '$5')),
+                    xpPoints: game.rewards?.xp || game.xpRewardConfig?.baseXP || "50",
+                    isDownloaded: false,
+                    source: 'api',
+                    fullData: game // Store full game including besitosRawData
+                };
+            });
             allGames.push(...apiGames);
         }
 
@@ -153,20 +160,42 @@ export const ListGame = () => {
         // Clear Redux state BEFORE navigation to prevent showing old data
         dispatch({ type: 'games/clearCurrentGameDetails' });
 
+        // Clear Redux state BEFORE navigation
+        dispatch({ type: 'games/clearCurrentGameDetails' });
+
         if (game.isDownloaded && game.fullData) {
             // For downloaded games, use localStorage method
             console.log('🎮 ListGame: Navigating to downloaded game via localStorage');
-            localStorage.setItem('selectedGameData', JSON.stringify(game.fullData));
-            router.push(`/gamedetails?id=${game.originalId}`);
+            try {
+                localStorage.setItem('selectedGameData', JSON.stringify(game.fullData));
+            } catch (error) {
+                console.error('❌ Failed to store game data:', error);
+            }
+            router.push(`/gamedetails?gameId=${game.originalId}&source=race`);
         } else {
-            // For API games, use normal navigation
-            const gameId = game.originalId;
+            // For API games, store full data including besitosRawData
+            if (game.fullData) {
+                try {
+                    localStorage.setItem('selectedGameData', JSON.stringify(game.fullData));
+                    console.log('💾 [ListGame] Stored full game data with besitosRawData:', {
+                        hasBesitosRawData: !!game.fullData.besitosRawData,
+                        gameId: game.originalId
+                    });
+                } catch (error) {
+                    console.error('❌ Failed to store game data:', error);
+                }
+            }
+
+            const gameId = game.originalId || game.id;
             if (!gameId) {
                 console.error('❌ ListGame: No game ID found:', game);
                 return;
             }
-            console.log('🎮 ListGame: Navigating to API game via gameId');
-            router.push(`/gamedetails?gameId=${gameId}`);
+            console.log('🎮 ListGame: Navigating to API game via gameId:', {
+                gameId,
+                hasBesitosRawData: !!game.fullData?.besitosRawData
+            });
+            router.push(`/gamedetails?gameId=${gameId}&source=race`);
         }
     }, [router, dispatch]);
 
@@ -180,25 +209,82 @@ export const ListGame = () => {
     useEffect(() => {
         // Only fetch as fallback if no games are available and not currently loading
         if (swipeStatus === 'idle' && (!swipeGames || swipeGames.length === 0)) {
-            // Get dynamic age group and gender from user profile
-            const ageGroup = getAgeGroupFromProfile(userProfile);
-            const gender = getGenderFromProfile(userProfile);
-
             console.log('[ListGame] Fallback: Fetching games data (homepage may not have loaded yet)...', {
                 age: userProfile?.age,
-                calculatedAgeGroup: ageGroup,
-                calculatedGender: gender
+                ageRange: userProfile?.ageRange,
+                gender: userProfile?.gender
             });
 
             dispatch(fetchGamesBySection({
                 uiSection: "Swipe",
-                ageGroup,
-                gender,
+                user: userProfile,
                 page: 1,
                 limit: 50  // Increased limit to get more games
             }));
         }
     }, [dispatch, swipeStatus, swipeGames, userProfile]);
+
+    // Refresh games in background after showing cached data (to get admin updates)
+    // Do this in background without blocking UI - show cached data immediately
+    useEffect(() => {
+        if (!userProfile) return;
+
+        // Use setTimeout to refresh in background after showing cached data
+        // This ensures smooth UX - cached data shows immediately, fresh data loads in background
+        const refreshTimer = setTimeout(() => {
+            console.log("🔄 [ListGame] Refreshing games in background to get admin updates...");
+            dispatch(fetchGamesBySection({
+                uiSection: "Swipe",
+                user: userProfile,
+                page: 1,
+                limit: 50,
+                force: true,
+                background: true
+            }));
+        }, 100); // Small delay to let cached data render first
+
+        return () => clearTimeout(refreshTimer);
+    }, [dispatch, userProfile]);
+
+    // Refresh games in background when app comes to foreground (admin might have updated)
+    useEffect(() => {
+        if (!userProfile) return;
+
+        const handleFocus = () => {
+            console.log("🔄 [ListGame] App focused - refreshing games to get admin updates");
+            dispatch(fetchGamesBySection({
+                uiSection: "Swipe",
+                user: userProfile,
+                page: 1,
+                limit: 50,
+                force: true,
+                background: true
+            }));
+        };
+
+        window.addEventListener("focus", handleFocus);
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden && userProfile) {
+                console.log("🔄 [ListGame] App visible - refreshing games to get admin updates");
+                dispatch(fetchGamesBySection({
+                    uiSection: "Swipe",
+                    user: userProfile,
+                    page: 1,
+                    limit: 50,
+                    force: true,
+                    background: true
+                }));
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener("focus", handleFocus);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+    }, [dispatch, userProfile]);
 
     // Loading timeout handling
     useEffect(() => {
@@ -274,13 +360,11 @@ export const ListGame = () => {
                     ))
                 ) : (
                     <div className="col-span-2 flex flex-col items-center justify-center py-6 px-4">
-                        <h4 className="[font-family:'Poppins',Helvetica] font-semibold text-[#F4F3FC] text-[14px] text-center mb-2">
-                            No Games Available
-                        </h4>
-                        <p className="[font-family:'Poppins',Helvetica] text-[#F4F3FC]/70 text-[12px] text-center">
-                            {swipeStatus === 'loading'
-                                ? 'Loading games...'
-                                : 'No games found. Try downloading some games first or check back later for new games.'}
+                        <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg mb-2 text-center">
+                            Gaming - Swipe
+                        </h3>
+                        <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-sm text-center">
+                            No games available
                         </p>
                     </div>
                 )}

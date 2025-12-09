@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Capacitor } from "@capacitor/core";
-import { registerFace } from "@/lib/api";
+import { registerFace, toggleBiometric } from "@/lib/api";
 import { NativeBiometric } from "capacitor-native-biometric";
 import { Camera } from "@capacitor/camera";
 import { Filesystem, Directory } from "@capacitor/filesystem";
@@ -284,6 +284,56 @@ export default function FaceVerificationPage() {
             return;
         }
 
+        setIsLoading(true);
+        setError(null);
+        setIsScanning(true);
+        setLoadingStep("Verifying biometric...");
+
+        // Call toggle biometric API when button is clicked
+        console.log("🔐 [CONTINUE] Calling toggle biometric API...");
+        try {
+            const toggleResult = await toggleBiometric(token);
+            console.log("🔐 [CONTINUE] Toggle biometric API response:", JSON.stringify(toggleResult));
+            
+            if (toggleResult.success && toggleResult.data) {
+                console.log("✅ [CONTINUE] Biometric enabled:", toggleResult.data.biometric?.enabled);
+            } else {
+                console.log("⚠️ [CONTINUE] Toggle biometric API error:", toggleResult.error);
+            }
+        } catch (toggleErr) {
+            console.error("❌ [CONTINUE] Toggle biometric API error:", toggleErr);
+            // Continue with face verification flow even if toggle fails
+        }
+
+        // Call setup API when button is clicked
+        console.log("🔐 [CONTINUE] Calling biometric setup API on button click...");
+        try {
+            // Hardcoded setup payload with required fields
+            const setupData = {
+                mobile: user?.mobile || "+1234567890", // REQUIRED - User's mobile number
+                type: "face_id", // REQUIRED - Must be "face_id" or "fingerprint"
+                verificationData: {
+                    livenessScore: 0.95,
+                    faceMatchScore: 0.85
+                },
+                deviceId: "device-12345",
+                scanType: "os_face_id" // Optional
+            };
+            
+            const setupResult = await registerFace(setupData, token);
+            console.log("🔐 [CONTINUE] Setup API response:", JSON.stringify(setupResult));
+
+            if (setupResult.error) {
+                console.log("⚠️ [CONTINUE] Setup API error:", setupResult.error);
+                // Continue with face verification flow even if setup fails
+            } else {
+                console.log("✅ [CONTINUE] Biometric setup initiated!");
+            }
+        } catch (setupErr) {
+            console.error("❌ [CONTINUE] Setup API error:", setupErr);
+            // Continue with face verification flow even if setup fails
+        }
+
         // Check if we're on a native platform
         console.log("🚀 [CONTINUE] Platform check:", Capacitor.getPlatform());
         console.log("🚀 [CONTINUE] Is native:", Capacitor.isNativePlatform());
@@ -291,12 +341,11 @@ export default function FaceVerificationPage() {
         if (!Capacitor.isNativePlatform()) {
             console.log("❌ [CONTINUE] Not on native platform");
             setError("Face ID is only available on mobile devices. Please use the mobile app.");
+            setIsLoading(false);
+            setIsScanning(false);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
-        setIsScanning(true);
         setLoadingStep("Preparing face scan...");
         console.log("🚀 [CONTINUE] Loading started");
 

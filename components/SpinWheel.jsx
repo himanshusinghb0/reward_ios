@@ -184,18 +184,18 @@ export default function SpinWheel() {
                             // Free spin: Reward already credited, no redemption needed
                             setPendingReward(0);
                             setPendingSpinId(null);
-                            
+
                             // Refresh wallet and XP balance from response
                             if (spinData.newBalance !== undefined) {
                                 setCoins(spinData.newBalance);
                             }
-                            
+
                             // Refresh Redux store with updated balance/XP
                             if (token) {
                                 dispatch(fetchWalletScreen({ token, force: true }));
                                 dispatch(fetchProfileStats({ token, force: true }));
                             }
-                            
+
                             console.log("✅ [SPIN] Reward credited automatically:", {
                                 coinsEarned: spinData.coinsEarned,
                                 xpEarned: spinData.xpEarned,
@@ -255,7 +255,7 @@ export default function SpinWheel() {
             // The ApiError is thrown at api.js:33 with the backend message
             // ApiError structure: { message: "Not eligible for this spin wheel", status: 403, body: {...} }
             let errorMessage = err.message || "Failed to spin. Please try again.";
-            
+
             // The error message from api.js:33 is already in err.message
             // This is the message that should be displayed: "Not eligible for this spin wheel"
             console.log("📝 [SPIN] Error object:", err);
@@ -793,14 +793,13 @@ export default function SpinWheel() {
                 <div className="absolute top-[67%] left-1/2  mr-2 transform -translate-x-1/2 -translate-y-1/2 z-20">
                     <motion.button
                         onClick={handleSpin}
-                        disabled={(isSpinning && !showResult) || cooldownRemaining > 0}
-                        className={`w-[200px] h-12 text-white text-lg font-bold px-8 rounded-lg border-2 whitespace-nowrap ${
-                            (isSpinning && !showResult) || cooldownRemaining > 0
-                                ? 'bg-gradient-to-b from-red-600 to-red-800 border-red-900 shadow-[0_8px_0px_#8f1a1a,inset_0_2px_4px_rgba(255,255,255,0.4)] cursor-not-allowed pointer-events-none'
-                                : 'bg-gradient-to-b from-red-600 to-red-800 border-red-900 shadow-[0_8px_0px_#8f1a1a,inset_0_2px_4px_rgba(255,255,255,0.4)]'
+                        disabled={(isSpinning && !showResult) || /* cooldownRemaining > 0 || */ isLoading}
+                        className={`w-[200px] h-12 text-white text-lg font-bold px-8 rounded-lg border-2 whitespace-nowrap ${(isSpinning && !showResult) || /* cooldownRemaining > 0 || */ isLoading
+                            ? 'bg-gradient-to-b from-red-600 to-red-800 border-red-900 shadow-[0_8px_0px_#8f1a1a,inset_0_2px_4px_rgba(255,255,255,0.4)] cursor-not-allowed pointer-events-none'
+                            : 'bg-gradient-to-b from-red-600 to-red-800 border-red-900 shadow-[0_8px_0px_#8f1a1a,inset_0_2px_4px_rgba(255,255,255,0.4)]'
                             }`}
-                        whileHover={(isSpinning && !showResult) || cooldownRemaining > 0 ? {} : { scale: 1.02 }}
-                        whileTap={(isSpinning && !showResult) || cooldownRemaining > 0 ? {} : {
+                        whileHover={(isSpinning && !showResult) || /* cooldownRemaining > 0 || */ isLoading ? {} : { scale: 1.02 }}
+                        whileTap={(isSpinning && !showResult) || /* cooldownRemaining > 0 || */ isLoading ? {} : {
                             scale: 0.98,
                             y: 4,
                             boxShadow: '0 4px 0px #8f1a1a, inset 0 2px 4px rgba(255,255,255,0.4)'
@@ -956,40 +955,40 @@ export default function SpinWheel() {
                                 (spinReward.type === "coins" && spinReward.coinsEarned > 0) ||
                                 (spinReward.type === "xp" && spinReward.xpEarned > 0)
                             ) && (
-                                <motion.div
-                                    className="mb-4"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.1, duration: 0.3 }}
-                                >
-                                    <div className="flex flex-col items-center justify-center gap-2">
-                                        <div className="flex items-center justify-center gap-2">
-                                            {spinReward.type === "coins" ? (
-                                                <>
-                                                    <img
-                                                        src="/dollor.png"
-                                                        alt="Coin"
-                                                        className="w-8 h-8"
-                                                    />
-                                                    <span className="text-3xl font-bold text-white">
-                                                        {spinReward.coinsEarned}
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span className="text-3xl">⭐</span>
-                                                    <span className="text-3xl font-bold text-white">
-                                                        {spinReward.xpEarned}
-                                                    </span>
-                                                </>
-                                            )}
+                                    <motion.div
+                                        className="mb-4"
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.1, duration: 0.3 }}
+                                    >
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <div className="flex items-center justify-center gap-2">
+                                                {spinReward.type === "coins" ? (
+                                                    <>
+                                                        <img
+                                                            src="/dollor.png"
+                                                            alt="Coin"
+                                                            className="w-8 h-8"
+                                                        />
+                                                        <span className="text-3xl font-bold text-white">
+                                                            {spinReward.coinsEarned}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-3xl">⭐</span>
+                                                        <span className="text-3xl font-bold text-white">
+                                                            {spinReward.xpEarned}
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <span className="text-xl font-semibold text-gray-300 uppercase tracking-wide">
+                                                {spinReward.type === "coins" ? "Coins" : "XP"} Earned
+                                            </span>
                                         </div>
-                                        <span className="text-xl font-semibold text-gray-300 uppercase tracking-wide">
-                                            {spinReward.type === "coins" ? "Coins" : "XP"} Earned
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            )}
+                                    </motion.div>
+                                )}
 
                             {/* Display ONLY the backend message - no hardcoded status info */}
                             <motion.div

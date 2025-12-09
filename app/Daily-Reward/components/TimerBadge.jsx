@@ -6,52 +6,69 @@ export const TimerBadge = ({ nextUnlockTime, isClaimed, countdown }) => {
     const [timeLeft, setTimeLeft] = useState("");
     const [isExpired, setIsExpired] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [initialCountdown, setInitialCountdown] = useState(null);
+    const [countdownStartTime, setCountdownStartTime] = useState(null);
 
     useEffect(() => {
         // Only show timer if we have valid data
         if (!countdown && !nextUnlockTime) {
             setIsLoading(false);
+            setInitialCountdown(null);
+            setCountdownStartTime(null);
             return;
         }
 
         setIsLoading(false);
 
+        // Initialize countdown from API or calculate from nextUnlockTime
+        if (countdown && countdown > 0) {
+            // Store the initial countdown value and when we received it
+            setInitialCountdown(countdown);
+            setCountdownStartTime(Date.now());
+        } else if (nextUnlockTime) {
+            // Use nextUnlockTime if countdown not available
+            const now = new Date().getTime();
+            const unlockTime = new Date(nextUnlockTime).getTime();
+            const timeUntilUnlock = Math.max(0, unlockTime - now);
+            setInitialCountdown(timeUntilUnlock);
+            setCountdownStartTime(now);
+        }
+    }, [nextUnlockTime, isClaimed, countdown]);
+
+    // Calculate and update countdown every second
+    useEffect(() => {
+        if (initialCountdown === null || countdownStartTime === null) {
+            return;
+        }
+
         const calculateTimeLeft = () => {
-            let timeUntilUnlock;
+            const now = Date.now();
+            const elapsed = now - countdownStartTime;
+            const remaining = Math.max(0, initialCountdown - elapsed);
 
-            if (countdown && countdown > 0) {
-                // Use backend countdown (milliseconds)
-                timeUntilUnlock = countdown;
-            } else if (nextUnlockTime) {
-                // Use nextUnlockTime if countdown not available
-                const now = new Date().getTime();
-                const unlockTime = new Date(nextUnlockTime).getTime();
-                timeUntilUnlock = unlockTime - now;
-            } else {
-                // Don't show timer if no valid data
-                setTimeLeft("");
-                return;
-            }
-
-            if (timeUntilUnlock <= 0) {
+            if (remaining <= 0) {
                 setIsExpired(true);
-                setTimeLeft("Ready!");
+                setTimeLeft(isClaimed ? "Next reward ready!" : "Ready!");
                 return;
             }
 
-            const hours = Math.floor(timeUntilUnlock / (1000 * 60 * 60));
-            const minutes = Math.floor((timeUntilUnlock % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeUntilUnlock % (1000 * 60)) / 1000);
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
 
             // Format: "23h:30m" for clear countdown display
-            setTimeLeft(`${hours}h:${minutes.toString().padStart(2, '0')}m`);
+            // For claimed rewards, show "Next: 23h:30m"
+            if (isClaimed) {
+                setTimeLeft(`Next: ${hours}h:${minutes.toString().padStart(2, '0')}m`);
+            } else {
+                setTimeLeft(`${hours}h:${minutes.toString().padStart(2, '0')}m`);
+            }
         };
 
         calculateTimeLeft();
         const interval = setInterval(calculateTimeLeft, 1000);
 
         return () => clearInterval(interval);
-    }, [nextUnlockTime, isClaimed, countdown]);
+    }, [initialCountdown, countdownStartTime, isClaimed]);
 
     // Only show timer if we have valid countdown data
     if (!countdown && !nextUnlockTime) return null;

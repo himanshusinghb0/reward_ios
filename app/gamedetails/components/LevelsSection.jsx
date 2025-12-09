@@ -92,25 +92,47 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                 return;
             }
 
+            // Use besitosRawData goals if available (they have the most complete data)
+            const rawData = game?.besitosRawData || {};
+            const goalsToUse = rawData.goals || game.goals || [];
+
+            // Get taskProgression rules for unlocking tasks
+            const taskProgression = game?.taskProgression || null;
+            const hasProgressionRule = taskProgression?.hasProgressionRule || false;
+            const firstBatchSize = taskProgression?.firstBatchSize || 0;
+            const nextBatchSize = taskProgression?.nextBatchSize || 0;
+            const completedTasks = taskProgression?.completedTasks || 0;
+            const canUnlockNextTasks = taskProgression?.canUnlockNextTasks || false;
+            const thresholdReached = taskProgression?.thresholdReached || false;
+
             console.log('🎯 LevelsSection: Processing game data:', {
-                gameTitle: game.title,
-                gameId: game.id,
-                hasGoals: !!game.goals,
-                goalsLength: game.goals?.length || 0,
-                goals: game.goals
+                gameTitle: rawData.title || game.title,
+                gameId: rawData.id || game.id,
+                hasGoals: !!goalsToUse,
+                goalsLength: goalsToUse?.length || 0,
+                goalsSource: rawData.goals ? 'besitosRawData' : 'game.goals',
+                taskProgression: {
+                    hasProgressionRule,
+                    firstBatchSize,
+                    nextBatchSize,
+                    completedTasks,
+                    canUnlockNextTasks,
+                    thresholdReached
+                },
+                goals: goalsToUse
             });
 
             // Check if we have goals
-            if (!game.goals || game.goals.length === 0) {
-                console.log('⚠️ LevelsSection: No goals found for game:', game.title);
+            if (!goalsToUse || goalsToUse.length === 0) {
+                console.log('⚠️ LevelsSection: No goals found for game:', rawData.title || game.title);
                 setError('No goals available for this game');
                 setIsLoading(false);
                 return;
             }
 
             try {
-                // Process goals with ACTUAL API data (completed, failed, days_left)
-                const allGoals = game.goals.map((goal, index) => {
+                // Process goals with ACTUAL API data (completed, failed, days_left) - from besitosRawData
+                const allGoals = goalsToUse.map((goal, index) => {
                     // Use actual completion status from API
                     const isCompleted = goal.completed === true;
                     const isFailed = goal.failed === true;
@@ -121,28 +143,80 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                     const isExpired = goal.days_left !== null && goal.days_left <= 0 && !isCompleted;
                     const isPending = !isCompleted && !isFailed && !isExpired;
 
-                    // Progressive unlocking in groups of three
-                    // First 3 tasks are always unlocked. Next 3 unlock when first 3 are all completed, etc.
+                    // Progressive unlocking based on taskProgression rules
                     const isLocked = (() => {
-                        // Determine which block of three this index belongs to
-                        const blockIndex = Math.floor(index / 3); // 0-based block
+                        // If no progression rule, use old logic (groups of 3)
+                        if (!hasProgressionRule || firstBatchSize === 0) {
+                            // Determine which block of three this index belongs to
+                            const blockIndex = Math.floor(index / 3); // 0-based block
 
-                        // Block 0 (first three) is always unlocked
-                        if (blockIndex === 0) {
-                            return false;
+                            // Block 0 (first three) is always unlocked
+                            if (blockIndex === 0) {
+                                return false;
+                            }
+
+                            // For subsequent blocks, require all tasks in the previous block to be completed
+                            const prevBlockStart = (blockIndex - 1) * 3;
+                            const prevBlockEnd = prevBlockStart + 3; // non-inclusive
+                            const previousBlockGoals = goalsToUse.slice(prevBlockStart, prevBlockEnd);
+
+                            const previousBlockCompleted = previousBlockGoals.length > 0 && previousBlockGoals.every(prevGoal => {
+                                return prevGoal.completed === true || prevGoal.status === 'completed';
+                            });
+
+                            // Lock if previous block not fully completed
+                            return !previousBlockCompleted;
                         }
 
-                        // For subsequent blocks, require all tasks in the previous block to be completed
-                        const prevBlockStart = (blockIndex - 1) * 3;
-                        const prevBlockEnd = prevBlockStart + 3; // non-inclusive
-                        const previousBlockGoals = game.goals.slice(prevBlockStart, prevBlockEnd);
+                        // Use taskProgression rules
+                        // First batch is always unlocked (firstBatchSize tasks: 0 to firstBatchSize-1)
+                        if (index < firstBatchSize) {
+                            return false; // First batch is always unlocked
+                        }
 
-                        const previousBlockCompleted = previousBlockGoals.length > 0 && previousBlockGoals.every(prevGoal => {
-                            return prevGoal.completed === true || prevGoal.status === 'completed';
-                        });
+                        // Calculate which batch this task belongs to (after first batch)
+                        // Batch 0 = first batch (0 to firstBatchSize-1) - already handled above
+                        // Batch 1 = second batch (firstBatchSize to firstBatchSize + nextBatchSize - 1)
+                        // Batch 2 = third batch, etc.
+                        const batchNumber = Math.floor((index - firstBatchSize) / nextBatchSize) + 1;
 
-                        // Lock if previous block not fully completed
-                        return !previousBlockCompleted;
+                        // Check if all previous batches are completed
+                        for (let b = 0; b < batchNumber; b++) {
+                            let batchStart, batchEnd;
+
+                            if (b === 0) {
+                                // First batch
+                                batchStart = 0;
+                                batchEnd = firstBatchSize;
+                            } else {
+                                // Subsequent batches
+                                batchStart = firstBatchSize + (b - 1) * nextBatchSize;
+                                batchEnd = Math.min(batchStart + nextBatchSize, goalsToUse.length);
+                            }
+
+                            // Get goals in this batch
+                            const batchGoals = goalsToUse.slice(batchStart, batchEnd);
+
+                            // Check if all goals in this batch are completed
+                            const batchCompleted = batchGoals.length > 0 && batchGoals.every(goal => {
+                                return goal.completed === true || goal.status === 'completed';
+                            });
+
+                            // If this is the immediate previous batch and it's not completed, task is locked
+                            if (b === batchNumber - 1) {
+                                // This is the immediate previous batch
+                                // Task is unlocked if previous batch is completed AND can unlock next
+                                return !(batchCompleted && (canUnlockNextTasks || thresholdReached));
+                            }
+
+                            // If any earlier batch is not completed, task is locked
+                            if (!batchCompleted) {
+                                return true; // Locked because an earlier batch is not completed
+                            }
+                        }
+
+                        // All previous batches completed, check if we can unlock next
+                        return !(canUnlockNextTasks || thresholdReached);
                     })();
 
                     // Determine task status

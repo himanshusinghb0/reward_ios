@@ -1,7 +1,13 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { login, signup, getProfile } from "@/lib/api";
+import {
+  login,
+  signup,
+  getProfile,
+  getDailyRewardsWeek,
+  getXPTierProgressBar,
+} from "@/lib/api";
 import useOnboardingStore from "@/stores/useOnboardingStore";
 import { App } from "@capacitor/app";
 import { useDispatch, useSelector } from "react-redux";
@@ -120,7 +126,7 @@ export function AuthProvider({ children }) {
               router.push(`/reset-password?token=${token}`);
             } else if (path === "/auth/callback") {
               handleSocialAuthCallback(token).then((result) => {
-                router.replace(result.ok ? "/homepage" : "/login");
+                router.replace(result.ok ? "/location" : "/login");
               });
             }
           }
@@ -431,17 +437,9 @@ export function AuthProvider({ children }) {
           } catch (_) {}
         }
 
-        const BASE_URL = "https://rewardsapi.hireagent.co";
-        const resp = await fetch(`${BASE_URL}/api/daily-rewards/week`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          signal: controller.signal,
-        });
-        const data = await resp.json();
-        if (resp.ok && data?.success && data?.data) {
+        // Use centralized API function instead of hardcoded URL
+        const data = await getDailyRewardsWeek(null, token);
+        if (data?.success && data?.data) {
           const cacheData = { data: data.data, cacheTime: Date.now() };
           localStorage.setItem(
             "daily_rewards_current_week",
@@ -463,6 +461,25 @@ export function AuthProvider({ children }) {
     setUser(user);
     setToken(token); // Setting the token here triggers the Redux fetch effect above
 
+    // IMPORTANT: Store user data in Redux profile immediately after login
+    // This ensures age and gender are available immediately for game fetching
+    // without waiting for the profile API call
+    if (user && (user.age || user.ageRange || user.gender || user._id)) {
+      console.log(
+        "🔑 [AuthContext] Storing login user data in Redux profile:",
+        {
+          age: user.age,
+          ageRange: user.ageRange,
+          gender: user.gender,
+          _id: user._id,
+        }
+      );
+      dispatch({
+        type: "profile/setUserFromLogin",
+        payload: user,
+      });
+    }
+
     // Preload games data immediately after successful login
     if (user && user._id) {
       console.log("🎮 [AuthContext] Preloading games data after login");
@@ -472,6 +489,44 @@ export function AuthProvider({ children }) {
           token: token,
         })
       );
+    }
+
+    // Preload XP tier progress bar data immediately after successful login/signup
+    // This pre-populates the cache so the homepage shows data instantly
+    if (token) {
+      console.log(
+        "📊 [AuthContext] Preloading XP tier progress bar data after login/signup"
+      );
+      // Fetch in background without blocking - cache will be populated
+      getXPTierProgressBar(token)
+        .then((response) => {
+          if (response.success && response.data) {
+            // Cache the data immediately
+            const CACHE_KEY = "xpTierProgressBar";
+            const cacheData = {
+              data: response.data,
+              timestamp: Date.now(),
+            };
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+              console.log(
+                "✅ [AuthContext] XP tier progress bar data cached successfully"
+              );
+            } catch (err) {
+              console.warn(
+                "⚠️ [AuthContext] Failed to cache XP tier data:",
+                err
+              );
+            }
+          }
+        })
+        .catch((err) => {
+          console.error(
+            "❌ [AuthContext] Failed to preload XP tier data (non-blocking):",
+            err
+          );
+          // Don't fail auth if this fails - it's just a preload
+        });
     }
 
     try {
@@ -484,9 +539,9 @@ export function AuthProvider({ children }) {
     return { ok: true, user };
   };
 
-  const signIn = async (emailOrMobile, password) => {
+  const signIn = async (emailOrMobile, password, turnstileToken = null) => {
     try {
-      const data = await login(emailOrMobile, password);
+      const data = await login(emailOrMobile, password, turnstileToken);
       localStorage.setItem("permissionsAccepted", "true");
       // Purge persisted state to avoid showing previous account balances
       try {
@@ -659,25 +714,49 @@ export function AuthProvider({ children }) {
 
   // MODIFIED: This function now leverages our Redux thunk for cleaner logic
   const handleSocialAuthCallback = async (socialToken) => {
+    console.log("🔐 [AuthContext] handleSocialAuthCallback called:", {
+      hasToken: !!socialToken,
+      tokenLength: socialToken?.length || 0,
+      tokenPreview: socialToken?.substring(0, 20) + "...",
+    });
+
     setIsLoading(true);
     try {
       // Dispatch the thunk and await its completion
+      console.log(
+        "📡 [AuthContext] Fetching user profile with social token..."
+      );
       const resultAction = await dispatch(fetchUserProfile(socialToken));
 
       // Check if the thunk was fulfilled (successful)
       if (fetchUserProfile.fulfilled.match(resultAction)) {
         const userProfile = resultAction.payload;
-        return handleAuthSuccess({ token: socialToken, user: userProfile });
+        console.log("✅ [AuthContext] User profile fetched successfully:", {
+          userId: userProfile?.data?.user?._id || userProfile?.user?._id,
+          email: userProfile?.data?.user?.email || userProfile?.user?.email,
+        });
+        return handleAuthSuccess({
+          token: socialToken,
+          user: userProfile.data?.user || userProfile.user || userProfile,
+        });
       } else {
         // If the thunk was rejected, throw an error to be caught below
-        throw new Error(
-          resultAction.payload || "Social auth profile fetch failed"
-        );
+        const errorMessage =
+          resultAction.payload || "Social auth profile fetch failed";
+        console.error("❌ [AuthContext] Profile fetch rejected:", errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error("❌ handleSocialAuthCallback failed:", error);
-      signOut();
-      return { ok: false, error: error.message };
+      console.error("❌ [AuthContext] handleSocialAuthCallback failed:", {
+        error: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+      // Don't sign out on error - let the callback page handle the error display
+      return {
+        ok: false,
+        error: error.message || "Failed to authenticate. Please try again.",
+      };
     } finally {
       setIsLoading(false);
     }

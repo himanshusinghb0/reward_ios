@@ -24,6 +24,9 @@ export const ChallengeModal = ({
     const [isSelecting, setIsSelecting] = useState(false);
     const [isStarting, setIsStarting] = useState(false);
     const [isCompleting, setIsCompleting] = useState(false);
+    const [isClaiming, setIsClaiming] = useState(false);
+    const [timeUntilClaimable, setTimeUntilClaimable] = useState(null);
+    const [isSpinning, setIsSpinning] = useState(false);
 
     // Log modal state changes
     useEffect(() => {
@@ -43,7 +46,7 @@ export const ChallengeModal = ({
         });
     }, [isOpen, today]);
 
-    // Calculate countdown timer
+    // Calculate countdown timer for challenge expiration
     useEffect(() => {
         if (!today?.countdown) {
             setCountdown("");
@@ -101,6 +104,53 @@ export const ChallengeModal = ({
 
         return () => clearInterval(interval);
     }, [today?.countdown]);
+
+    // Calculate time until rewards can be claimed (10 minutes from start)
+    useEffect(() => {
+        // Only show countdown if challenge is completed but rewards can't be claimed yet
+        if (!today?.progress?.isCompleted || !today?.progress?.startedAt) {
+            setTimeUntilClaimable(null);
+            return;
+        }
+
+        const updateTimeUntilClaimable = () => {
+            // Use server time if available (more accurate), otherwise use client time
+            const serverTime = today?.countdown?.serverTime
+                ? new Date(today.countdown.serverTime)
+                : new Date();
+            const now = new Date();
+            const startedAt = new Date(today.progress.startedAt);
+
+            // Calculate time difference using server time if available
+            const timeDiff = serverTime - startedAt;
+            const timeLimitMs = 10 * 60 * 1000; // 10 minutes in milliseconds
+            const remaining = timeLimitMs - timeDiff;
+
+            if (remaining <= 0) {
+                setTimeUntilClaimable(null); // Time limit passed, can claim
+                return;
+            }
+
+            // Calculate minutes and seconds
+            const minutes = Math.floor(remaining / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+            setTimeUntilClaimable({
+                minutes,
+                seconds,
+                formatted: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+                canClaim: false
+            });
+        };
+
+        // Initial update
+        updateTimeUntilClaimable();
+
+        // Update every second for live countdown
+        const interval = setInterval(updateTimeUntilClaimable, 1000);
+
+        return () => clearInterval(interval);
+    }, [today?.progress?.isCompleted, today?.progress?.startedAt, today?.countdown?.serverTime]);
 
     if (!isOpen) return null;
 
@@ -182,7 +232,16 @@ export const ChallengeModal = ({
                 payload: result.payload,
                 game: result.payload?.game,
                 deepLink: result.payload?.game?.deepLink,
+                progress: result.payload?.progress,
             });
+
+            // IMPORTANT: Track when challenge started for 10-minute validation
+            // If API doesn't return startedAt, we set it locally
+            if (result.type.includes('fulfilled')) {
+                // Refresh today's data to get updated progress with startedAt
+                await dispatch(fetchToday({ token: localStorage.getItem('authToken') }));
+                console.log("🚀 [CHALLENGE MODAL] Refreshed today's data to get startedAt timestamp");
+            }
 
             // Check for deep link in game object
             let deepLink = result.payload?.game?.deepLink;
@@ -270,6 +329,118 @@ export const ChallengeModal = ({
         }
     };
 
+    // Handle claim rewards - with time-based validation
+    const handleClaimRewards = async () => {
+        console.log("🎁 [CHALLENGE MODAL] handleClaimRewards called:", {
+            hasToken: !!token,
+            today: today,
+            timeUntilClaimable,
+            timestamp: new Date().toISOString(),
+        });
+
+        // VALIDATION: Check if challenge is completed
+        if (!today?.progress?.isCompleted) {
+            alert("Please complete the challenge first before claiming rewards.");
+            return;
+        }
+
+        // VALIDATION: Check if 10 minutes have passed since start
+        if (today?.progress?.startedAt) {
+            const now = new Date();
+            const startedAt = new Date(today.progress.startedAt);
+            const timeLimitMs = 10 * 60 * 1000; // 10 minutes
+            const elapsed = now - startedAt;
+
+            if (elapsed < timeLimitMs) {
+                const remaining = timeLimitMs - elapsed;
+                const minutes = Math.floor(remaining / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+                alert(`Please wait ${minutes} minute(s) and ${seconds} second(s) before claiming rewards.`);
+                return;
+            }
+        }
+
+        // VALIDATION: Check if API allows claiming
+        if (!today?.actions?.canClaimRewards) {
+            alert("Rewards are not available to claim yet. Please try again later.");
+            return;
+        }
+
+        try {
+            setIsClaiming(true);
+            console.log("🎁 [CHALLENGE MODAL] Claiming rewards via completeChallenge");
+
+            // Use completeChallenge to claim rewards (it handles both completion and claiming)
+            const result = await dispatch(completeTodayChallenge({
+                conversionId: today?.conversionId,
+                token: token
+            }));
+
+            console.log("🎁 [CHALLENGE MODAL] Claim rewards result:", {
+                type: result.type,
+                payload: result.payload,
+                rewards: result.payload?.rewards,
+            });
+
+            // Check if claim was successful
+            if (result.type.includes('fulfilled')) {
+                console.log("🎁 [CHALLENGE MODAL] Rewards claimed successfully, refreshing data");
+
+                // Refresh calendar and today's data
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                await dispatch(fetchCalendar({ year, month, token }));
+                await dispatch(fetchToday({ token }));
+
+                console.log("🎁 [CHALLENGE MODAL] Data refreshed after claiming rewards");
+            }
+
+            onClose();
+        } catch (error) {
+            console.error("🎁 [CHALLENGE MODAL] Failed to claim rewards:", {
+                error: error.message,
+                stack: error.stack,
+            });
+            alert("Failed to claim rewards. Please try again.");
+        } finally {
+            setIsClaiming(false);
+        }
+    };
+
+    // Calculate if rewards can be claimed (all conditions must be met)
+    const canClaimRewardsNow = () => {
+        // Condition 1: Challenge must be completed
+        if (!today?.progress?.isCompleted) {
+            return false;
+        }
+
+        // Condition 2: 10 minutes must have passed since start
+        if (today?.progress?.startedAt) {
+            // Use server time if available (more accurate), otherwise use client time
+            const serverTime = today?.countdown?.serverTime
+                ? new Date(today.countdown.serverTime)
+                : new Date();
+            const startedAt = new Date(today.progress.startedAt);
+            const timeLimitMs = 10 * 60 * 1000; // 10 minutes
+            const elapsed = serverTime - startedAt;
+
+            if (elapsed < timeLimitMs) {
+                return false;
+            }
+        } else {
+            // If startedAt is not set, cannot claim (challenge not started properly)
+            return false;
+        }
+
+        // Condition 3: API must allow claiming
+        if (!today?.actions?.canClaimRewards) {
+            return false;
+        }
+
+        return true;
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-900 rounded-lg p-6 w-full max-w-sm border border-gray-700">
@@ -306,6 +477,32 @@ export const ChallengeModal = ({
                                 {today.challenge.instructions}
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Spin Wheel for "spin" type challenges */}
+                {today?.challenge?.type === 'spin' && today?.actions?.canSpin && (
+                    <div className="mb-4 p-4 bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg">
+                        <div className="text-center mb-2">
+                            <div className="text-purple-200 text-sm font-medium mb-1">
+                                {today?.actions?.spinLabel || 'Spin the Wheel'}
+                            </div>
+                            {today?.hints?.showHint && today?.hints?.hintText && (
+                                <div className="text-purple-300 text-xs mt-1">
+                                    {today.hints.hintText}
+                                </div>
+                            )}
+                        </div>
+                        <SpinWheel
+                            onSpinComplete={async () => {
+                                console.log('🎰 [CHALLENGE MODAL] Spin completed, starting challenge...');
+                                setIsSpinning(false);
+                                // After spin completes, start the challenge
+                                await handleStartChallenge();
+                            }}
+                            isSpinning={isSpinning}
+                            disabled={isStarting || isSpinning || !today?.actions?.canSpin}
+                        />
                     </div>
                 )}
 
@@ -352,14 +549,40 @@ export const ChallengeModal = ({
                     </div>
                 )}
 
-                {/* Action Buttons - Using actions flags from API */}
+                {/* Time Until Claimable Warning */}
+                {today?.progress?.isCompleted && today?.progress?.startedAt && timeUntilClaimable && (
+                    <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                        <div className="text-yellow-200 text-sm font-medium mb-1">⏳ Rewards Available In:</div>
+                        <div className="text-yellow-100 text-lg font-bold font-mono">{timeUntilClaimable.formatted}</div>
+                        <div className="text-yellow-200 text-xs mt-1">Please wait 10 minutes from when you started the challenge</div>
+                    </div>
+                )}
+
+                {/* Action Buttons - Using actions flags from API with time-based validation */}
                 <div className="flex gap-3">
-                    {today?.actions?.canClaimRewards ? (
+                    {canClaimRewardsNow() ? (
                         <button
-                            onClick={onClose}
-                            className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                            onClick={isClaiming ? undefined : handleClaimRewards}
+                            disabled={isClaiming}
+                            className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors ${isClaiming ? 'bg-green-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
                         >
-                            ✓ Challenge Completed!
+                            {isClaiming ? 'Claiming Rewards...' : '🎁 Claim Rewards'}
+                        </button>
+                    ) : today?.progress?.isCompleted && today?.progress?.startedAt && timeUntilClaimable ? (
+                        <button
+                            disabled
+                            className="flex-1 py-3 bg-gray-600 text-gray-400 rounded-lg font-medium cursor-not-allowed"
+                        >
+                            ⏳ Wait {timeUntilClaimable.formatted} to Claim
+                        </button>
+                    ) : today?.progress?.isCompleted && !canClaimRewardsNow() ? (
+                        <button
+                            disabled
+                            className="flex-1 py-3 bg-gray-600 text-gray-400 rounded-lg font-medium cursor-not-allowed"
+                        >
+                            {timeUntilClaimable
+                                ? `⏳ Wait ${timeUntilClaimable.formatted} to Claim`
+                                : '⏳ Please wait 10 minutes to claim rewards'}
                         </button>
                     ) : today?.actions?.canComplete ? (
                         <button
@@ -369,13 +592,20 @@ export const ChallengeModal = ({
                         >
                             {isCompleting ? 'Completing…' : 'Mark as Complete'}
                         </button>
-                    ) : today?.actions?.canPlay ? (
+                    ) : today?.actions?.canPlay && today?.challenge?.type !== 'spin' ? (
                         <button
                             onClick={isStarting ? undefined : handleStartChallenge}
                             disabled={isStarting}
                             className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors ${isStarting ? 'bg-purple-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
                         >
-                            {isStarting ? 'Opening…' : 'Play Now'}
+                            {isStarting ? 'Opening…' : today?.actions?.primaryActionLabel || 'Play Now'}
+                        </button>
+                    ) : today?.challenge?.type === 'spin' && !today?.actions?.canSpin ? (
+                        <button
+                            disabled
+                            className="flex-1 py-3 bg-gray-600 text-gray-400 rounded-lg font-medium cursor-not-allowed"
+                        >
+                            Spin Not Available
                         </button>
                     ) : today?.actions?.canSelectGame ? (
                         <button

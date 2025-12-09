@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { MemoizedButton, MemoizedImage } from "./PerformanceWrapper";
 import { TimerBadge } from "./TimerBadge";
 import { MissedDayIndicator } from "./MissedDayIndicator";
@@ -10,6 +10,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
     const [error, setError] = useState(null);
     const [showBigRewardAnimation, setShowBigRewardAnimation] = useState(false);
     const [claimingDay, setClaimingDay] = useState(null);
+    const [locallyClaimedDays, setLocallyClaimedDays] = useState(new Set()); // Track locally claimed days to disable button immediately
 
     // Memoized reward configuration
     const getRewardConfig = useCallback((status, dayNumber, isBigRewardEligible = false) => {
@@ -59,31 +60,38 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
     const isBigRewardEligible = useMemo(() => {
         if (!weekData) return false;
 
-        // For current week: check if all days 1-6 were claimed
+        // For current week: check if all PAST days 1-6 were claimed (don't check future days)
         if (isCurrentWeek) {
             const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset to start of day for accurate comparison
             const weekStart = new Date(weekData.weekStart);
 
-            // Check if all days 1-6 were claimed
+            // Check if all PAST days 1-6 were claimed (only check days that have already passed)
             for (let dayNum = 1; dayNum < 7; dayNum++) {
                 const dayData = weekData.days.find(day => day.dayNumber === dayNum);
                 if (dayData) {
                     const dayDate = new Date(weekStart);
                     dayDate.setDate(dayDate.getDate() + (dayNum - 1));
+                    dayDate.setHours(0, 0, 0, 0);
 
-                    // If it's a past day and not claimed, big reward is cancelled
-                    if (dayDate < today && dayData.status !== 'claimed') {
-                        return false; // Big reward cancelled due to missed day
-                    }
+                    // Only check PAST days (days that have already occurred)
+                    // Future days should not affect big reward eligibility
+                    if (dayDate < today) {
+                        // This is a past day - it must be claimed
+                        if (dayData.status !== 'claimed' && !locallyClaimedDays.has(dayNum)) {
+                            return false; // Big reward cancelled due to missed past day
+                        }
 
-                    // If it's marked as missed, big reward is cancelled
-                    if (dayData.status === 'missed') {
-                        return false; // Big reward cancelled due to missed day
+                        // If it's marked as missed, big reward is cancelled
+                        if (dayData.status === 'missed') {
+                            return false; // Big reward cancelled due to missed day
+                        }
                     }
+                    // If dayDate >= today, it's a future day - don't check it
                 }
             }
 
-            // If we reach here, all days 1-6 were claimed
+            // If we reach here, all past days 1-6 were claimed
             return true;
         }
 
@@ -101,7 +109,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
 
         // For other weeks, use backend field
         return weekData.bigRewardEligible === true;
-    }, [weekData, isCurrentWeek, isFutureWeek]);
+    }, [weekData, isCurrentWeek, isFutureWeek, locallyClaimedDays]);
 
     // Check if reward should be locked based on countdown
     const shouldLockReward = useCallback((dayData) => {
@@ -162,7 +170,10 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                 const dayDate = new Date(weekStart);
                 dayDate.setDate(dayDate.getDate() + (dayData.dayNumber - 1));
 
-                // Check if this is today
+                // Check if this is today using API's todayDayNumber (more reliable than date comparison)
+                const isTodayByAPI = weekData.todayDayNumber === dayData.dayNumber;
+
+                // Check if this is today using date comparison
                 const isToday = dayDate.toDateString() === today.toDateString();
 
                 // Check if this is a past day
@@ -172,7 +183,8 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                 const isFutureDay = dayDate > today;
 
                 // AC2: Current day should show "CLAIM NOW" only if user logs in
-                if (isToday && dayData.status === 'claimable') {
+                // Use API's todayDayNumber as primary check, fallback to date comparison
+                if ((isTodayByAPI || isToday) && dayData.status === 'claimable') {
                     effectiveStatus = 'claimable'; // Show "CLAIM NOW"
                 }
                 // AC3: Once claimed, days should update to show "CLAIMED"
@@ -180,7 +192,8 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                     effectiveStatus = 'claimed'; // Show "CLAIMED"
                 }
                 // AC4: Missed logins should show "UNCLAIMED" with red cross
-                else if (dayData.status === 'missed' || (isPastDay && dayData.status === 'claimable')) {
+                // Don't mark as missed if it's today according to API, even if date comparison says it's past
+                else if (dayData.status === 'missed' || (isPastDay && dayData.status === 'claimable' && !isTodayByAPI)) {
                     effectiveStatus = 'missed'; // Show "UNCLAIMED" with red cross
                     isMissed = true;
                 }
@@ -222,17 +235,24 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
             }
 
             const config = getRewardConfig(effectiveStatus, dayData.dayNumber, isBigRewardEligible);
-            return {
-                day: dayData.dayNumber,
-                status: effectiveStatus,
-                originalStatus: dayData.status,
-                coins: dayData.coins,
-                xp: dayData.xp,
-                claimedAt: dayData.claimedAt,
-                nextUnlockTime: (() => {
-                    if (!weekData?.countdown || weekData.countdown <= 0) return null;
 
-                    const today = new Date();
+            // Calculate next unlock time
+            const calculateNextUnlockTime = () => {
+                const today = new Date();
+
+                // If reward is claimed, calculate next daily reward (24 hours from claim time)
+                if (effectiveStatus === 'claimed' && dayData.claimedAt) {
+                    const claimedAt = new Date(dayData.claimedAt);
+                    const nextRewardTime = new Date(claimedAt.getTime() + 24 * 60 * 60 * 1000); // 24 hours from claim
+
+                    // Only show timer if next reward is in the future
+                    if (nextRewardTime > today) {
+                        return nextRewardTime;
+                    }
+                }
+
+                // Use backend countdown if available
+                if (weekData?.countdown && weekData.countdown > 0) {
                     const weekStart = new Date(weekData.weekStart);
                     const dayDate = new Date(weekStart);
                     dayDate.setDate(dayDate.getDate() + (dayData.dayNumber - 1));
@@ -243,9 +263,27 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                         const timeUntilUnlock = dayDate.getTime() - today.getTime();
                         return new Date(today.getTime() + timeUntilUnlock);
                     }
+                }
 
-                    return null;
-                })(),
+                return null;
+            };
+
+            // Apply weekly multiplier if available (from API response)
+            const weeklyMultiplier = weekData?.weeklyMultiplier || weekData?.multiplier || 1;
+            const displayCoins = dayData.rewardCoins ? (dayData.rewardCoins * weeklyMultiplier) : (dayData.coins * weeklyMultiplier);
+            const displayXp = dayData.rewardXp ? (dayData.rewardXp * weeklyMultiplier) : (dayData.xp * weeklyMultiplier);
+
+            return {
+                day: dayData.dayNumber,
+                status: effectiveStatus,
+                originalStatus: dayData.status,
+                coins: displayCoins, // Apply multiplier to displayed coins
+                xp: displayXp, // Apply multiplier to displayed XP
+                originalCoins: dayData.coins || dayData.rewardCoins || 0,
+                originalXp: dayData.xp || dayData.rewardXp || 0,
+                multiplier: weeklyMultiplier,
+                claimedAt: dayData.claimedAt,
+                nextUnlockTime: calculateNextUnlockTime(),
                 isLocked: isLocked || isFutureWeek,
                 isMissed: isMissed,
                 isFutureWeek: isFutureWeek,
@@ -256,6 +294,25 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
             return null;
         }
     }, [getRewardConfig, isBigRewardEligible, weekData, shouldLockReward, shouldMarkAsMissed, isFutureWeek, isCurrentWeek]);
+
+    // Sync locally claimed days with actual API data when weekData updates
+    useEffect(() => {
+        if (weekData?.days && Array.isArray(weekData.days)) {
+            const actuallyClaimedDays = new Set();
+            weekData.days.forEach(day => {
+                if (day.status === 'claimed') {
+                    actuallyClaimedDays.add(day.dayNumber);
+                }
+            });
+            // Update to sync with API data (this ensures buttons stay disabled after refresh)
+            setLocallyClaimedDays(prev => {
+                // Merge with existing locally claimed to preserve immediate disable on click
+                const merged = new Set(actuallyClaimedDays);
+                prev.forEach(day => merged.add(day));
+                return merged;
+            });
+        }
+    }, [weekData?.days?.map(d => `${d.dayNumber}-${d.status}`).join(',')]);
 
     // Memoized reward data
     const dailyRewards = useMemo(() => {
@@ -276,19 +333,21 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
     }, [dailyRewards]);
 
     // Calculate which day should show the timer (only ONE day should show timer)
+    // Use API data to determine which day should show the countdown timer
     const nextUnlockableDay = useMemo(() => {
         if (!isCurrentWeek || isFutureWeek || !weekData?.days || !Array.isArray(weekData.days)) {
             return null;
         }
 
-        // Only show timer if we have countdown data
+        // Only show timer if we have countdown data from API
         const hasCountdownData = weekData?.countdown && weekData.countdown > 0;
         if (!hasCountdownData) return null;
 
         const today = new Date();
         const weekStart = new Date(weekData.weekStart);
+        const todayDayNumber = weekData.todayDayNumber;
 
-        // Find the last claimed day
+        // Find the last claimed day (not claimable - claimable days don't need timer)
         let lastClaimedDay = 0;
         for (let dayNum = 1; dayNum <= 7; dayNum++) {
             const dayData = weekData.days.find(day => day.dayNumber === dayNum);
@@ -297,38 +356,36 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
             }
         }
 
-        // If no day is claimed yet, timer should show on day 1 if it's locked
-        if (lastClaimedDay === 0) {
-            const day1Data = weekData.days.find(day => day.dayNumber === 1);
-            const day1Date = new Date(weekStart);
-            const isDay1Future = day1Date > today;
-            if (day1Data && (day1Data.status === 'locked' || isDay1Future)) {
-                return 1;
+        // Logic: Show timer on the next claimable day AFTER a claimed day
+        // This shows countdown for when the next claimable reward will be available
+        if (lastClaimedDay > 0) {
+            // Find the next claimable day after the last claimed day
+            for (let dayNum = lastClaimedDay + 1; dayNum <= 7; dayNum++) {
+                const dayData = weekData.days.find(day => day.dayNumber === dayNum);
+                if (dayData && dayData.status === 'claimable') {
+                    // Show timer on this claimable day with countdown
+                    // The countdown shows when this claimable day becomes available (or when next day unlocks)
+                    return dayNum;
+                }
             }
-            return null;
         }
 
-        // Timer should show on the NEXT day after the last claimed day
-        const nextDayNumber = lastClaimedDay + 1;
-
-        // If next day is day 7, check if it's locked
-        if (nextDayNumber === 7) {
-            const day7Data = weekData.days.find(day => day.dayNumber === 7);
-            if (day7Data && day7Data.status === 'locked') {
-                return 7;
+        // If no claimed day, check if there's a claimable day that's NOT today
+        // Don't show timer on today's claimable day
+        for (let dayNum = 1; dayNum <= 7; dayNum++) {
+            const dayData = weekData.days.find(day => day.dayNumber === dayNum);
+            if (dayData && dayData.status === 'claimable' && dayNum !== todayDayNumber) {
+                // Show timer on claimable days that are not today
+                return dayNum;
             }
-            return null;
         }
 
-        // For days 1-6, check if the next day exists and is locked
-        if (nextDayNumber <= 6) {
-            const nextDayData = weekData.days.find(day => day.dayNumber === nextDayNumber);
-            const nextDayDate = new Date(weekStart);
-            nextDayDate.setDate(nextDayDate.getDate() + (nextDayNumber - 1));
-            const isNextDayFuture = nextDayDate > today;
-
-            if (nextDayData && (nextDayData.status === 'locked' || isNextDayFuture)) {
-                return nextDayNumber;
+        // If no claimable day found, show timer on next locked day
+        const nextLockedDay = lastClaimedDay > 0 ? lastClaimedDay + 1 : 1;
+        if (nextLockedDay <= 7) {
+            const nextDayData = weekData.days.find(day => day.dayNumber === nextLockedDay);
+            if (nextDayData && nextDayData.status === 'locked') {
+                return nextLockedDay;
             }
         }
 
@@ -372,23 +429,42 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                     return;
                 }
 
-                // Set claiming state
+                // Check if already claimed locally (prevent double-click)
+                if (locallyClaimedDays.has(dayNumber)) {
+                    setError("This reward has already been claimed.");
+                    return;
+                }
+
+                // Set claiming state and mark as locally claimed immediately to disable button
                 setClaimingDay(dayNumber);
+                setLocallyClaimedDays(prev => new Set(prev).add(dayNumber));
                 setError(null);
 
                 try {
                     await onClaimReward(dayNumber);
+
+                    // Clear any previous errors on success
+                    setError(null);
 
                     // Trigger big reward animation if claiming day 7 and eligible
                     if (dayNumber === 7 && isBigRewardEligible) {
                         handleBigRewardAnimation();
                     }
                 } catch (claimError) {
+                    // Only set error if claim actually failed
                     setError(claimError.message || "Failed to claim reward");
+                    setClaimingDay(null);
+                    // Remove from locally claimed if claim failed
+                    setLocallyClaimedDays(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(dayNumber);
+                        return newSet;
+                    });
                 } finally {
                     // Clear claiming state after a short delay to show the transition
+                    // Only if not already cleared by error handler
                     setTimeout(() => {
-                        setClaimingDay(null);
+                        setClaimingDay((prev) => prev === dayNumber ? null : prev);
                     }, 500);
                 }
             }
@@ -407,12 +483,13 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                 key={reward.day}
                 className={`relative w-40 h-[170px] rounded-[21.82px] overflow-hidden ${reward.bgColor} ${reward.status === 'claimable' && !reward.isLocked && !reward.isMissed && !reward.isFutureWeek ? 'shadow-[0_0_20px_rgba(168,85,247,0.6),0_0_10px_rgba(168,85,247,0.4)]' : ''}`}
             >
-                {/* Timer Badge - Show ONLY on the next unlockable day */}
-                {isCurrentWeek && !isFutureWeek && nextUnlockableDay === reward.day && (
+                {/* Timer Badge - Show on next claimable day after claimed day, or on locked days */}
+                {/* Don't show timer on today's claimable day - it's ready now */}
+                {isCurrentWeek && !isFutureWeek && nextUnlockableDay === reward.day && weekData?.countdown && weekData.countdown > 0 && reward.day !== weekData.todayDayNumber && (
                     <TimerBadge
-                        nextUnlockTime={reward.nextUnlockTime}
-                        isClaimed={false}
-                        countdown={weekData?.countdown}
+                        nextUnlockTime={null}
+                        isClaimed={reward.status === 'claimed'}
+                        countdown={weekData.countdown}
                     />
                 )}
 
@@ -436,8 +513,8 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
 
                 <MemoizedButton
                     onClick={() => handleClaimClick(reward.day)}
-                    disabled={reward.status !== 'claimable' || reward.isLocked || reward.isMissed || reward.isFutureWeek || claimingDay === reward.day}
-                    className={`w-[166px] ${reward.buttonBg} absolute top-[126px] left-0 h-11 rounded-[0px_0px_3.13px_3.13px] overflow-hidden ${reward.status === 'claimable' && !reward.isLocked && !reward.isMissed && !reward.isFutureWeek
+                    disabled={reward.status !== 'claimable' || reward.isLocked || reward.isMissed || reward.isFutureWeek || claimingDay === reward.day || locallyClaimedDays.has(reward.day) || reward.status === 'claimed'}
+                    className={`w-[166px] ${reward.buttonBg} absolute top-[126px] left-0 h-11 rounded-[0px_0px_3.13px_3.13px] overflow-hidden ${reward.status === 'claimable' && !reward.isLocked && !reward.isMissed && !reward.isFutureWeek && !locallyClaimedDays.has(reward.day) && reward.status !== 'claimed'
                         ? 'cursor-pointer'
                         : 'cursor-not-allowed opacity-75'
                         }`}
@@ -553,12 +630,13 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                         : "bg-[linear-gradient(180deg,rgba(18,24,60,1)_0%,rgba(18,24,60,1)_100%)]"
                     }`}>
 
-                    {/* Timer Badge - Show ONLY on Day 7 if it's the next unlockable day */}
-                    {isCurrentWeek && !isFutureWeek && nextUnlockableDay === 7 && (
+                    {/* Timer Badge - Show on Day 7 if it's the next unlockable day, use API countdown directly */}
+                    {/* Don't show timer if Day 7 is today's claimable day */}
+                    {isCurrentWeek && !isFutureWeek && nextUnlockableDay === 7 && weekData?.countdown && weekData.countdown > 0 && 7 !== weekData.todayDayNumber && (
                         <TimerBadge
-                            nextUnlockTime={day7Data.nextUnlockTime}
-                            isClaimed={false}
-                            countdown={weekData?.countdown}
+                            nextUnlockTime={null}
+                            isClaimed={day7Data.status === 'claimed'}
+                            countdown={weekData.countdown}
                         />
                     )}
 
@@ -673,7 +751,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
 
                     <MemoizedButton
                         onClick={() => handleClaimClick(7)}
-                        disabled={day7Data.status !== 'claimable' || day7Data.isMissed || day7Data.isFutureWeek || claimingDay === 7}
+                        disabled={day7Data.status !== 'claimable' || day7Data.isMissed || day7Data.isFutureWeek || claimingDay === 7 || locallyClaimedDays.has(7) || day7Data.status === 'claimed'}
                         className={`w-full ${day7Data.status === 'claimed'
                             ? "bg-[#2a2f50]"
                             : day7Data.status === 'missed'
@@ -681,7 +759,7 @@ export const DailyRewardsSection = ({ weekData, isCurrentWeek, isFutureWeek, onC
                                 : day7Data.status === 'claimable'
                                     ? "bg-[linear-gradient(331deg,rgba(237,131,0,1)_0%,rgba(237,166,0,1)_100%)]"
                                     : "bg-[#ef890f4c]"
-                            } absolute top-[126px] left-0 h-11 rounded-[0px_0px_3.13px_3.13px] overflow-hidden ${day7Data.status === 'claimable' && !day7Data.isMissed && !day7Data.isFutureWeek && claimingDay !== 7
+                            } absolute top-[126px] left-0 h-11 rounded-[0px_0px_3.13px_3.13px] overflow-hidden ${day7Data.status === 'claimable' && !day7Data.isMissed && !day7Data.isFutureWeek && claimingDay !== 7 && !locallyClaimedDays.has(7) && day7Data.status !== 'claimed'
                                 ? 'cursor-pointer'
                                 : 'cursor-not-allowed opacity-75'
                             }`}
