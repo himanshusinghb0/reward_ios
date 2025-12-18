@@ -1,11 +1,14 @@
 # require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
-require_relative '../../../node_modules/@capacitor/ios/scripts/pods_helpers'
+# require_relative '../../../node_modules/@capacitor/ios/scripts/pods_helpers'
+# Add this line instead:
+# Use ENV['BITRISE_SOURCE_DIR'] for an absolute path to the project root
+require_relative File.join(ENV['BITRISE_SOURCE_DIR'], 'node_modules/@capacitor/ios/scripts/pods_helpers')
 
 platform :ios, '14.0'
 use_frameworks!
 
 # workaround to avoid Xcode caching of Pods that requires
-# Product -> Clean Build Folder after new Cordova plugins installed
+# Product -> Clean Build Folder after new Cordova plugins installedgit
 # Requires CocoaPods 1.6 or newer
 install! 'cocoapods', :disable_input_output_paths => true
 
