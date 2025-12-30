@@ -232,7 +232,7 @@ export const Conversion = () => {
                         <img
                             className="w-[23px] h-[23px] flex-shrink-0"
                             alt="Coin"
-                            src="https://c.animaapp.com/GgG4W9O5/img/image-3937@2x.png"
+                            src="/dollor.png"
                         />
                     </div>
 
@@ -283,28 +283,31 @@ export const Conversion = () => {
                     </div>
                 </div>
 
+
                 <div
-                    className="inline-flex items-center gap-4  relative flex-[0_0_auto]"
+                    className="flex flex-col mt-2 gap-2 w-full"
                     role="group"
                     aria-label="Conversion options"
                 >
                     {/* Convert in 5 Mins Button */}
                     <button
-                        className="bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] relative w-[159px] h-10 rounded-lg overflow-hidden cursor-pointer transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                        className="bg-[linear-gradient(180deg,rgba(158,173,247,1)_0%,rgba(113,106,231,1)_100%)] w-full h-12 rounded-lg overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 relative"
                         onClick={handleScheduledConvert}
                         disabled={flowState !== 'idle'}
                         aria-label="Schedule conversion for 5 minutes"
                         role="button"
                         tabIndex={0}
                     >
-                        <div className="absolute inset-0 flex justify-center items-center font-semibold text-white text-[13px]">
-                            {flowState === 'timerRunning' ? `Time Left: ${formatTime(timeLeft)}` : 'Convert in 05:00'}
+                        <div className="absolute inset-0 flex justify-center items-center font-semibold text-white text-[15px]">
+                            {flowState === 'timerRunning'
+                                ? `Time Left: ${formatTime(timeLeft)}`
+                                : 'Convert in 05:00'}
                         </div>
                     </button>
 
                     {/* Convert Now Button */}
                     <button
-                        className="bg-[linear-gradient(180deg,rgba(251,159,68,1)_0%,rgba(241,188,132,1)_100%)] relative w-[159px] h-10 rounded-lg overflow-hidden cursor-pointer transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 flex items-center justify-center"
+                        className="bg-[linear-gradient(180deg,rgba(251,159,68,1)_0%,rgba(241,188,132,1)_100%)] w-full h-12 rounded-lg overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 flex items-center justify-center relative"
                         onClick={handleConvertNow}
                         disabled={flowState !== 'idle'}
                         aria-label="Convert currency now"
@@ -312,11 +315,25 @@ export const Conversion = () => {
                         tabIndex={0}
                     >
                         <img className="w-7 h-7 mr-2" alt="Convert now icon" src="https://c.animaapp.com/GgG4W9O5/img/image-3941@2x.png" />
-                        <span className="font-semibold text-white text-[13px]">
+                        <span className="font-semibold text-white text-[15px]">
                             Convert Now
                         </span>
                     </button>
                 </div>
+                <section className="mt-2 ">
+                    <div className="w-full max-w-[335px] sm:max-w-[375px] mx-auto">
+                        <div className="w-full p-4 sm:p-6 rounded-lg bg-[linear-gradient(to_right,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.1)_50%,rgba(0,0,0,0.9)_100%)] shadow-lg border border-white/20">
+                            <div className="flex flex-col justify-start gap-2">
+                                <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-[#f4f3fc] text-[14px] sm:text-[14px] ">
+                                    Disclaimer
+                                </h2>
+                                <p className="[font-family:'Poppins',Helvetica] font-light text-[#FFFFFF] text-[13px] sm:text-base text-start leading-5 sm:leading-6">
+                                    Points ar for loyalty use only and do not reflect real-world currency
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     );

@@ -700,7 +700,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                 {/* Progress Line - Dynamic Height - Connects first to last card */}
                 {activeLevels.length > 0 && (
                     <div
-                        className="absolute left-[35px] top-6 z-0"
+                        className="absolute left-[38px] top-6 z-0"
                         style={{
                             width: '2px',
                             height: `${activeLineHeight}px`
@@ -836,7 +836,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
 
                         {/* Arrow between levels */}
                         {index < activeLevels.length - 1 && (
-                            <div className="absolute top-[120px] left-[4px] z-20">
+                            <div className="absolute top-[120px] left-[7px] z-20">
                                 <img
                                     className="w-[23px] h-[23px]"
                                     alt="Arrow back ios new"
@@ -920,7 +920,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                 {/* Progress Line for Locked Levels - Dynamic Height - Connects first to last card */}
                 {lockedLevels.length > 0 && (
                     <div
-                        className="absolute left-[36px] top-6 z-0 bg-[#2f344a] "
+                        className="absolute left-[38px] top-6 z-0 bg-[#2f344a] "
                         style={{
                             width: '2px',
                             height: `${lockedLineHeight}px`
@@ -965,7 +965,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
 
                         {/* Arrow between locked levels */}
                         {index < lockedLevels.length - 1 && (
-                            <div className="absolute top-[84px] left-[5px] z-20">
+                            <div className="absolute top-[84px] left-[7px] z-20">
                                 <img
                                     className="w-[23px] h-[23px]"
                                     alt="Arrow back ios new"
@@ -1028,35 +1028,41 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
 
             {/* Claim Confirmation Modal */}
             {showClaimModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
-                        <h3 className="text-lg font-bold text-gray-800 mb-3">🎁 Claim Your Rewards</h3>
-                        <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1A1A1A] border border-gray-700 rounded-2xl p-6 max-w-sm w-full mx-auto shadow-xl">
+                        <h3 className="text-xl font-bold text-white mb-3">🎁 Claim Your Rewards</h3>
+                        <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
                             <div className="flex justify-between items-center mb-2">
-                                <span className="text-gray-600">Coins Earned:</span>
-                                <span className="font-bold text-yellow-600">🎁 {sessionCoins}</span>
+                                <span className="text-gray-300 text-sm">Coins Earned:</span>
+                                <span className="font-bold text-yellow-400 text-lg flex items-center gap-1.5">
+                                    {sessionCoins}
+                                    <img src="/dollor.png" alt="coins" className="w-5 h-5" />
+                                </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-600">XP Earned:</span>
-                                <span className="font-bold text-blue-600">⭐ {sessionXP}</span>
+                                <span className="text-gray-300 text-sm">XP Earned:</span>
+                                <span className="font-bold text-blue-400 text-lg flex items-center gap-1.5">
+                                    {sessionXP}
+                                    <img src="/xp.svg" alt="xp" className="w-5 h-5" />
+                                </span>
                             </div>
                         </div>
-                        <p className="text-gray-600 text-sm mb-4">
-                            Once you claim these rewards, they will be added to your wallet and this game session will be locked. You won't be able to earn more rewards from this game.
+                        <p className="text-gray-400 text-sm mb-6">
+                            Once claimed, rewards are final. This game session will lock and you won't be able to earn more rewards from it.
                         </p>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setShowClaimModal(false)}
-                                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-                            >
-                                Cancel
-                            </button>
+                        <div className="flex flex-col gap-3">
                             <button
                                 onClick={handleClaimRewards}
                                 disabled={claiming}
-                                className="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {claiming ? 'Claiming...' : 'Claim Rewards'}
+                            </button>
+                            <button
+                                onClick={() => setShowClaimModal(false)}
+                                className="w-full bg-gray-700/70 text-gray-200 py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors font-semibold"
+                            >
+                                Cancel
                             </button>
                         </div>
                     </div>

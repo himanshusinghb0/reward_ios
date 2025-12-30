@@ -112,6 +112,20 @@ export default function WalletPage() {
         <SpinWin />
         <Conversion />
         <WithdrawalOption />
+        <section className="mb-5  ">
+          <div className="w-full max-w-[335px] sm:max-w-[375px] mx-auto">
+            <div className="w-full p-4 sm:p-6 rounded-lg bg-[linear-gradient(to_right,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.1)_50%,rgba(0,0,0,0.9)_100%)] shadow-lg border border-white/20">
+              <div className="flex flex-col justify-start gap-2">
+                <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-[#f4f3fc] text-[14px] sm:text-[14px] ">
+                  Disclaimer
+                </h2>
+                <p className="[font-family:'Poppins',Helvetica] font-light text-[#FFFFFF] text-[13px] sm:text-base text-start leading-5 sm:leading-6">
+                  Points ar for loyalty use only and do not reflect real-world currency
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
         <VipMember vipStatus={vipStatus} handleVipUpgrade={handleVipUpgrade} />
         <HomeIndicator activeTab="wallet" />
       </div>

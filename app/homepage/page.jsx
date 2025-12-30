@@ -17,6 +17,8 @@ import StreakSection from "./components/StreakSection";
 import SurveysSection from "./components/SurveysSection";
 import NonGameOffersSection from "./components/NonGameOffersSection";
 import FeaturesSection from "./components/FeaturesSection";
+import { BannerSection } from "../AchieveGoals/components/BannerSection";
+import { Daily } from "./components/Daily";
 
 const Homepage = () => {
   const { token, user } = useAuth();
@@ -63,14 +65,15 @@ const Homepage = () => {
         <MostPlayedGames />
         <WelcomeOfferSection />
         <GameCard />
-        <div className="mt-14">
+        {/* <div className="mt-14">
           <SurveysSection />
-        </div>
+        </div> */}
         <NonGameOffersSection />
         <FeaturesSection />
         <VipBanner />
         <RaceSection />
         <StreakSection />
+        <Daily />
       </div>
       <HomeIndicator activeTab="home" />
     </div>

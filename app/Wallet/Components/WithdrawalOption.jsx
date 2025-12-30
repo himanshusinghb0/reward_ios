@@ -235,7 +235,7 @@ export const WithdrawalOption = () => {
 
     return (
         <div className="flex w-full justify-center items-center ">
-            <div className="w-full p-4 ">
+            <div className="w-full px-4 pt-4  ">
                 <div className="flex flex-col items-center justify-start">
                     <h3 className="font-semibold text-[#f4f3fc] text-[16px] mb-2 w-full max-w-[335px] text-left">Withdrawal Options</h3>
                     <div className="w-full max-w-[335px] h-[53px] mb-4">
@@ -392,6 +392,7 @@ export const WithdrawalOption = () => {
                 )}
 
             </div>
+
         </div>
     );
 };

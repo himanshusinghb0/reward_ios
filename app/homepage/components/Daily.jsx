@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export const BannerSection = () => {
+export const Daily = () => {
     const [isPressed, setIsPressed] = useState(false);
     const router = useRouter();
 
@@ -13,7 +13,7 @@ export const BannerSection = () => {
 
     return (
         <section
-            className="flex flex-col h-full w-full justify-center items-center  mt-2  mb-2 relative"
+            className="flex flex-col h-full w-full justify-center items-center  mt-4  relative"
             role="banner"
             aria-label="Daily Challenge Banner"
         >

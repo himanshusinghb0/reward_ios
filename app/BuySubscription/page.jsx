@@ -6,6 +6,9 @@ import { fetchVipStatus } from "@/lib/redux/slice/profileSlice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import StripePaymentSheet from "@/components/StripePaymentSheet";
+import XPTierTracker from "../homepage/components/XPTierTracker";
+import { LegalDisclaimerSection } from "@/components/LegalDisclaimerSection";
+import { PlanComparisonSection } from "@/components/PlanComparisonSection";
 const tierData = {
     gold: {
         name: 'Gold',
@@ -472,6 +475,9 @@ export default function BuySubscription() {
                             </div>
                         ))}
                     </section>
+                    <section className="mt-7">
+                        <XPTierTracker />
+                    </section>
                     <section
                         className="flex flex-col w-[335px] items-center gap-5 mb-4 mt-8"
                         aria-labelledby="pricing-heading"
@@ -559,6 +565,29 @@ export default function BuySubscription() {
                                     </button>
                                 ));
                             })()}
+                        </div>
+                    </section>
+                    <section className="mt-3">
+                        <LegalDisclaimerSection />
+                    </section>
+                    <section className="mt-5">
+                        <PlanComparisonSection />
+
+
+                    </section>
+                    {/* Legal Disclaimer Section */}
+                    <section className="px-4 sm:px-5 pb-2 mt-5">
+                        <div className="w-full max-w-[335px] sm:max-w-[375px] mx-auto">
+                            <div className="w-full p-4 sm:p-6 rounded-lg bg-[linear-gradient(to_right,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.1)_50%,rgba(0,0,0,0.9)_100%)] shadow-lg border border-white/20">
+                                <div className="flex flex-col justify-start gap-2">
+                                    <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-[#f4f3fc] text-[14px] sm:text-[14px] ">
+                                        Legal Disclaimer
+                                    </h2>
+                                    <p className="[font-family:'Poppins',Helvetica] font-light text-[#FFFFFF] text-[13px] sm:text-base text-start leading-5 sm:leading-6">
+                                        This is a loyalty subscription. Rewards are virtual and do not represent real-world currency. Benefits may vary based on user activity.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </section>
                     <div className="w-full  mt-6 mb-4 px-4">

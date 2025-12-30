@@ -9,6 +9,7 @@ import GameItemCard from "./GameItemCard";
 import NonGamingOffersCarousel from "./NonGamingOffersCarousel";
 import AccountOverviewCard from "./AccountOverviewCard";
 import WatchAdCard from "./WatchAdCard";
+import NonGameOffersSection from "@/app/homepage/components/NonGameOffersSection";
 
 // Static data for non-gaming offers carousel
 const nonGamingOffers = [
@@ -312,6 +313,8 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
 
   return (
     <div className={`flex flex-col w-full items-start gap-8 relative px-5 ${showSearch ? 'top-[180px]' : 'top-[96px]'}`}>
+      <p className="text-white text-[16px] font-light">Track your progress and complete game challenges to earn reward</p>
+
       {/* ==================== DOWNLOADED GAMES SECTION ==================== */}
       <div className="flex flex-col items-start gap-2.5 relative self-stretch w-full flex-[0_0_auto] max-w-sm mx-auto">
         <div className="flex flex-col w-full items-start gap-4 relative flex-[0_0_auto]">
@@ -321,6 +324,7 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
             </div>
           </div>
         </div>
+
 
         <div className="flex flex-col w-full items-start gap-2.5 px-0 py-2.5 relative flex-[0_0_auto] overflow-y-scroll">
           {/* REMOVED: Loading state for better Android UX - show content immediately */}
@@ -372,6 +376,10 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
 
       {/* ==================== WATCH AD SECTION ==================== */}
       <WatchAdCard xpAmount={5} />
+
+      <NonGameOffersSection />
+
+
 
       {/* ==================== NON-GAMING OFFERS CAROUSEL SECTION ==================== */}
       {/* <NonGamingOffersCarousel offers={nonGamingOffers} /> */}

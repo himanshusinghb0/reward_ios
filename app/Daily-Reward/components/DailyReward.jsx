@@ -244,6 +244,9 @@ const DailyReward = () => {
             />
 
 
+            {/* Legal Disclaimer Section */}
+
+
 
             {/* Missed Day Recovery Modal */}
             <MissedDayRecovery

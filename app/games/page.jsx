@@ -83,6 +83,7 @@ export default function GamesPage() {
         <GameListSection searchQuery={searchQuery} showSearch={showSearch} />
         <AccountOverviewSection />
 
+
         <HomeIndicator activeTab="games" />
       </div>
     </div>

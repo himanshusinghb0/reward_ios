@@ -79,28 +79,37 @@ export const GoalsAndTargetsSection = () => {
                                     >
                                         {goal.label}
                                     </label>
-                                    <div className="relative w-16 h-8 flex items-center justify-center text-center rounded-md bg-[#1C1C1E]">
+                                    <div className="relative w-24 h-8 flex items-center justify-center text-center rounded-md bg-[#1C1C1E]">
                                         <input
                                             id={`goal-${goal.key}`}
                                             type="number"
                                             value={currentValue}
                                             onChange={(e) => handleValueChange(goal.key, e.target.value)}
-                                            className="w-full [font-family:'Poppins',Helvetica] font-bold text-[#d9d9d9] text-sm text-center bg-transparent border-none outline-none p-1"
+                                            className="w-full [font-family:'Poppins',Helvetica] font-bold text-[#d9d9d9] text-sm text-center bg-transparent border-none outline-none p-1 pr-8"
                                             min="0"
                                             max={goal.max}
                                         />
+                                        <img src="/dollor.png" alt="$" className="w-5 h-5 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" />
                                     </div>
                                 </div>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={goal.max}
-                                    step="1"
-                                    value={currentValue}
-                                    onChange={(e) => handleValueChange(goal.key, e.target.value)}
-                                    style={sliderStyle}
-                                    className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#6a6dcd]"
-                                />
+                                <div className="relative w-full pt-4">
+                                    <div className="absolute -top-0 transform -translate-x-1/2" style={{ left: `${progress}%`, zIndex: 10 }}>
+                                        <div className="flex items-center bg-[#2f3276] p-1 rounded-md shadow-lg">
+                                            <span className="text-white text-xs font-bold">{currentValue}</span>
+                                            {/* <img src="/dollor.png" alt="$" className="w-3 h-3 ml-1" /> */}
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max={goal.max}
+                                        step="1"
+                                        value={currentValue}
+                                        onChange={(e) => handleValueChange(goal.key, e.target.value)}
+                                        style={sliderStyle}
+                                        className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#6a6dcd]"
+                                    />
+                                </div>
                             </div>
                         );
                     })}

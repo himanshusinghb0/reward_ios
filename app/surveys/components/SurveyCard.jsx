@@ -69,14 +69,18 @@ const SurveyCard = React.memo(({
     }
 
     // Get estimated time
-    const estimatedTime = survey.estimatedTime || survey.length || 5;
+    const estimatedTime = typeof survey.estimatedTime === 'number' ? survey.estimatedTime :
+        (typeof survey.length === 'number' ? survey.length : 5);
 
-    // Get title
-    const title = survey.title || survey.name || "Survey";
+    // Get title - ensure it's a string
+    const title = (typeof survey.title === 'string' ? survey.title : '') ||
+        (typeof survey.name === 'string' ? survey.name : '') ||
+        "Survey";
 
     // Get category and difficulty - format as per requirement
-    const category = survey.category || (isThirdParty ? "External" : "Survey");
-    const difficulty = survey.difficulty || null;
+    const category = (typeof survey.category === 'string' ? survey.category : '') ||
+        (isThirdParty ? "External" : "Survey");
+    const difficulty = typeof survey.difficulty === 'string' ? survey.difficulty : null;
 
     const stats = [];
     if (coins > 0) {
@@ -128,7 +132,7 @@ const SurveyCard = React.memo(({
                     </h1>
                     {/* Display fields one by one with labels */}
                     <div className="flex flex-col gap-[2px] mt-[2px]">
-                        {category && (
+                        {/* {category && (
                             <div className="flex items-center gap-1.5">
                                 <span className="[font-family:'Poppins',Helvetica] font-light text-gray-400 text-[12px] leading-tight">
                                     Category:
@@ -137,7 +141,7 @@ const SurveyCard = React.memo(({
                                     {category}
                                 </span>
                             </div>
-                        )}
+                        )} */}
                         {difficulty && (
                             <div className="flex items-center gap-1.5">
                                 <span className="[font-family:'Poppins',Helvetica] font-light text-gray-400 text-[12px] leading-tight">
@@ -154,7 +158,7 @@ const SurveyCard = React.memo(({
                                     Estimated Time:
                                 </span>
                                 <span className="[font-family:'Poppins',Helvetica] font-light text-gray-300 text-[12px] leading-tight">
-                                    {estimatedTime} min
+                                    {String(estimatedTime)} min
                                 </span>
                             </div>
                         )}
@@ -170,7 +174,7 @@ const SurveyCard = React.memo(({
                                     role="listitem"
                                 >
                                     <span className="[font-family:'Poppins',Helvetica] font-medium text-white text-sm leading-5">
-                                        {stat.value}
+                                        {String(stat.value)}
                                     </span>
                                     <img
                                         className="w-4 h-4 ml-1"
@@ -185,7 +189,7 @@ const SurveyCard = React.memo(({
                     {isThirdParty && survey.amount && stats.length === 0 && (
                         <div className="flex items-center mt-1">
                             <span className="[font-family:'Poppins',Helvetica] font-medium text-purple-400 text-sm">
-                                {rewardText}
+                                {String(rewardText)}
                             </span>
                         </div>
                     )}

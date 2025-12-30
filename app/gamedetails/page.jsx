@@ -50,6 +50,7 @@ import { handleGameDownload, getUserId } from "@/lib/gameDownloadUtils";
 import sessionManager from "@/lib/sessionManager";
 import { fetchGameById, fetchUserData } from "@/lib/redux/slice/gameSlice";
 import { fetchWalletTransactions, fetchFullWalletTransactions } from "@/lib/redux/slice/walletTransactionsSlice";
+import { BannerSection } from "../AchieveGoals/components/BannerSection";
 
 /**
  * Game Details Page - Main content component
@@ -916,8 +917,8 @@ function GameDetailsContent() {
                             </>
                         )}
                     </div>
-                    <div className="flex w-full items-center justify-start mt-3 relative">
-                        <div className="flex flex-row items-center justify-center gap-1.5 bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)] rounded-[10px] py-1.5 px-2.5 w-fit">
+                    <div className="flex w-full items-center justify-center mt-3 relative">
+                        <div className="flex flex-row items-center justify-center gap-1.5 bg-[linear-gradient(180deg,rgba(158,173,247,0.6)_0%,rgba(113,106,231,0.6)_100%)] rounded-[10px] py-1.5 px-2.5 w-full">
                             <span className="[font-family:'Poppins',Helvetica] font-medium text-white text-[14px] flex items-center justify-center gap-1.5 whitespace-nowrap">
                                 <span className="whitespace-nowrap text-[14px] font-medium">Earn up to</span>
                                 <span className="flex items-center gap-0.5 whitespace-nowrap">
@@ -1026,22 +1027,37 @@ function GameDetailsContent() {
                     />
                 </div>
 
-                <div className="animate-fade-in">
-                    <DailyChallenge
+                {/* <div className="animate-fade-in">
+                    <BannerSection
                         game={displayGame}
                         onChallengeClick={handleDailyChallenge}
                     />
-                </div>
+                </div> */}
 
-                <HomeIndicator />
+                {/* <HomeIndicator /> */}
 
                 {/* Session Status Component */}
-                <SessionStatus
+                {/* <SessionStatus
                     game={selectedGame}
                     currentSession={currentSession}
-                />
+                /> */}
 
             </div>
+            <BannerSection />
+            <section className="my-5  ">
+                <div className="w-full max-w-[335px] sm:max-w-[375px] mx-auto">
+                    <div className="w-full p-4 sm:p-6 rounded-lg bg-[linear-gradient(to_right,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.1)_50%,rgba(0,0,0,0.9)_100%)] shadow-lg border border-white/20">
+                        <div className="flex flex-col justify-start gap-2">
+                            <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-[#f4f3fc] text-[14px] sm:text-[14px] ">
+                                Disclaimer
+                            </h2>
+                            <p className="[font-family:'Poppins',Helvetica] font-light text-[#FFFFFF] text-[13px] sm:text-base text-start leading-5 sm:leading-6">
+                                Rewards are loyalty tokens only. Points have no cash value. Redemption eligibility may vary. Must be 17+ to participate.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </LoadingOverlay>
     );
 }

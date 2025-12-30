@@ -178,7 +178,7 @@ export const HomeIndicator = ({ activeTab }) => {
 
               <Link
                 href="/games"
-                className="group flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative -ml-14"
+                className="group flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative -ml"
                 aria-label="Navigate to My Games"
                 aria-current={currentActiveTab === "games" ? "page" : undefined}
               >
@@ -200,8 +200,8 @@ export const HomeIndicator = ({ activeTab }) => {
                 )}
               </Link>
 
-              <div ref={menuRef} className="flex flex-col items-center cursor-pointer focus:outline-none rounded-full absolute -top-[42px] left-1/2 transform -translate-x-1/2 z-30">
-                <button
+              {/* <div ref={menuRef} className="flex flex-col items-center cursor-pointer focus:outline-none rounded-full absolute -top-[42px] left-1/2 transform -translate-x-1/2 z-30"> */}
+              {/* <button
                   className="flex flex-col items-center justify-center w-[62px] h-[62px] rounded-full focus:outline-none relative transition-all duration-300 hover:opacity-80"
                   aria-label="Open more options"
                   tabIndex={0}
@@ -214,20 +214,20 @@ export const HomeIndicator = ({ activeTab }) => {
                     src="https://c.animaapp.com/Tbz6Qwwg/img/more.svg"
                     role="presentation"
                   />
-                </button>
+                </button> */}
 
-                {/* More Menu - positioned above the middle button, shifted very far left */}
-                {showMoreMenu && (
+              {/* More Menu - positioned above the middle button, shifted very far left */}
+              {/* {showMoreMenu && (
                   <div className="absolute bottom-[36px] left-1/2 transform -translate-x-[200%] z-40">
                     <MoreMenu onClose={() => setShowMoreMenu(false)} />
                   </div>
-                )}
+                )} */}
 
-              </div>
+              {/* </div> */}
 
               <Link
                 href="/Wallet"
-                className="group flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative -mr-16"
+                className="group flex flex-col items-center gap-1 cursor-pointer focus:outline-none rounded-lg p-1 min-w-[50px] relative "
                 aria-label="Navigate to My Wallet"
                 aria-current={currentActiveTab === "wallet" ? "page" : undefined}
               >

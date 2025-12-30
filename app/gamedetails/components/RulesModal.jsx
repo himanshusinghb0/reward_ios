@@ -9,21 +9,21 @@ export const RulesModal = ({ isVisible, onClose, position }) => {
             const modalRect = modalRef.current.getBoundingClientRect();
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            
+
             // Calculate position relative to button
-            let top = position.top + position.buttonHeight + 8; // 8px gap below button
+            let top = position.top + window.scrollY + position.buttonHeight + 21; // move down 6px
             let left = position.left - (335 / 2) + (position.buttonWidth / 2); // Center modal relative to button
-            
+
             // Ensure modal stays within viewport bounds
             if (left < 16) left = 16; // 16px padding from left edge
             if (left + 335 > viewportWidth - 16) left = viewportWidth - 335 - 16; // 16px padding from right edge
-            
+
             // If modal would go below viewport, position it above the button instead
-            if (top + 315 > viewportHeight - 16) {
-                top = position.top - 315 - 8; // Position above button with 8px gap
-                if (top < 16) top = 16; // Ensure it doesn't go above viewport
+            if (top + 315 > viewportHeight + window.scrollY - 16) {
+                top = position.top + window.scrollY - 315 - 21; // Position above button
+                if (top < window.scrollY + 16) top = window.scrollY + 16; // Ensure it doesn't go above viewport
             }
-            
+
             setModalStyle({
                 position: 'absolute',
                 top: `${top}px`,

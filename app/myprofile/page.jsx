@@ -14,6 +14,7 @@ import Achievements from "./components/Achievements";
 import Leadership from "./components/Leadership";
 import SpinWin from "./components/SpinWin";
 import MyEarningCard from "../Wallet/Components/MyEarningCard";
+import LegalCompliance from "./components/LegalCompliance";
 
 
 export default function MyProfile() {
@@ -196,6 +197,8 @@ export default function MyProfile() {
             handleToggleNotifications={handleToggleNotifications}
             signOut={signOut}
           />
+          <LegalCompliance />
+
         </main>
       </div>
     </div>

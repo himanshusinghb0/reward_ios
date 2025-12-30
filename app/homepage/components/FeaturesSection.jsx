@@ -9,7 +9,7 @@ const FeaturesSection = () => {
         {
             id: 1,
             title: "Surveys",
-            bgColor: "#8963f5",
+            // bgColor: "#8963f5",
             route: "/surveys",
             rectangleImage1:
                 "https://c.animaapp.com/En0DOTZF/img/rectangle-41006.svg",
@@ -25,7 +25,7 @@ const FeaturesSection = () => {
         {
             id: 3,
             title: "Daily\nrewards",
-            bgColor: "#0ca8de",
+            // bgColor: "#0ca8de",
             route: "/Daily-Reward",
             rectangleImage1:
                 "https://c.animaapp.com/En0DOTZF/img/rectangle-41006-1.svg",
@@ -41,7 +41,7 @@ const FeaturesSection = () => {
         {
             id: 4,
             title: "Challenges",
-            bgColor: "#be8fff",
+            // bgColor: "#be8fff",
             route: "/dailychallenge",
             rectangleImage1:
                 "https://c.animaapp.com/En0DOTZF/img/rectangle-41004-1.svg",
@@ -189,7 +189,7 @@ const FeaturesSection = () => {
 
     return (
         <section
-            className="flex flex-col items-start mt-4  gap-2.5 pl-3 sm:pl-4 md:pl-5 pr-0 py-0 relative w-full max-w-full sm:max-w-[375px] mx-auto"
+            className="flex flex-col items-start mt-10 gap-2.5 pl-3 sm:pl-4 md:pl-5 pr-0 py-0 relative w-full max-w-full sm:max-w-[375px] mx-auto"
             data-model-id="2035:19015"
             aria-labelledby="features-heading"
         >
@@ -200,12 +200,12 @@ const FeaturesSection = () => {
                 Features
             </h2>
 
-            <div className="flex flex-col w-full sm:w-[331px] items-start gap-4 relative flex-[0_0_auto]">
+            <div className="flex flex-col w-full sm:w-[331px] items-start  relative flex-[0_0_auto]">
                 <div className="flex items-center gap-[19px] relative self-stretch w-full flex-[0_0_auto]">
                     {features.slice(0, 2).map((feature) => renderFeatureCard(feature))}
                 </div>
 
-                <div className="flex items-center gap-[19px] relative self-stretch w-full flex-[0_0_auto]">
+                <div className="flex items-center  relative self-stretch w-full flex-[0_0_auto]">
                     {features.slice(2, 4).map((feature) => renderFeatureCard(feature))}
                 </div>
             </div>
