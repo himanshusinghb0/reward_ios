@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.fizzbleep.jackson',
+  appId: 'com.jackson.rewards.app',
   appName: 'Jackson',
   webDir: 'out',
   server: {
