@@ -1,10 +1,6 @@
 # This executes a Node command to get the absolute path to the helper script.
 # This bypasses all problematic Ruby relative path resolution logic.
 require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
-# require_relative '../../../node_modules/@capacitor/ios/scripts/pods_helpers'
-# Add this line instead:
-# Use ENV['BITRISE_SOURCE_DIR'] for an absolute path to the project root
-# require File.join(File.dirname(`node -p 'const path = require("path"); path.join(path.dirname(require.resolve("@capacitor/core")), "../ios")'`.strip), 'scripts/pods_helpers')
 
 platform :ios, '14.0'
 use_frameworks!
@@ -15,12 +11,6 @@ use_frameworks!
 install! 'cocoapods', :disable_input_output_paths => true
 
 def capacitor_pods
-  # Use the absolute path from the project root (where the Podfile code is executed from)
-  # The path to the pod is now calculated correctly by the Node command above.
-  # The pods must use the path relative to the Podfile, which IS ../../node_modules 
-  # based on your file structure. Since this is failing, we must simplify the pod path.
-  # Note: The 'path' here is a relative path from the Podfile.
-
   pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
   pod 'CapacitorCommunityStripe', :path => '../../node_modules/@capacitor-community/stripe'
@@ -43,5 +33,17 @@ target 'App' do
 end
 
 post_install do |installer|
+  # Keep the existing Capacitor deployment target check
   assertDeploymentTarget(installer)
+
+  # FIX: Disable code signing for all Pod targets to prevent 
+  # "does not support provisioning profiles" error during exportArchive
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['CODE_SIGNING_ALLOWED'] = "NO"
+      config.build_settings['CODE_SIGNING_REQUIRED'] = "NO"
+      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ""
+      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY_NAME'] = ""
+    end
+  end
 end
