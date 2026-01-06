@@ -11,6 +11,8 @@ const RewardProgress = ({ stats }) => {
     // OPTIMIZED: Memoize expensive calculations to prevent re-computation
     const pointsData = useMemo(() => {
         const currentProgress = stats?.currentXP ?? 0;
+        // const currentProgress = 0
+
         const pointsNeeded = Math.max(0, rewardGoal - currentProgress);
         const progressPercentage = Math.min(
             (currentProgress / rewardGoal) * 100,
@@ -109,21 +111,21 @@ const RewardProgress = ({ stats }) => {
                         aria-label={`Progress: ${pointsData.currentPoints} out of ${pointsData.targetPoints} points`}
                     >
                         {/* Progress bar background - pink theme from card gradient */}
-                        <div className="absolute w-full h-[19px] top-0.5 left-0 bg-[#b13388] rounded-[32px] border-4 border-solid border-[#FFFFFF33]" />
+                        <div className="absolute w-full h-[19px] top-0.5 left-2 bg-[#b13388] rounded-[32px] border-4 border-solid border-[#FFFFFF33]" />
 
                         {/* Progress bar fill - same as XPTierTracker */}
                         <div
-                            className="absolute h-[11px] top-1.5 left-1 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-[32px] transition-all duration-300 ease-out"
+                            className="absolute h-[11px] top-1.5 left-3 bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-[32px] transition-all duration-300 ease-out"
                             style={{
-                                width: `calc(${progressPercentage}% - 8px)`,
+                                width: `calc(${progressPercentage}% - 2px)`,
                             }}
                         />
 
                         {/* Current progress indicator - same as XPTierTracker with proper circle */}
                         <div
-                            className="absolute w-6 h-6 top-0 bg-white rounded-full border-4 border-solid border-[#FFD700] transition-all duration-300 ease-out"
+                            className="absolute w-6 h-6   top-0 bg-white rounded-full border-4 border-solid border-[#FFD700] transition-all duration-300 ease-out"
                             style={{
-                                left: `calc(${progressPercentage}% - 12px)`,
+                                left: `calc(${progressPercentage}% - 2px)`,
                             }}
                         />
                     </div>

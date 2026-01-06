@@ -19,6 +19,8 @@ import NonGameOffersSection from "./components/NonGameOffersSection";
 import FeaturesSection from "./components/FeaturesSection";
 import { BannerSection } from "../AchieveGoals/components/BannerSection";
 import { Daily } from "./components/Daily";
+import WalkathonSection from "./components/WalkathonSection";
+import { Frame as GameTips } from "./components/GameTips";
 
 const Homepage = () => {
   const { token, user } = useAuth();
@@ -68,9 +70,14 @@ const Homepage = () => {
         {/* <div className="mt-14">
           <SurveysSection />
         </div> */}
-        <NonGameOffersSection />
+        <div className="mt-4">
+          <NonGameOffersSection />
+        </div>
+
         <FeaturesSection />
+        <GameTips />
         <VipBanner />
+        <WalkathonSection />
         <RaceSection />
         <StreakSection />
         <Daily />

@@ -50,7 +50,6 @@ import { handleGameDownload, getUserId } from "@/lib/gameDownloadUtils";
 import sessionManager from "@/lib/sessionManager";
 import { fetchGameById, fetchUserData } from "@/lib/redux/slice/gameSlice";
 import { fetchWalletTransactions, fetchFullWalletTransactions } from "@/lib/redux/slice/walletTransactionsSlice";
-import { BannerSection } from "../AchieveGoals/components/BannerSection";
 
 /**
  * Game Details Page - Main content component
@@ -974,7 +973,7 @@ function GameDetailsContent() {
                                         })()}
                                     </span>
                                     <img
-                                        className="w-[19px] h-[20px] object-contain flex-shrink-0"
+                                        className="w-[19px]  mb-[2px] h-[20px] object-contain flex-shrink-0"
                                         alt="XP icon"
                                         src="https://c.animaapp.com/ltgoa7L3/img/pic-7.svg"
                                     />
@@ -1027,14 +1026,14 @@ function GameDetailsContent() {
                     />
                 </div>
 
-                {/* <div className="animate-fade-in">
-                    <BannerSection
+                <div className="animate-fade-in">
+                    <DailyChallenge
                         game={displayGame}
                         onChallengeClick={handleDailyChallenge}
                     />
-                </div> */}
+                </div>
 
-                {/* <HomeIndicator /> */}
+
 
                 {/* Session Status Component */}
                 {/* <SessionStatus
@@ -1043,21 +1042,6 @@ function GameDetailsContent() {
                 /> */}
 
             </div>
-            <BannerSection />
-            <section className="my-5  ">
-                <div className="w-full max-w-[335px] sm:max-w-[375px] mx-auto">
-                    <div className="w-full p-4 sm:p-6 rounded-lg bg-[linear-gradient(to_right,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.1)_50%,rgba(0,0,0,0.9)_100%)] shadow-lg border border-white/20">
-                        <div className="flex flex-col justify-start gap-2">
-                            <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-[#f4f3fc] text-[14px] sm:text-[14px] ">
-                                Disclaimer
-                            </h2>
-                            <p className="[font-family:'Poppins',Helvetica] font-light text-[#FFFFFF] text-[13px] sm:text-base text-start leading-5 sm:leading-6">
-                                Rewards are loyalty tokens only. Points have no cash value. Redemption eligibility may vary. Must be 17+ to participate.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </LoadingOverlay>
     );
 }
