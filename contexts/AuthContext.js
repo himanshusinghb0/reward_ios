@@ -296,7 +296,7 @@ export function AuthProvider({ children }) {
     setTimeout(() => {
       if (!hasWalletData && walletScreenStatus === "idle") {
         console.log("💰 [AuthContext] Fetching wallet data (not cached)");
-        dispatch(fetchWalletScreen(token));
+        dispatch(fetchWalletScreen({ token }));
       }
 
       // Only fetch other heavy data if not already loaded
@@ -362,6 +362,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (isLoading) return;
     if (pathname === "/") return;
+
+    // ✅ FIX: Skip gatekeeper during NEW USER onboarding flow
+    if (isNewUserFlow) return;
 
     // Skip gatekeeper logic during auth callback to prevent redirect loop
     if (pathname === "/auth/callback") return;
@@ -627,7 +630,6 @@ export function AuthProvider({ children }) {
     try {
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("authToken", token);
-      localStorage.setItem("onboardingComplete", "true");
     } catch (err) {
       console.error("❌ Failed to save to localStorage", err);
     }
@@ -734,6 +736,7 @@ export function AuthProvider({ children }) {
 
       // Clear permission/location flags for new signups so they go through the flow
       localStorage.removeItem("permissionsAccepted");
+      localStorage.removeItem("onboardingComplete");
       localStorage.removeItem("locationCompleted");
       localStorage.removeItem("faceVerificationCompleted");
       localStorage.removeItem("faceVerificationSkipped");
@@ -743,7 +746,12 @@ export function AuthProvider({ children }) {
       // Biometric credentials will be saved AFTER face verification is complete
       // This ensures proper onboarding flow
 
-      return handleAuthSuccess(data);
+      // return handleAuthSuccess(data);
+      const result = await handleAuthSuccess(data);
+
+      router.replace("/select-age"); // or first onboarding route
+
+      return result;
     } catch (error) {
       return { ok: false, error: error.body || { error: error.message } };
     }

@@ -17,7 +17,7 @@ export const Frame = () => {
     // If backend has "Game Tips" section configured, it can be changed back
     useEffect(() => {
         dispatch(fetchGamesBySection({
-            uiSection: "Swipe",
+            uiSection: "Gametips",
             ageGroup: "18-24",
             gender: "male",
             page: 1,
@@ -27,42 +27,39 @@ export const Frame = () => {
 
     // Memoize the game tips from the new API
     const gameTips = useMemo(() => {
-        const swipeGames = gamesBySection?.["Swipe"] || [];
-        // Try "Game Tips" first if it exists, otherwise use "Swipe"
-        const gameTipsGames = gamesBySection?.["Game Tips"] || [];
-        const allGames = gameTipsGames.length > 0 ? gameTipsGames : swipeGames;
+        const games = gamesBySection?.["Gametips"] || [];
 
-        return allGames.slice(0, 2).map((game, index) => {
-            // Clean and format title
-            const rawTitle = game?.title || game?.details?.name || 'Game';
-            const cleanTitle = rawTitle
-                .replace(/\s*Android\s*/gi, '') // Remove "Android" text
-                .replace(/-/g, ' ')             // Replace hyphens with spaces
-                .split(' - ')[0]                // Remove platform suffix after "-"
-                .trim();
-
-            // Format description - more readable
-            const rawDesc = game.details?.description || game.description || "Discover an amazing gaming experience";
-            let cleanDesc = rawDesc.trim();
-            // Capitalize first letter
-            cleanDesc = cleanDesc.charAt(0).toUpperCase() + cleanDesc.slice(1);
-            // Truncate at word boundary (max ~60 chars)
-            if (cleanDesc.length > 60) {
-                const truncated = cleanDesc.substring(0, 57);
-                const lastSpace = truncated.lastIndexOf(' ');
-                cleanDesc = lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
-            }
+        return games.slice(0, 2).map((game, index) => {
+            const rawData = game.besitosRawData || {};
 
             return {
                 id: game._id || game.id || `game-tip-${index}`,
-                title: cleanTitle,
-                description: cleanDesc,
-                image: game.images?.icon || game.icon || game.square_image || game.image || '/placeholder-game.png',
+                title:
+                    rawData.title ||
+                    game.title ||
+                    game.details?.name ||
+                    "Game",
+
+                description:
+                    rawData.description ||
+                    game.details?.description ||
+                    game.description ||
+                    "Discover an amazing gaming experience",
+
+                // ✅ SAME IMAGE LOGIC AS MOST PLAYED
+                image:
+                    rawData.square_image ||
+                    rawData.image ||
+                    game.details?.square_image ||
+                    game.images?.icon ||
+                    "/placeholder-game.png",
+
                 imageType: index === 0 ? "bg" : "img",
-                game: game // Store the full game object for navigation
+                game
             };
         });
     }, [gamesBySection]);
+
 
     // Handle game click - navigate to game tips details page
     const handleGameClick = (game) => {

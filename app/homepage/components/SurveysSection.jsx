@@ -128,22 +128,6 @@ const SurveysSection = () => {
         };
     };
 
-    // Show loading state (only if no cached data)
-    if (status === "loading" && (!surveys || surveys.length === 0)) {
-        return (
-            <div className="flex w-full flex-col my-1 items-start gap-3 relative">
-                <div className="flex w-full items-center justify-between">
-                    <p className="[font-family:'Poppins',Helvetica] text-[16px] font-semibold leading-[normal] tracking-[0] text-[#FFFFFF]">
-                        Get Paid to do Surveys
-                    </p>
-                </div>
-                <div className="relative flex h-[190px] rounded-[10px] w-full items-center justify-center">
-                    <p className="text-white text-sm">Loading surveys...</p>
-                </div>
-            </div>
-        );
-    }
-
     // Show error state (only if we have an error and no surveys)
     if (status === "failed" && (!surveys || surveys.length === 0)) {
         return (

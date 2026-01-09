@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { getConversionSettings } from "../../../lib/api";
 
 const SCALE_CONFIG = [
     { minWidth: 0, scaleClass: "scale-90" },
@@ -96,24 +97,45 @@ export const Conversion = () => {
     const [flowState, setFlowState] = useState("idle"); // 'idle', 'timerRunning', 'convertNow'
     const [timeLeft, setTimeLeft] = useState(5 * 60); // 5 minutes in seconds
     const timerRef = useRef(null);
+    const [conversionSettings, setConversionSettings] = useState(null);
+    const [isLoadingSettings, setIsLoadingSettings] = useState(false);
 
     // --- Simple Flow Handlers ---
 
     // Handle Convert in 5:00 - Show timer modal
-    const handleScheduledConvert = () => {
+    const handleScheduledConvert = async () => {
         if (flowState !== "idle") return;
 
         setFlowState("timerRunning");
         setTimeLeft(5 * 60); // 5 minutes (300 seconds)
+
+        // Fetch conversion settings in the background
+        setIsLoadingSettings(true);
+        try {
+            const settings = await getConversionSettings();
+            setConversionSettings(settings.data);
+        } catch (error) {
+            console.error("Failed to fetch conversion settings:", error);
+            // Fallback to default
+            setConversionSettings({
+                conversionRules: [{
+                    coinsPerUnit: 20,
+                    currencyAmount: 1
+                }],
+                defaultRule: {
+                    coinsPerDollar: 20
+                }
+            });
+        } finally {
+            setIsLoadingSettings(false);
+        }
 
         timerRef.current = setInterval(() => {
             setTimeLeft((prevTime) => {
                 if (prevTime <= 1) {
                     clearInterval(timerRef.current);
                     // Show conversion result after timer completes
-                    const userAmount = parseFloat(coinAmount) || 0;
-                    const conversionRate = 0.10; // 1 dollar = 10 coins, so 1 coin = 0.10 dollars
-                    setConversionAmount((userAmount * conversionRate).toFixed(2));
+                    calculateConversion();
                     setFlowState("idle"); // Reset if time runs out
                     return 0;
                 }
@@ -123,17 +145,53 @@ export const Conversion = () => {
     };
 
     // Handle Convert Now - Show simple modal
-    const handleConvertNow = () => {
+    const handleConvertNow = async () => {
         if (flowState !== "idle") return;
         setFlowState("convertNow");
+
+        // Fetch conversion settings in the background
+        setIsLoadingSettings(true);
+        try {
+            const settings = await getConversionSettings();
+            setConversionSettings(settings.data);
+        } catch (error) {
+            console.error("Failed to fetch conversion settings:", error);
+            // Fallback to default
+            setConversionSettings({
+                conversionRules: [{
+                    coinsPerUnit: 20,
+                    currencyAmount: 1
+                }],
+                defaultRule: {
+                    coinsPerDollar: 20
+                }
+            });
+        } finally {
+            setIsLoadingSettings(false);
+        }
     };
 
     // Handle Convert Now modal close - Show conversion result
     const handleConvertNowClose = () => {
-        const userAmount = parseFloat(coinAmount) || 0;
-        const conversionRate = 0.10; // 1 dollar = 10 coins, so 1 coin = 0.10 dollars
-        setConversionAmount((userAmount * conversionRate).toFixed(2));
+        calculateConversion();
         setFlowState("idle");
+    };
+
+    // Calculate conversion based on fetched settings
+    const calculateConversion = () => {
+        const userAmount = parseFloat(coinAmount) || 0;
+        let conversionRate = 0.10; // default fallback
+
+        if (conversionSettings && conversionSettings.conversionRules && conversionSettings.conversionRules.length > 0) {
+            const rule = conversionSettings.conversionRules[0];
+            if (rule.coinsPerUnit && rule.currencyAmount) {
+                conversionRate = rule.currencyAmount / rule.coinsPerUnit;
+            }
+        } else if (conversionSettings && conversionSettings.defaultRule && conversionSettings.defaultRule.coinsPerDollar) {
+            conversionRate = 1 / conversionSettings.defaultRule.coinsPerDollar;
+        }
+
+        setConversionAmount((userAmount * conversionRate).toFixed(2));
     };
 
     // Cleanup timer on component unmount

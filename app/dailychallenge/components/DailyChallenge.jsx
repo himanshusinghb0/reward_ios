@@ -11,6 +11,7 @@ import {
 import { BannerSection } from "./BannerSection";
 import { ChallengeGroupSection } from "./ChallengeGroupSection";
 import { ChallengeModal } from "./ChallengeModal";
+import { useRouter } from "next/navigation";
 
 export const DailyChallenge = () => {
     // Redux state and dispatch
@@ -25,6 +26,9 @@ export const DailyChallenge = () => {
         modalOpen,
         error
     } = useSelector((state) => state.dailyChallenge || {});
+    const router = useRouter();
+
+    // Local state and hooks
 
     const [isMonthLoading, setIsMonthLoading] = useState(false);
     const [pendingCalendar, setPendingCalendar] = useState(null);
@@ -388,7 +392,10 @@ export const DailyChallenge = () => {
 
             <header className="flex flex-col w-full max-w-[375px] items-start gap-2 px-5 py-3 mt-[36px]">
                 <nav className="items-center gap-4 self-stretch w-full rounded-[32px] flex relative flex-[0_0_auto]">
-                    <button aria-label="Go back">
+                    <button aria-label="Go back"
+                        onClick={() => router.back()}
+                        className="cursor-pointer"
+                    >
                         <img
                             className="relative w-6 h-6"
                             alt="Arrow back ios new"

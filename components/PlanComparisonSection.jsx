@@ -6,22 +6,22 @@ export const PlanComparisonSection = () => {
     const plans = [
         {
             name: "Bronze",
-            weeklyXP: 50,
+            weeklyXP: 100,
             bonusChances: 5,
             adFree: false,
             earlyAccess: false,
         },
         {
             name: "Gold",
-            weeklyXP: 100,
+            weeklyXP: 250,
             bonusChances: 10,
             adFree: true,
             earlyAccess: true,
         },
         {
             name: "Platinum",
-            weeklyXP: 150,
-            bonusChances: 15,
+            weeklyXP: 500,
+            bonusChances: 50,
             adFree: true,
             earlyAccess: true,
         },
@@ -29,9 +29,9 @@ export const PlanComparisonSection = () => {
 
     const features = [
         { label: "Weekly XP", key: "weeklyXP" },
-        { label: "Bonus Game\nChances", key: "bonusChances" },
+        { label: "Extra Spin", key: "bonusChances" },
         { label: "Ad Free", key: "adFree" },
-        { label: "Early Access\nto Features", key: "earlyAccess" },
+
     ];
 
     return (

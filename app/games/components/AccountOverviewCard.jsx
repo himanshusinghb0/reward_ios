@@ -140,7 +140,7 @@ const AccountOverviewCard = ({ userStats = null, className = "" }) => {
                                         <Image
                                             className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]"
                                             alt="Coin"
-                                            src="https://c.animaapp.com/3mn7waJw/img/image-3937-4@2x.png"
+                                            src="/dollor.png"
                                             width={20}
                                             height={20}
                                         />
