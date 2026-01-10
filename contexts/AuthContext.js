@@ -346,17 +346,17 @@ export function AuthProvider({ children }) {
     };
   }, [token, dispatch]);
 
-  useEffect(() => {
-    // Only fetch if we haven't fetched before
-    if (onboardingStatus === "idle") {
-      console.log("🚀 [Onboarding] Preloading all onboarding options...");
-      dispatch(fetchOnboardingOptions("age_range"));
-      dispatch(fetchOnboardingOptions("gender"));
-      dispatch(fetchOnboardingOptions("game_preferences"));
-      dispatch(fetchOnboardingOptions("game_style"));
-      dispatch(fetchOnboardingOptions("dealy_game"));
-    }
-  }, [dispatch, onboardingStatus]);
+  // useEffect(() => {
+  //   // Only fetch if we haven't fetched before
+  //   if (onboardingStatus === "idle") {
+  //     console.log("🚀 [Onboarding] Preloading all onboarding options...");
+  //     dispatch(fetchOnboardingOptions("age_range"));
+  //     dispatch(fetchOnboardingOptions("gender"));
+  //     dispatch(fetchOnboardingOptions("game_preferences"));
+  //     dispatch(fetchOnboardingOptions("game_style"));
+  //     dispatch(fetchOnboardingOptions("dealy_game"));
+  //   }
+  // }, [dispatch, onboardingStatus]);
 
   // Gatekeeper logic for routing (No changes needed here)
   useEffect(() => {
@@ -740,6 +740,7 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("locationCompleted");
       localStorage.removeItem("faceVerificationCompleted");
       localStorage.removeItem("faceVerificationSkipped");
+      localStorage.removeItem("onboardingComplete");
 
       // DON'T save biometric credentials here for new users
       // New users will go through: Permissions → Location → Face Verification
@@ -747,7 +748,16 @@ export function AuthProvider({ children }) {
       // This ensures proper onboarding flow
 
       // return handleAuthSuccess(data);
+      // return handleAuthSuccess(data);
       const result = await handleAuthSuccess(data);
+      // 🔥 FETCH ONBOARDING OPTIONS ONCE (RIGHT HERE)
+      await Promise.all([
+        dispatch(fetchOnboardingOptions("age_range")),
+        dispatch(fetchOnboardingOptions("gender")),
+        dispatch(fetchOnboardingOptions("game_preferences")),
+        dispatch(fetchOnboardingOptions("game_style")),
+        dispatch(fetchOnboardingOptions("dealy_game")),
+      ]);
 
       router.replace("/select-age"); // or first onboarding route
 
