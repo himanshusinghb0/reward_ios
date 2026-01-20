@@ -45,7 +45,6 @@ export default function WalletPage() {
     // Use setTimeout to refresh in background after showing cached data
     // This ensures smooth UX - cached data shows immediately, fresh data loads in background
     const refreshTimer = setTimeout(() => {
-      console.log("🔄 [WalletPage] Refreshing wallet and balance data in background to get admin updates...");
       dispatch(fetchWalletScreen({ token, force: true }));
       dispatch(fetchProfileStats({ token, force: true }));
     }, 100); // Small delay to let cached data render first
@@ -58,7 +57,6 @@ export default function WalletPage() {
     if (!token) return;
 
     const handleFocus = () => {
-      console.log("🔄 [WalletPage] App focused - refreshing wallet and balance to get admin updates");
       dispatch(fetchWalletScreen({ token, force: true }));
       dispatch(fetchProfileStats({ token, force: true }));
     };
