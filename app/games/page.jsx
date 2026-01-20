@@ -20,12 +20,12 @@ export default function GamesPage() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     // TODO: Implement search logic here
-    console.log("Searching for:", searchQuery);
+    // Search logic would be implemented here
   };
   return (
     <div className="flex justify-center ">
       <div
-        className="relative overflow-x-hidden w-full min-h-screen bg-black pb-48 mx-auto"
+        className="relative overflow-x-hidden w-full min-h-screen bg-black pb-[150px] mx-auto"
         data-model-id="289:1500"
       >
         {/* App version */}
@@ -50,6 +50,9 @@ export default function GamesPage() {
                 src="https://c.animaapp.com/3mn7waJw/img/search.svg"
                 width={48}
                 height={48}
+                loading="eager"
+                decoding="async"
+                priority
               />
             </button>
           </div>
@@ -82,7 +85,6 @@ export default function GamesPage() {
 
         <GameListSection searchQuery={searchQuery} showSearch={showSearch} />
         <AccountOverviewSection />
-
 
         <HomeIndicator activeTab="games" />
       </div>

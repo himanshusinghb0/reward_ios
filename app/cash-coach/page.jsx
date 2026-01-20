@@ -68,24 +68,19 @@ export default function CashCoachPage() {
 
                 if (playPromise !== undefined) {
                     playPromise
-                        .then(() => {
-                            // Audio playing successfully
-                            console.log("Coin sound playing");
-                        })
                         .catch(error => {
-                            // Autoplay was prevented or other error
-                            console.log("Audio play failed:", error);
+                            // Autoplay was prevented or other error - silently handle
                             // Try to play again after user interaction
                             if (audioRef.current) {
-                                audioRef.current.play().catch(err => {
-                                    console.log("Retry audio play failed:", err);
+                                audioRef.current.play().catch(() => {
+                                    // Retry failed - silently handle
                                 });
                             }
                         });
                 }
             }
         } catch (error) {
-            console.log("Sound effect error:", error);
+            // Sound effect error - silently handle
         }
     };
 
@@ -112,6 +107,11 @@ export default function CashCoachPage() {
                     className="w-[23px] h-6 flex-shrink-0"
                     alt="Coin"
                     src="/dollor.png"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    width={23}
+                    height={24}
                 />
             </div>
         </button>

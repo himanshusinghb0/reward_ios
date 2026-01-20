@@ -89,7 +89,7 @@ export const GoalsAndTargetsSection = () => {
                                             min="0"
                                             max={goal.max}
                                         />
-                                        <img src="/dollor.png" alt="$" className="w-5 h-5 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                        <img src="/dollor.png" alt="$" className="w-5 h-5 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" loading="eager" decoding="async" fetchPriority="high" width={20} height={20} />
                                     </div>
                                 </div>
                                 <div className="relative w-full pt-4">

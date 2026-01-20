@@ -12,8 +12,6 @@ export const EarningsOverviewSection = () => {
     const { walletScreen } = useSelector((state) => state.walletTransactions);
     const coinBalance = walletScreen?.wallet?.balance || 0;
 
-    console.log("summary", summary);
-
     const earningsData = [
         {
             id: 1,
@@ -64,6 +62,11 @@ export const EarningsOverviewSection = () => {
                             className="relative w-3 h-[10.73px]"
                             alt="Indicator"
                             src={item.iconSrc}
+                            loading="lazy"
+                            decoding="async"
+                            fetchPriority="low"
+                            width={12}
+                            height={11}
                         />
                         <div className="relative [font-family:'Poppins',Helvetica] font-normal text-white text-base">
                             {item.title}
