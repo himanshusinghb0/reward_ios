@@ -1,19 +1,56 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export const DailyChallenge = ({ game }) => {
     const router = useRouter();
+
+    // Preload banner images for faster rendering (optimized for iOS)
+    useEffect(() => {
+        const preloadImages = [
+            "/Dailychallangebanner/bg.svg",
+            "/Dailychallangebanner/banner.svg",
+            "/Dailychallangebanner/mainimage.png"
+        ];
+
+        // Use Image() objects for better iOS Safari compatibility
+        const imagePromises = preloadImages.map(src => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = src;
+            });
+        });
+
+        // Also add link preload for additional browser support
+        preloadImages.forEach(src => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = src.endsWith('.svg') ? 'image/svg+xml' : 'image';
+            link.href = src;
+            link.fetchPriority = 'high';
+            document.head.appendChild(link);
+        });
+
+        // Cleanup function to remove preload links
+        return () => {
+            preloadImages.forEach(src => {
+                const links = document.head.querySelectorAll(`link[href="${src}"]`);
+                links.forEach(link => link.remove());
+            });
+        };
+    }, []);
 
     // Sample banner data - you can replace this with actual data from props or API
     const bannerData = [
         {
             id: 1,
             maskingImage: "/img/masking.png",
-            bgImage: "https://c.animaapp.com/efaCLdlC/img/bg.svg",
-            bannerImage: "https://c.animaapp.com/efaCLdlC/img/banner.svg",
+            bgImage: "/Dailychallangebanner/bg.svg",
+            bannerImage: "/Dailychallangebanner/banner.svg",
             reward: "Earn Reward",
             title: "Accept the Challenge",
-            mainImage: "https://c.animaapp.com/efaCLdlC/img/image@2x.png"
+            mainImage: "/Dailychallangebanner/mainimage.png"
         }
     ];
 
@@ -48,6 +85,11 @@ export const DailyChallenge = ({ game }) => {
                                         alt=""
                                         src={banner.bgImage}
                                         aria-hidden="true"
+                                        loading="eager"
+                                        decoding="async"
+                                        fetchPriority="high"
+                                        width={352}
+                                        height={240}
                                     />
 
                                     <img
@@ -55,6 +97,11 @@ export const DailyChallenge = ({ game }) => {
                                         alt=""
                                         src={banner.bannerImage}
                                         aria-hidden="true"
+                                        loading="eager"
+                                        decoding="async"
+                                        fetchPriority="high"
+                                        width={203}
+                                        height={48}
                                     />
 
                                     <p className="top-[81px] font-bold text-[#ffe664] text-[34px] leading-[48px] absolute left-6 [font-family:'Poppins',Helvetica] tracking-[0] whitespace-nowrap">
@@ -74,6 +121,11 @@ export const DailyChallenge = ({ game }) => {
                                         className="absolute top-[100px] right-[-1px] w-[90px] h-[100px] object-cover"
                                         alt="Gaming controller illustration"
                                         src={banner.mainImage}
+                                        loading="eager"
+                                        decoding="async"
+                                        fetchPriority="high"
+                                        width={90}
+                                        height={100}
                                     />
                                 </div>
                             ) : (
@@ -81,6 +133,11 @@ export const DailyChallenge = ({ game }) => {
                                     className="relative w-[349px] h-[200px]"
                                     alt="Challenge banner"
                                     src={banner.image}
+                                    loading="eager"
+                                    decoding="async"
+                                    fetchPriority="high"
+                                    width={349}
+                                    height={200}
                                 />
                             )}
                         </article>

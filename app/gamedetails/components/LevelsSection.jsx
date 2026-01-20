@@ -69,27 +69,43 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
 
     // Notify parent component when session data changes
     useEffect(() => {
-        if (onSessionUpdate) {
+        if (onSessionUpdate && game) {
+            // Calculate completed tasks count for progression rules
+            // IMPORTANT: Count completed UNLOCKED tasks only for batch-based progression
+            const unlockedGoals = processedGoals.filter(g => !g.isLocked);
+            const completedUnlockedTasksCount = unlockedGoals.filter(g => g.isCompleted).length;
+            
+            // Get taskProgression rules for batch calculation
+            const taskProgression = game?.taskProgression || null;
+            const hasProgressionRule = taskProgression?.hasProgressionRule || false;
+            const firstBatchSize = taskProgression?.firstBatchSize || 0;
+            const nextBatchSize = taskProgression?.nextBatchSize || 0;
+            
             onSessionUpdate({
                 sessionCoins,
                 sessionXP,
                 isClaimed,
                 isGameDownloaded,
-                isMilestoneReached: checkMilestoneReached()
+                isMilestoneReached: checkMilestoneReached(),
+                completedTasksCount: completedUnlockedTasksCount, // Use completed UNLOCKED tasks only
+                taskProgression: {
+                    hasProgressionRule,
+                    firstBatchSize,
+                    nextBatchSize,
+                    processedGoals // Pass processed goals to calculate batches
+                }
             });
         }
-    }, [sessionCoins, sessionXP, isClaimed, isGameDownloaded, processedGoals]);
+    }, [sessionCoins, sessionXP, isClaimed, isGameDownloaded, processedGoals, game]);
 
     // Process game goals from API with real-time progress tracking
     useEffect(() => {
         const processGameData = () => {
-            console.log('🔄 LevelsSection: Starting data processing...');
             setIsLoading(true);
             setError(null);
 
             // Check if we have game data
             if (!game) {
-                console.log('⚠️ LevelsSection: No game data available');
                 setIsLoading(false);
                 return;
             }
@@ -107,26 +123,8 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
             const canUnlockNextTasks = taskProgression?.canUnlockNextTasks || false;
             const thresholdReached = taskProgression?.thresholdReached || false;
 
-            console.log('🎯 LevelsSection: Processing game data:', {
-                gameTitle: rawData.title || game.title,
-                gameId: rawData.id || game.id,
-                hasGoals: !!goalsToUse,
-                goalsLength: goalsToUse?.length || 0,
-                goalsSource: rawData.goals ? 'besitosRawData' : 'game.goals',
-                taskProgression: {
-                    hasProgressionRule,
-                    firstBatchSize,
-                    nextBatchSize,
-                    completedTasks,
-                    canUnlockNextTasks,
-                    thresholdReached
-                },
-                goals: goalsToUse
-            });
-
             // Check if we have goals
             if (!goalsToUse || goalsToUse.length === 0) {
-                console.log('⚠️ LevelsSection: No goals found for game:', rawData.title || game.title);
                 setError('No goals available for this game');
                 setIsLoading(false);
                 return;
@@ -151,13 +149,6 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                     const isLocked = (() => {
                         // Check if goal has progression data from API (downloaded games)
                         if (goal.progression && typeof goal.progression.isLocked === 'boolean') {
-                            console.log(`🎯 LevelsSection: Using API progression data for goal ${index + 1}:`, {
-                                goalId: goal.goal_id,
-                                isLocked: goal.progression.isLocked,
-                                isUnlocked: goal.progression.isUnlocked,
-                                unlockReason: goal.progression.unlockReason,
-                                batchNumber: goal.progression.batchNumber
-                            });
                             return goal.progression.isLocked;
                         }
 
@@ -262,17 +253,6 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                     // XP reward is only given if task is completed, but XP value is shown for all tasks
                     const xpReward = isCompleted ? calculatedXP : 0;
 
-                    // Log XP calculation for debugging (only for first few tasks to avoid spam)
-                    if (index < 5) {
-                        console.log(`🎯 Task ${index + 1} XP Calculation:`, {
-                            taskNumber: index + 1,
-                            baseXP,
-                            multiplier,
-                            calculatedXP,
-                            formula: `baseXP(${baseXP}) × multiplier(${multiplier})^${index} = ${calculatedXP}`
-                        });
-                    }
-
                     // Format time limit
                     let timeLimit = 'No limit';
                     if (goal.days_left !== null) {
@@ -360,7 +340,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                                 return user._id || user.id;
                             }
                         } catch (error) {
-                            console.error('Error getting user ID:', error);
+                            // Error getting user ID
                         }
                         return null;
                     };
@@ -388,20 +368,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                     }
                 }
 
-                console.log('✅ LevelsSection: Goals processed with real-time data:', {
-                    totalGoals: allGoals.length,
-                    completedGoals: allGoals.filter(g => g.isCompleted).length,
-                    failedGoals: allGoals.filter(g => g.isFailed).length,
-                    expiredGoals: allGoals.filter(g => g.isExpired).length,
-                    pendingGoals: allGoals.filter(g => g.taskStatus === 'pending').length,
-                    totalEarned: `$${totalCoins}`,
-                    totalXP: `${totalXP} XP`,
-                    linearGoals: allGoals.filter(g => !g.isTurbo && g.section === 'linear').length,
-                    turboGoals: allGoals.filter(g => g.isTurbo).length
-                });
-
             } catch (err) {
-                console.error('❌ LevelsSection: Error processing game data:', err);
                 setError('Failed to load game levels');
                 setIsLoading(false);
             }
@@ -494,7 +461,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                         return user._id || user.id;
                     }
                 } catch (error) {
-                    console.error('Error getting user ID:', error);
+                    // Error getting user ID
                 }
                 return null;
             };
@@ -551,7 +518,6 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
             }
 
         } catch (error) {
-            console.error('❌ Error claiming rewards:', error);
             alert('Failed to claim rewards. Please try again.');
         } finally {
             setClaiming(false);
@@ -567,18 +533,25 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
         if (cardCount === 0) return 0;
         if (cardCount === 1) return 75; // Single card height
 
-        // Each card is 75px height + 16px gap between cards
+        // Each card is 75px height + 16px gap between cards (gap-4)
         const cardHeight = 75;
         const gapBetweenCards = 16;
 
-        // Calculate total height: (number of cards × card height) + (gaps between cards × gap size)
-        const baseHeight = (cardCount * cardHeight) + ((cardCount - 1) * gapBetweenCards);
+        // Calculate height to connect ALL icons from first to last
+        // Line starts at top-6 (24px) and needs to reach the last circle
+        // Distance between circle centers: cardHeight (75px) + gapBetweenCards (16px) = 91px
+        // For cardCount circles, distance from first to last: (cardCount - 1) × 91px
+        const distanceBetweenCircles = (cardCount - 1) * (cardHeight + gapBetweenCards);
 
-        // Only apply reduction to locked lines to prevent over-extension
-        // Reduced at both start and end for locked tasks
-        const totalHeight = isLocked ? baseHeight - 100 : baseHeight;
-
-        return totalHeight;
+        // For locked tasks: add extra buffer to ensure line extends well past the last circle
+        // For active/unlocked tasks: use smaller buffer for cleaner appearance
+        if (isLocked) {
+            const baseHeight = distanceBetweenCircles + cardHeight + 100; // Large buffer for locked tasks
+            return baseHeight;
+        } else {
+            const baseHeight = distanceBetweenCircles + (cardHeight); // Smaller buffer for active tasks
+            return baseHeight;
+        }
     };
 
     const activeLineHeight = calculateLineHeight(activeLevels.length, false);
@@ -607,6 +580,11 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                             className={`w-[12.19px] h-[12.19px] transition-transform ${showDropdown ? 'rotate-180' : ''}`}
                             alt="Arrow back ios new"
                             src="https://c.animaapp.com/ABnBdu2U/img/arrow-back-ios-new@2x.png"
+                            loading="eager"
+                            decoding="async"
+                            fetchPriority="high"
+                            width={12}
+                            height={12}
                         />
                     </button>
 
@@ -785,6 +763,11 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                                         className="w-[19px] h-[20px]"
                                         alt="Reward Icon"
                                         src={level.rewardImage}
+                                        loading="lazy"
+                                        decoding="async"
+                                        fetchPriority="low"
+                                        width={19}
+                                        height={20}
                                     />
                                 </div>
                             </div>
@@ -796,6 +779,11 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                                         className="w-[14px] h-[14px] flex-shrink-0"
                                         alt="Clock"
                                         src="https://c.animaapp.com/ABnBdu2U/img/clock-10.svg"
+                                        loading="lazy"
+                                        decoding="async"
+                                        fetchPriority="low"
+                                        width={14}
+                                        height={14}
                                     />
                                     <span className={`font-normal text-[11px] ${level.isExpired ? 'text-red-300 font-semibold' :
                                         level.days_left && level.days_left <= 3 ? 'text-orange-300 font-medium' :
@@ -825,11 +813,11 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                             <div className="flex justify-center">
                                 <div className="w-[89px] h-[22px]  top-2 relative">
                                     <div className="absolute top-0 left-[18px] w-[52px] h-[22px] bg-[#201f59] rounded-t-[4px] shadow-[0px_0px_4px_#fef47e33]" />
-                                    <img className="absolute top-0.5 left-0 w-[19px] h-5" alt="Vector Left" src={level.vectorLeft} />
-                                    <img className="absolute top-[3px] left-[70px] w-[18px] h-[19px]" alt="Vector Right" src={level.vectorRight} />
+                                    <img className="absolute top-0.5 left-0 w-[19px] h-5" alt="Vector Left" src={level.vectorLeft} loading="lazy" decoding="async" fetchPriority="low" width={19} height={20} />
+                                    <img className="absolute top-[3px] left-[70px] w-[18px] h-[19px]" alt="Vector Right" src={level.vectorRight} loading="lazy" decoding="async" fetchPriority="low" width={18} height={19} />
                                     <div className="absolute top-0 left-[18px] w-[52px] h-[22px] flex items-center justify-center space-x-1">
                                         <span className="font-medium text-white text-[13px]">{level.points}</span>
-                                        <img className="w-4 h-[13px]" alt="XP Icon" src={level.pic} />
+                                        <img className="w-4 h-[13px]" alt="XP Icon" src={level.pic} loading="lazy" decoding="async" fetchPriority="low" width={16} height={13} />
                                     </div>
                                 </div>
                             </div>
@@ -842,6 +830,11 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                                     className="w-[23px] h-[23px]"
                                     alt="Arrow back ios new"
                                     src="https://c.animaapp.com/ABnBdu2U/img/arrow-back-ios-new-3@2x.png"
+                                    loading="lazy"
+                                    decoding="async"
+                                    fetchPriority="low"
+                                    width={23}
+                                    height={23}
                                 />
                             </div>
                         )}
@@ -940,7 +933,7 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                 )}
 
                 {lockedLevels.map((level, index) => (
-                    <div key={`locked-${index}`} className="flex items-center gap-2.5 w-full relative z-10">
+                    <div key={`locked-${index}`} className="flex items-center gap-3 w-full relative z-10">
                         <div className="flex w-[38px] h-[38px] items-center justify-center bg-[#2f344a] rounded-full flex-shrink-0 relative">
                             <div className="font-semibold text-white-f4f3fc text-[12px]">
                                 {level.id}
@@ -951,13 +944,76 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
                                     className="w-[28px] h-[28px]"
                                     alt="Lock Icon"
                                     src="https://c.animaapp.com/ABnBdu2U/img/image-3943-3@2x.png"
+                                    loading="lazy"
+                                    decoding="async"
+                                    fetchPriority="low"
+                                    width={28}
+                                    height={28}
                                 />
                             </div>
                         </div>
 
-                        <div className={`w-[282px] h-[68px] rounded-[10px] bg-[linear-gradient(180deg,rgba(158,173,247,0.4)_0%,rgba(113,106,231,0.4)_100%)] relative ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
-                            {/* Lock overlay */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-[10px] bg-[#292929f2] p-2">
+                        <div className={`w-[256px] min-h-[75px] relative rounded-[10px] ${level.gradient} flex flex-col justify-between p-2 pb-2 ${isClaimed ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
+                            {/* Real task content in background - same as active tasks */}
+                            {/* Top Row: Title and Reward */}
+                            <div className="flex justify-between items-start gap-2 mb-1.5">
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-normal text-[#f4f3fc] text-[13px] leading-tight line-clamp-2 pr-1">
+                                        {level.title}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    <div className="font-semibold text-[15px] text-white">
+                                        {level.reward}
+                                    </div>
+                                    <img
+                                        className="w-[19px] h-[20px]"
+                                        alt="Reward Icon"
+                                        src={level.rewardImage}
+                                        loading="lazy"
+                                        decoding="async"
+                                        fetchPriority="low"
+                                        width={19}
+                                        height={20}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Time Limit Row */}
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-1.5">
+                                    <img
+                                        className="w-[14px] h-[14px] flex-shrink-0"
+                                        alt="Clock"
+                                        src="https://c.animaapp.com/ABnBdu2U/img/clock-10.svg"
+                                        loading="lazy"
+                                        decoding="async"
+                                        fetchPriority="low"
+                                        width={14}
+                                        height={14}
+                                    />
+                                    <span className="font-normal text-[11px] text-[#f4f3fc]">
+                                        {level.timeLimit}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Bottom Row: XP Bonus */}
+                            <div className="flex justify-center">
+                                <div className="w-[89px] h-[22px] top-2 relative">
+                                    <div className="absolute top-0 left-[18px] w-[52px] h-[22px] bg-[#201f59] rounded-t-[4px] shadow-[0px_0px_4px_#fef47e33]" />
+                                    <img className="absolute top-0.5 left-0 w-[19px] h-5" alt="Vector Left" src={level.vectorLeft} loading="lazy" decoding="async" fetchPriority="low" width={19} height={20} />
+                                    <img className="absolute top-[3px] left-[70px] w-[18px] h-[19px]" alt="Vector Right" src={level.vectorRight} loading="lazy" decoding="async" fetchPriority="low" width={18} height={19} />
+                                    <div className="absolute top-0 left-[18px] w-[52px] h-[22px] flex items-center justify-center space-x-1">
+                                        <span className="font-medium text-white text-[13px]">{level.points}</span>
+                                        <img className="w-4 h-[13px]" alt="XP Icon" src={level.pic} loading="lazy" decoding="async" fetchPriority="low" width={16} height={13} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Lock overlay - slightly transparent */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-[10px] bg-[#292929e6] p-2 pointer-events-none">
                                 <p className="w-[220px] text-center font-semibold text-white text-sm">
                                     Unlock level by completing the above tasks
                                 </p>
@@ -966,11 +1022,16 @@ export const LevelsSection = ({ game, selectedTier, onTierChange, onSessionUpdat
 
                         {/* Arrow between locked levels */}
                         {index < lockedLevels.length - 1 && (
-                            <div className="absolute top-[84px] left-[6.9px] z-20">
+                            <div className="absolute top-[120px] left-[6.9px] z-20">
                                 <img
                                     className="w-[23px] h-[23px]"
                                     alt="Arrow back ios new"
                                     src="https://c.animaapp.com/ABnBdu2U/img/arrow-back-ios-new-3@2x.png"
+                                    loading="lazy"
+                                    decoding="async"
+                                    fetchPriority="low"
+                                    width={23}
+                                    height={23}
                                 />
                             </div>
                         )}

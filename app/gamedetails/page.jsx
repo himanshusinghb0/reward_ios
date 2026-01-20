@@ -48,6 +48,7 @@ const OptimizedGameImage = ({ game, isLoaded, onLoad, onError, className }) => {
 // Utility imports
 import { handleGameDownload, getUserId } from "@/lib/gameDownloadUtils";
 import sessionManager from "@/lib/sessionManager";
+import { transferGameEarnings } from "@/lib/api";
 import { fetchGameById, fetchUserData } from "@/lib/redux/slice/gameSlice";
 import { fetchWalletTransactions, fetchFullWalletTransactions } from "@/lib/redux/slice/walletTransactionsSlice";
 
@@ -78,13 +79,6 @@ function GameDetailsContent() {
     const [loadedFromLocalStorage, setLoadedFromLocalStorage] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true); // Track initial loading state
 
-    // Debug Redux state
-    console.log('🎮 GameDetails: Redux state:', {
-        gameDetailsStatus,
-        hasCurrentGameDetails: !!currentGameDetails,
-        gameId,
-        selectedGame: !!selectedGame
-    });
     // Capitalize tier name (junior -> Junior, senior -> Senior, mid -> Mid)
     const capitalizeTier = (tier) => {
         if (!tier) return 'Junior';
@@ -99,7 +93,9 @@ function GameDetailsContent() {
         sessionXP: 0,
         isClaimed: false,
         isGameDownloaded: false,
-        isMilestoneReached: false // Track actual milestone status
+        isMilestoneReached: false, // Track actual milestone status
+        completedTasksCount: 0, // Track number of completed unlocked tasks for progression rules
+        taskProgression: null // Task progression rules from backend
     });
     const [currentSession, setCurrentSession] = useState(null);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -110,20 +106,11 @@ function GameDetailsContent() {
     // Load game data - handle both downloaded games (localStorage) and API games
     useEffect(() => {
         const loadGameData = async () => {
-            console.log('🎮 GameDetails: Starting to load game data:', {
-                gameId,
-                hasLocalStorageData: !!localStorage.getItem('selectedGameData')
-            });
-
             // Priority 1: Check localStorage for downloaded games (from "My Games" section)
             const storedGameData = localStorage.getItem('selectedGameData');
             if (storedGameData) {
                 try {
                     const parsedGame = JSON.parse(storedGameData);
-                    console.log('🎮 GameDetails: Loading downloaded game from localStorage:', {
-                        gameId: parsedGame.id || parsedGame._id,
-                        title: parsedGame.title || parsedGame.name || parsedGame.details?.name
-                    });
 
                     setSelectedGame(parsedGame);
                     setLoadedFromLocalStorage(true);
@@ -137,7 +124,6 @@ function GameDetailsContent() {
                         const userId = getUserId();
                         const token = localStorage.getItem('authToken');
                         if (userId && token) {
-                            console.log('🔄 [GameDetails] Fetching userData for userXpTier...');
                             dispatch(fetchUserData({ userId, token }));
                         }
                     }
@@ -146,7 +132,6 @@ function GameDetailsContent() {
                     localStorage.removeItem('selectedGameData');
                     return;
                 } catch (error) {
-                    console.error('❌ Error parsing localStorage game data:', error);
                     localStorage.removeItem('selectedGameData');
                 }
             }
@@ -154,7 +139,6 @@ function GameDetailsContent() {
             // Priority 2: Fetch from API if no localStorage data
             // Uses stale-while-revalidate: shows cached data immediately, fetches fresh if needed
             if (gameId && !loadedFromLocalStorage) {
-                console.log('🎮 GameDetails: Fetching game from API (stale-while-revalidate):', { gameId });
                 // Don't clear Redux state - stale-while-revalidate will handle cache
                 // This ensures cached data shows immediately if available
                 dispatch(fetchGameById({ gameId }));
@@ -175,7 +159,6 @@ function GameDetailsContent() {
         // Use setTimeout to refresh in background after showing cached data
         // This ensures smooth UX - cached data shows immediately, fresh data loads in background
         const refreshTimer = setTimeout(() => {
-            console.log("🔄 [GameDetails] Refreshing game details in background to get admin updates...");
             dispatch(fetchGameById({ gameId, force: true, background: true }));
         }, 100); // Small delay to let cached data render first
 
@@ -187,7 +170,6 @@ function GameDetailsContent() {
         if (!gameId || loadedFromLocalStorage) return;
 
         const handleFocus = () => {
-            console.log("🔄 [GameDetails] App focused - refreshing game details to get admin updates");
             dispatch(fetchGameById({ gameId, force: true, background: true }));
         };
 
@@ -195,7 +177,6 @@ function GameDetailsContent() {
 
         const handleVisibilityChange = () => {
             if (!document.hidden && gameId && !loadedFromLocalStorage) {
-                console.log("🔄 [GameDetails] App visible - refreshing game details to get admin updates");
                 dispatch(fetchGameById({ gameId, force: true, background: true }));
             }
         };
@@ -210,16 +191,6 @@ function GameDetailsContent() {
 
     // Handle game details from new API
     useEffect(() => {
-        console.log('🎮 GameDetails: API response handler triggered:', {
-            hasCurrentGameDetails: !!currentGameDetails,
-            gameDetailsStatus,
-            gameId,
-            currentGameDetails: currentGameDetails ? {
-                id: currentGameDetails.id || currentGameDetails._id,
-                title: currentGameDetails.title || currentGameDetails.name || currentGameDetails.details?.name
-            } : null
-        });
-
         if (currentGameDetails && gameDetailsStatus === 'succeeded') {
             // Get the fetched game ID (check multiple possible fields including nested gameDetails)
             const fetchedGameId = currentGameDetails.id || currentGameDetails._id || currentGameDetails.gameId || currentGameDetails.gameDetails?.id;
@@ -236,56 +207,22 @@ function GameDetailsContent() {
                 currentGameDetails.gameDetails?.id?.toString() === gameId?.toString()
             );
 
-            console.log('🎮 Game details loaded from API:', {
-                fetchedGameId,
-                _id: currentGameDetails._id,
-                gameId: currentGameDetails.gameId,
-                gameDetailsId: currentGameDetails.gameDetails?.id,
-                title: currentGameDetails.title || currentGameDetails.name || currentGameDetails.gameDetails?.name,
-                requestedGameId: gameId,
-                isCorrectGame
-            });
-
             // If we already loaded from localStorage, don't overwrite to avoid flicker/race
             // Only set game if we haven't loaded from localStorage AND we don't have a selected game yet
             // Trust the API response if it succeeded - the API should return the correct game
             // Only check gameId match if gameId is provided, otherwise trust the API
             if (!loadedFromLocalStorage && !selectedGame) {
-                // If gameId is provided, verify it matches, otherwise trust the API response
-                if (gameId && !isCorrectGame) {
-                    console.warn('⚠️ Game ID mismatch, but trusting API response:', {
-                        requestedGameId: gameId,
-                        fetchedGameId,
-                        _id: currentGameDetails._id,
-                        gameId: currentGameDetails.gameId,
-                        gameDetailsId: currentGameDetails.gameDetails?.id
-                    });
-                }
-                console.log('✅ Setting game from API response');
                 setSelectedGame(currentGameDetails);
                 setIsDataLoaded(true);
                 setIsInitialLoading(false); // Stop initial loading
                 initializeSession(currentGameDetails);
-            } else {
-                console.log('⚠️ Not setting game from API:', {
-                    loadedFromLocalStorage,
-                    hasSelectedGame: !!selectedGame,
-                    isCorrectGame,
-                    gameId
-                });
             }
         } else if (gameDetailsStatus === 'failed') {
-            console.error('❌ Game details API failed:', {
-                gameId,
-                status: gameDetailsStatus,
-                error: 'API request failed'
-            });
             setIsInitialLoading(false); // Stop loading on error
         } else if (gameDetailsStatus === 'loading') {
-            console.log('⏳ Game details API is loading...', { gameId });
+            // Loading state
         } else if (gameDetailsStatus === 'succeeded' && !currentGameDetails) {
             // API succeeded but no game data - this shouldn't happen, but clear loading anyway
-            console.warn('⚠️ API succeeded but no game data received');
             setIsInitialLoading(false);
         }
     }, [currentGameDetails, gameDetailsStatus, gameId, loadedFromLocalStorage, selectedGame]);
@@ -342,17 +279,6 @@ function GameDetailsContent() {
                 userXpTier: rawGame.userXpTier || null
             };
 
-            console.log('🔄 Normalized game data with besitosRawData:', {
-                hasBesitosRawData: !!normalized.besitosRawData,
-                hasGoals: !!normalized.goals,
-                goalsLength: normalized.goals?.length || 0,
-                hasImage: !!normalized.square_image,
-                imageUrl: normalized.square_image,
-                hasAmount: !!normalized.amount,
-                amount: normalized.amount,
-                title: normalized.title
-            });
-
             return normalized;
         }
 
@@ -392,11 +318,6 @@ function GameDetailsContent() {
         if (tier) {
             const capitalizedTier = capitalizeTier(tier);
             setSelectedTier(capitalizedTier);
-            console.log('🎯 [GameDetails] Setting tier from userXpTier:', {
-                tier,
-                capitalizedTier,
-                source: displayGame?.userXpTier ? 'displayGame' : 'userData'
-            });
         }
     }, [displayGame?.userXpTier, userData?.userXpTier]);
 
@@ -439,14 +360,13 @@ function GameDetailsContent() {
                         return user._id || user.id;
                     }
                 } catch (error) {
-                    console.error('Error getting user ID:', error);
+                    // Error getting user ID
                 }
                 return null;
             };
 
             const userId = getUserId();
             if (!userId) {
-                console.warn('⚠️ No user ID found, cannot create session');
                 return;
             }
 
@@ -456,13 +376,11 @@ function GameDetailsContent() {
             // Check for existing active session
             const existingSession = sessionManager.getActiveSessionForGame(gameIdForSession, userId);
             if (existingSession) {
-                console.log('🔄 Found existing session:', existingSession.id);
                 setCurrentSession(existingSession);
 
                 // Validate existing session
                 const isValid = await sessionManager.validateSession(existingSession.id);
                 if (!isValid) {
-                    console.log('⚠️ Existing session invalid, creating new one');
                     const newSessionId = sessionManager.createSession(gameIdForSession, userId, game);
                     const newSession = sessionManager.getSession(newSessionId);
                     setCurrentSession(newSession);
@@ -470,13 +388,12 @@ function GameDetailsContent() {
             } else {
                 // Create new session
                 const rawData = game?.besitosRawData || {};
-                console.log('🆕 Creating new session for game:', rawData.title || game.title || game.name);
                 const sessionId = sessionManager.createSession(gameIdForSession, userId, game);
                 const session = sessionManager.getSession(sessionId);
                 setCurrentSession(session);
             }
         } catch (error) {
-            console.error('❌ Error initializing session:', error);
+            // Error initializing session
         }
     };
 
@@ -487,7 +404,6 @@ function GameDetailsContent() {
             const userId = getUserId();
             const token = localStorage.getItem('authToken');
             if (userId && token) {
-                console.log('🔄 GameDetails: Page focused, refreshing downloaded games list...');
                 dispatch(fetchUserData({ userId, token }));
             }
         };
@@ -499,11 +415,9 @@ function GameDetailsContent() {
     // Listen for gameDownloaded event to refresh list immediately
     useEffect(() => {
         const handleGameDownloaded = (event) => {
-            console.log('🎮 GameDetails: Game download event received:', event);
             const userId = getUserId();
             const token = localStorage.getItem('authToken');
             if (userId && token) {
-                console.log('🔄 GameDetails: Refreshing downloaded games list after download...');
                 dispatch(fetchUserData({ userId, token }));
             }
         };
@@ -534,12 +448,6 @@ function GameDetailsContent() {
         });
 
         setIsGameInstalled(isDownloaded || false);
-
-        console.log('🎮 GameDetails: Installation status check:', {
-            gameId: currentGameId,
-            isDownloaded,
-            inProgressGamesCount: inProgressGames?.length || 0
-        });
     }, [displayGame, inProgressGames]);
 
     // Event handlers
@@ -563,12 +471,11 @@ function GameDetailsContent() {
                     const userId = getUserId();
                     const token = localStorage.getItem('authToken');
                     if (userId && token) {
-                        console.log('🔄 GameDetails: Refreshing downloaded games list after download action...');
                         dispatch(fetchUserData({ userId, token }));
                     }
                 }, 2000); // Wait 2 seconds for server to process download
             } catch (error) {
-                console.error('❌ Game action failed:', error);
+                // Game action failed
             }
         }
     };
@@ -593,31 +500,110 @@ function GameDetailsContent() {
     };
 
     // Handle reward claiming with session lock
-    const handleClaimRewards = async () => {
-        if (!currentSession) {
-            console.error('❌ No active session for claiming rewards');
+    // Accepts optional coins/XP to claim specific amounts (for progressive group claims)
+    const handleClaimRewards = async (claimData = {}) => {
+        // If no session exists, try to create one before claiming
+        let sessionToUse = currentSession;
+        if (!sessionToUse) {
+            try {
+                // Get user ID
+                const getUserId = () => {
+                    try {
+                        const userData = localStorage.getItem('user');
+                        if (userData) {
+                            const user = JSON.parse(userData);
+                            return user._id || user.id;
+                        }
+                    } catch (error) {
+                        // Error getting user ID
+                    }
+                    return null;
+                };
+
+                const userId = getUserId();
+                const gameIdForSession = displayGame?.id || displayGame?._id;
+
+                if (userId && gameIdForSession) {
+                    // Try to get existing session first
+                    const existingSession = sessionManager.getActiveSessionForGame(gameIdForSession, userId);
+                    if (existingSession) {
+                        sessionToUse = existingSession;
+                        setCurrentSession(existingSession);
+                    } else {
+                        // Create new session if none exists
+                        await initializeSession(displayGame);
+                        // Wait a bit for session to be set
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        // Try to get the session again after initialization
+                        const newSession = sessionManager.getActiveSessionForGame(gameIdForSession, userId);
+                        if (newSession) {
+                            sessionToUse = newSession;
+                            setCurrentSession(newSession);
+                        } else {
+                            throw new Error('No active session found. Please refresh the page.');
+                        }
+                    }
+                } else {
+                    throw new Error('No active session found. Please refresh the page.');
+                }
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        if (!sessionToUse) {
             throw new Error('No active session found. Please refresh the page.');
         }
 
+        // Use provided coins/XP if available, otherwise use session totals
+        const coinsToClaim = claimData.coins !== undefined ? claimData.coins : sessionData.sessionCoins;
+        const xpToClaim = claimData.xp !== undefined ? claimData.xp : sessionData.sessionXP;
+
         try {
-            console.log('🎁 Claiming rewards for session:', currentSession.id);
+            // Get token for API call
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('User not authenticated');
+            }
 
-            // Use session manager to claim rewards
-            const claimResult = await sessionManager.claimSessionRewards(currentSession.id, {
-                coins: sessionData.sessionCoins,
-                xp: sessionData.sessionXP,
+            // First, call transferGameEarnings API to actually transfer rewards to wallet
+            const transferResult = await transferGameEarnings({
+                gameId: displayGame?.id || displayGame?._id || displayGame?.gameId,
+                coins: coinsToClaim,
+                xp: xpToClaim,
+                reason: `Game session completion - ${displayGame?.besitosRawData?.title || displayGame?.title || 'Unknown Game'}${claimData.groups ? ` - ${claimData.groups} groups claimed` : ''}`
+            }, token);
+
+            if (transferResult.success === false) {
+                throw new Error(transferResult.error || 'Failed to transfer earnings');
+            }
+
+            // Then use session manager to update session state
+            const claimResult = await sessionManager.claimSessionRewards(sessionToUse.id, {
+                coins: coinsToClaim,
+                xp: xpToClaim,
                 isClaimed: true
             });
 
-            // Update local state
-            setSessionData(prev => ({ ...prev, isClaimed: true }));
+            // Update local state - only mark as fully claimed if claiming all rewards
+            // Otherwise, keep session active for remaining rewards
+            const isFullyClaimed = claimData.coins === undefined || coinsToClaim >= sessionData.sessionCoins;
+            setSessionData(prev => ({
+                ...prev,
+                isClaimed: isFullyClaimed,
+                // Update session totals if claiming partial amounts
+                sessionCoins: isFullyClaimed ? prev.sessionCoins : Math.max(0, prev.sessionCoins - coinsToClaim),
+                sessionXP: isFullyClaimed ? prev.sessionXP : Math.max(0, prev.sessionXP - xpToClaim)
+            }));
 
-            // End the session
-            sessionManager.endSession(currentSession.id, 'claimed', {
-                coins: sessionData.sessionCoins,
-                xp: sessionData.sessionXP,
-                isClaimed: true
-            });
+            // End the session only if fully claimed
+            if (isFullyClaimed) {
+                sessionManager.endSession(sessionToUse.id, 'claimed', {
+                    coins: coinsToClaim,
+                    xp: xpToClaim,
+                    isClaimed: true
+                });
+            }
 
             // Refresh transaction history immediately after reward claim
             try {
@@ -627,19 +613,14 @@ function GameDetailsContent() {
                         dispatch(fetchWalletTransactions({ token, limit: 5 })),
                         dispatch(fetchFullWalletTransactions({ token, page: 1, limit: 20, type: "all" }))
                     ]);
-                    console.log("✅ Transaction history refreshed after reward claim");
                 }
             } catch (transactionError) {
-                console.warn("⚠️ Failed to refresh transaction history:", transactionError);
                 // Don't throw error - reward was still claimed successfully
             }
 
             // Show success message
-            alert(`✅ Rewards claimed!\n💰 $${sessionData.sessionCoins.toFixed(2)} Coins\n⭐ ${sessionData.sessionXP} XP\n\nSession ended successfully.`);
-
-            console.log('✅ Rewards claimed successfully:', claimResult);
+            alert(`✅ Rewards claimed!\n💰 $${coinsToClaim.toFixed(2)} Coins\n⭐ ${xpToClaim} XP${isFullyClaimed ? '\n\nSession ended successfully.' : '\n\nYou can continue earning more rewards!'}`);
         } catch (error) {
-            console.error('❌ Claim rewards failed:', error);
             throw error;
         }
     };
@@ -787,15 +768,6 @@ function GameDetailsContent() {
 
     // Error state - game not found
     if (!displayGame) {
-        console.error('❌ GameDetails: Game not found - Debug info:', {
-            gameId,
-            gameDetailsStatus,
-            hasCurrentGameDetails: !!currentGameDetails,
-            hasSelectedGame: !!selectedGame,
-            loadedFromLocalStorage,
-            isDataLoaded
-        });
-
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-black animate-fade-in">
                 <div className="text-center mb-6">
@@ -825,7 +797,7 @@ function GameDetailsContent() {
             className="w-full h-full"
         >
             <div
-                className="flex flex-col overflow-x-hidden w-full h-full items-center justify-center px-4 pb-3 pt-1 bg-black max-w-[390px] mx-auto transition-all duration-300 ease-in-out animate-fade-in android-optimized"
+                className="flex flex-col overflow-x-hidden w-full h-full items-center justify-center px-4 pb-[120px] pt-1 bg-black max-w-[390px] mx-auto transition-all duration-300 ease-in-out animate-fade-in android-optimized"
             >
                 {/* App Version */}
                 <div className="w-full max-w-[375px] px-3 ml-2 mb-3 pt-2">
@@ -990,13 +962,13 @@ function GameDetailsContent() {
                     <InstructionsTextSection game={displayGame} />
                 </div>
 
-                <div className="animate-fade-in">
+                {/* <div className="animate-fade-in">
                     <ActionButtonSection
                         game={displayGame}
                         isInstalled={isGameInstalled}
                         onGameAction={handleGameAction}
                     />
-                </div>
+                </div> */}
 
                 <div className="animate-fade-in">
                     <LevelsSection
@@ -1012,6 +984,8 @@ function GameDetailsContent() {
                         game={displayGame}
                         sessionCoins={sessionData.sessionCoins}
                         sessionXP={sessionData.sessionXP}
+                        completedTasksCount={sessionData.completedTasksCount || 0}
+                        taskProgression={sessionData.taskProgression}
                         isClaimed={sessionData.isClaimed}
                         isMilestoneReached={sessionData.isMilestoneReached}
                         onClaimRewards={handleClaimRewards}
@@ -1033,14 +1007,21 @@ function GameDetailsContent() {
                     />
                 </div>
 
-
-
                 {/* Session Status Component */}
                 {/* <SessionStatus
                     game={selectedGame}
                     currentSession={currentSession}
                 /> */}
 
+            </div>
+
+            {/* Fixed Action Button - Outside scrolling container */}
+            <div className="fixed bottom-0 left-0 right-0 z-[9999] bg-black/95 backdrop-blur-sm border-t border-gray-800/50 safe-area-inset-bottom animate-fade-in">
+                <ActionButtonSection
+                    game={displayGame}
+                    isInstalled={isGameInstalled}
+                    onGameAction={handleGameAction}
+                />
             </div>
         </LoadingOverlay>
     );
