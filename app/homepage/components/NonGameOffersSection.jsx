@@ -186,7 +186,7 @@ const NonGameOffersSection = () => {
     // Background fetching happens automatically without blocking UI
 
     return (
-        <div className="w-[335px] h-[275px] mx-auto mt-6 flex flex-col items-center">
+        <div className="w-[335px] h-[275px] mx-auto flex flex-col items-center">
             <div className="w-full h-[24px] px-4 mb-2.5 mr-4">
                 <h2 className="font-['Poppins',Helvetica] text-[16px] font-semibold leading-normal tracking-[0] text-[#FFFFFF]">
                     Non- Gaming Offers

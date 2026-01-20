@@ -425,14 +425,12 @@ const GameCard = ({ onClose: onCloseProp }) => {
             id: 1,
             src: "https://c.animaapp.com/DfFsihWg/img/group-2@2x.png",
             alt: "Close",
-            position: "left-0",
             onClick: handleUndo,
         },
         {
             id: 2,
             src: "https://c.animaapp.com/DfFsihWg/img/group-4@2x.png",
             alt: "Undo",
-            position: "left-24",
             label: {
                 current: isFirstTimeUser ? '∞' : (maxUndoLimit === -1 ? '∞' : maxUndoLimit - undoCount),
                 total: isFirstTimeUser ? '∞' : (maxUndoLimit === -1 ? '∞' : maxUndoLimit)
@@ -443,7 +441,6 @@ const GameCard = ({ onClose: onCloseProp }) => {
             id: 3,
             src: "https://c.animaapp.com/DfFsihWg/img/group-3@2x.png",
             alt: "Download",
-            position: "left-48",
             onClick: handleDownload,
         },
         // {
@@ -589,14 +586,14 @@ const GameCard = ({ onClose: onCloseProp }) => {
     // Show last card if user clicked "Got it"
     if (showLastCard && isLastCardReached) {
         return (
-            <main className="relative w-[335px] h-[549px] mx-auto" data-model-id="2035:14588">
+            <main className="relative w-[335px] min-h-[600px] mx-auto mb-3" data-model-id="2035:14588">
                 {/* Action buttons section - only show close button - moved further below footer with more spacing */}
                 <section
-                    className="absolute w-[320px] h-[62px] top-[550px] left-10"
+                    className="absolute w-full max-w-[335px] h-[62px] top-[520px] left-1/2 -translate-x-1/2 flex items-center justify-center gap-4 px-4"
                     aria-label="Action buttons"
                 >
                     <button
-                        className="left-0 absolute w-[62px] h-[62px] top-0 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full"
+                        className="relative w-[62px] h-[62px] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full"
                         aria-label="Close"
                         onClick={handleClose}
                     >
@@ -614,6 +611,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
                             src={gameData?.image || "https://c.animaapp.com/DfFsihWg/img/image-3930@2x.png"}
                             loading="eager"
                             decoding="async"
+                            fetchPriority="high"
                             onLoad={() => setImageLoading(false)}
                             onError={(e) => {
                                 setImageError(true);
@@ -764,7 +762,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
     // Show empty state if no games available
     if (!swipeGames || swipeGames.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center w-[335px] h-[549px] mx-auto p-6">
+            <div className="flex flex-col items-center justify-center w-[335px] min-h-[549px] mx-auto mb-3 p-6">
                 <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-xl mb-2 text-center">
                     Gaming - Swipe
                 </h2>
@@ -776,33 +774,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
     }
 
     return (
-        <main className="relative w-[335px] h-[549px] mx-auto animate-fade-in" data-model-id="2035:14588">
-            {/* Action buttons section - moved further below footer with more spacing */}
-            <section
-                className="absolute w-[320px] h-[62px] top-[524px] left-10"
-                aria-label="Action buttons"
-            >
-                {actionButtons.map((button) => (
-                    <button
-                        key={button.id}
-                        className={`${button.position}  absolute w-[62px] h-[62px] top-0 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full`}
-                        aria-label={button.alt}
-                        onClick={button.onClick}
-                    >
-                        <img className="w-full h-full" alt={button.alt} src={button.src} loading="eager" decoding="async" width="62" height="62" />
-
-                        {/* Conditionally render the label if `hasLabel` is true */}
-                        {button.label && (
-                            <div className="absolute bottom-[-18px] left-2/4 -translate-x-1/2 z-10 flex items-center justify-center">
-                                <UndoActionLabel
-                                    current={button.label.current}
-                                    total={button.label.total} />
-                            </div>
-                        )}
-                    </button>
-                ))}
-            </section>
-
+        <main className="relative w-[335px] min-h-[600px] mx-auto mb-3 animate-fade-in" data-model-id="2035:14588">
             {/* Main game card */}
             <article
                 ref={cardRef}
@@ -833,6 +805,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
                             src={gameData?.image || "https://c.animaapp.com/DfFsihWg/img/image-3930@2x.png"}
                             loading="eager"
                             decoding="async"
+                            fetchPriority="high"
                             onLoad={() => setImageLoading(false)}
                             onError={(e) => {
                                 setImageError(true);
@@ -957,6 +930,32 @@ const GameCard = ({ onClose: onCloseProp }) => {
                         </svg>
                     </button>
                 </footer>
+
+                {/* Action buttons section - positioned after footer */}
+                <section
+                    className="absolute w-full max-w-[335px] h-[62px] top-[520px] left-1/2 -translate-x-1/2 flex items-center justify-center gap-4 px-4"
+                    aria-label="Action buttons"
+                >
+                    {actionButtons.map((button) => (
+                        <button
+                            key={button.id}
+                            className="relative w-[62px] h-[62px] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-full"
+                            aria-label={button.alt}
+                            onClick={button.onClick}
+                        >
+                            <img className="w-full h-full" alt={button.alt} src={button.src} loading="lazy" decoding="async" width="62" height="62" />
+
+                            {/* Conditionally render the label if `hasLabel` is true */}
+                            {button.label && (
+                                <div className="absolute bottom-[-18px] left-1/2 -translate-x-1/2 z-10 flex items-center justify-center">
+                                    <UndoActionLabel
+                                        current={button.label.current}
+                                        total={button.label.total} />
+                                </div>
+                            )}
+                        </button>
+                    ))}
+                </section>
 
                 {showTooltip && (
                     <div

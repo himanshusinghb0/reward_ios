@@ -63,7 +63,6 @@ export const Frame = () => {
 
     // Handle game click - navigate to game tips details page
     const handleGameClick = (game) => {
-        console.log('🎮 Game Tips: Navigating to game tips details for:', game.details?.name || game.title || game.name);
 
         // Get game title for the tips page
         const gameTitle = (() => {
@@ -181,13 +180,24 @@ export const Frame = () => {
                                     style={{ backgroundImage: `url(${tip.image})` }}
                                     role="img"
                                     aria-label={tip.title}
-                                />
+                                >
+                                    <img
+                                        src={tip.image}
+                                        alt=""
+                                        className="hidden"
+                                        loading="lazy"
+                                        decoding="async"
+                                        fetchPriority="low"
+                                    />
+                                </div>
                             ) : (
                                 <img
                                     className="absolute inset-0 w-full h-full object-cover rounded-t-[12px]"
                                     alt={tip.title}
                                     src={tip.image}
                                     loading="lazy"
+                                    decoding="async"
+                                    fetchPriority="low"
                                 />
                             )}
                         </div>

@@ -45,7 +45,7 @@ const Homepage = () => {
 
   return (
     <div
-      className="relative w-full min-h-screen bg-black pb-[150px] animate-fade-in"
+      className="relative w-full min-h-screen bg-black pb-[110px] animate-fade-in"
     >
       {/* Notification Banner - appears at top when user has notifications enabled */}
       {currentNotification && (
@@ -70,10 +70,7 @@ const Homepage = () => {
         {/* <div className="mt-14">
           <SurveysSection />
         </div> */}
-        <div className="mt-4">
-          <NonGameOffersSection />
-        </div>
-
+        <NonGameOffersSection />
         <FeaturesSection />
         <GameTips />
         <VipBanner />

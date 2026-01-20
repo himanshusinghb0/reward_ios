@@ -87,12 +87,16 @@ const FeaturesSection = () => {
                     className="absolute top-[13px] left-px w-[156px] h-[71px]"
                     alt="Rectangle"
                     src={feature.rectangleImage1}
+                    loading="lazy"
+                    decoding="async"
                 />
 
                 <img
                     className="absolute top-4 left-px w-[156px] h-[68px]"
                     alt="Rectangle"
                     src={feature.rectangleImage2}
+                    loading="lazy"
+                    decoding="async"
                 />
 
                 <div className={feature.titleClasses}>
@@ -112,6 +116,8 @@ const FeaturesSection = () => {
                             className="absolute top-2.5 left-2.5 w-[51px] h-[17px]"
                             alt="Union"
                             src="https://c.animaapp.com/En0DOTZF/img/union.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <div className="absolute top-[25px] left-3 w-[46px] h-[5px] bg-black opacity-10" />
@@ -122,48 +128,64 @@ const FeaturesSection = () => {
                             className="absolute top-[11px] left-[11px] w-12 h-2"
                             alt="Rectangle"
                             src="https://c.animaapp.com/En0DOTZF/img/rectangle-2318.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <img
                             className="absolute top-[9px] left-[53px] w-5 h-[13px]"
                             alt="Vector"
                             src="https://c.animaapp.com/En0DOTZF/img/vector-1.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <img
                             className="absolute top-[9px] -left-0.5 w-5 h-[13px]"
                             alt="Vector"
                             src="https://c.animaapp.com/En0DOTZF/img/vector-9.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <img
                             className="absolute -top-px left-[37px] w-[23px] h-[17px]"
                             alt="Vector"
                             src="https://c.animaapp.com/En0DOTZF/img/vector-6.png"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <img
                             className="absolute -top-px left-[11px] w-[23px] h-[17px]"
                             alt="Vector"
                             src="https://c.animaapp.com/En0DOTZF/img/vector-8.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <img
                             className="absolute top-[9px] left-[39px] w-[18px] h-2"
                             alt="Vector"
                             src="https://c.animaapp.com/En0DOTZF/img/vector-4.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <img
                             className="absolute top-[9px] left-[13px] w-[18px] h-2"
                             alt="Vector"
                             src="https://c.animaapp.com/En0DOTZF/img/vector-5.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <img
                             className="absolute top-1.5 left-[29px] w-3 h-[9px]"
                             alt="Vector"
                             src="https://c.animaapp.com/En0DOTZF/img/vector-3.svg"
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         <div className="absolute top-[13px] left-[29px] w-[13px] h-[46px] rounded-[5.5px] border-[0.69px] border-solid border-[#c52024] bg-[linear-gradient(180deg,rgba(255,107,57,1)_0%,rgba(251,195,62,1)_13%,rgba(251,195,62,1)_68%,rgba(255,107,57,1)_100%)]" />
@@ -173,6 +195,8 @@ const FeaturesSection = () => {
                         className={feature.imageClasses}
                         alt={feature.title}
                         src={feature.mainImage}
+                        loading="lazy"
+                        decoding="async"
                     />
                 )}
 
@@ -189,7 +213,7 @@ const FeaturesSection = () => {
 
     return (
         <section
-            className="flex flex-col items-start mt-10 gap-2.5 pl-3 sm:pl-4 md:pl-5 pr-0 py-0 relative w-full max-w-full sm:max-w-[375px] mx-auto"
+            className="flex flex-col items-start gap-2.5 pl-3 sm:pl-4 md:pl-5 pr-0 py-0 relative w-full max-w-full sm:max-w-[375px] mx-auto"
             data-model-id="2035:19015"
             aria-labelledby="features-heading"
         >
