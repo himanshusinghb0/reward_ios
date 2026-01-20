@@ -70,9 +70,9 @@ export const ProgressSection = ({
 
     // Check if day should show chest box (special milestone days)
     // Days are now 1-indexed (1-30)
-    // Milestone days: 7, 14, 21, 28
+    // Milestone days: 7, 14, 21, 30
     const shouldShowChestBox = (day) => {
-        return [7, 14, 21, 28].includes(day);
+        return [7, 14, 21, 30].includes(day);
     };
 
     // Get the appropriate icon for each day
@@ -254,7 +254,7 @@ export const ProgressSection = ({
                     setActivityStats(response.data);
                 }
             } catch (error) {
-                console.error('Failed to fetch daily activity stats:', error);
+                // Failed to fetch daily activity stats - silently handle
             } finally {
                 setActivityLoading(false);
             }
@@ -315,10 +315,10 @@ export const ProgressSection = ({
     return (
         <section
             ref={scrollContainerRef}
-            className="w-full max-w-[375px] scrollbar-hide overflow-y-auto h-screen"
+            className="w-full max-w-[375px] scrollbar-hide pt-[184px]"
             aria-label="Progress tracker"
         >
-            <div className="w-full flex justify-center relative px-4 pt-0 ladder-3d" style={{ height: '2900px' }}>
+            <div className="w-full flex justify-center relative px-4 pt-0 ladder-3d" style={{ height: '2940px' }}>
                 {/* Loading State - Non-blocking, show UI while loading */}
                 {activityLoading && !activityStats && (
                     <div className="absolute top-4 right-4 z-50">
@@ -420,32 +420,32 @@ export const ProgressSection = ({
                                 {dayData.reward.coins > 0 && (
                                     <div className="flex items-center gap-1">
                                         <span className="text-sm font-bold text-black drop-shadow-sm">{dayData.reward.coins}</span>
-                                        <img className="w-4 h-4 drop-shadow-sm" alt="coin" src="/dollor.png" />
+                                        <img className="w-4 h-4 drop-shadow-sm" alt="coin" src="/dollor.png" loading="eager" decoding="async" width="16" height="16" />
                                     </div>
                                 )}
                                 {/* XP */}
                                 {dayData.reward.xp > 0 && (
                                     <div className="flex items-center gap-1 ml-1">
                                         <span className="text-sm font-bold text-black drop-shadow-sm">{dayData.reward.xp}</span>
-                                        <img className="w-4 h-4 drop-shadow-sm" alt="XP" src="/xp.svg" onError={(e) => { e.target.src = "/xp.png"; }} />
+                                        <img className="w-4 h-4 drop-shadow-sm" alt="XP" src="/xp.svg" onError={(e) => { e.target.src = "/xp.png"; }} loading="eager" decoding="async" width="16" height="16" />
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {/* Day Icons - Show leaves progressively based on current streak */}
-                        {/* Only show leaf if day is within current streak range */}
+                        {/* Only show leaf if day is within current streak range OR is a milestone day */}
                         {/* Uses activity stats to track user activity streak */}
-                        {(dayData.day <= currentStreak) && (
+                        {(dayData.day <= currentStreak || [7, 14, 21, 30].includes(dayData.day)) && (
                             <div
                                 className="absolute flex items-center z-30 transform transition-all duration-300 hover:scale-110"
                                 style={{
                                     top: `${dayData.top + getCircleOffset(dayData.day) - 38 - (dayData.day === 28 || dayData.day === 29 ? 15 : 0)}px`, // Aligned with circle position, moved up more
-                                    left: `130px` // Aligned with circle position (circles at 80px, leaves at 130px for proper spacing)
+                                    left: `${[7, 14, 21, 30].includes(dayData.day) ? '120px' : '120px'}` // Move milestone days slightly left
                                 }}
                             >
-                                {/* Show leaf with treasure box for milestone days (7, 14, 21, 28) */}
-                                {shouldShowChestBox(dayData.day) && dayData.day <= currentStreak ? (
+                                {/* Show leaf with treasure box for milestone days (7, 14, 21, 30) */}
+                                {shouldShowChestBox(dayData.day) ? (
                                     <div className="relative group">
                                         {/* Leaf background - natural proportions - increased size */}
                                         <img
@@ -456,6 +456,8 @@ export const ProgressSection = ({
                                             loading="eager"
                                             decoding="async"
                                             fetchPriority="high"
+                                            width="140"
+                                            height="100"
                                         />
                                         {/* Treasure box overlay on the leaf - better proportioned - increased size */}
                                         <img
@@ -466,6 +468,8 @@ export const ProgressSection = ({
                                             loading="eager"
                                             decoding="async"
                                             fetchPriority="high"
+                                            width="138"
+                                            height="120"
                                         />
                                         {/* Show reward amount for milestone days - Coins and XP */}
                                         {dayData.reward && (dayData.reward.coins > 0 || dayData.reward.xp > 0) && (
@@ -473,13 +477,13 @@ export const ProgressSection = ({
                                                 {dayData.reward.coins > 0 && (
                                                     <>
                                                         <span className="text-xs font-bold text-black">{dayData.reward.coins}</span>
-                                                        <img className="w-3 h-3" alt="coin" src="/dollor.png" />
+                                                        <img className="w-3 h-3" alt="coin" src="/dollor.png" loading="eager" decoding="async" width="12" height="12" />
                                                     </>
                                                 )}
                                                 {dayData.reward.xp > 0 && (
                                                     <>
                                                         <span className="text-xs font-bold text-black">{dayData.reward.xp}</span>
-                                                        <img className="w-3 h-3" alt="XP" src="/xp.svg" onError={(e) => { e.target.src = "/xp.png"; }} />
+                                                        <img className="w-3 h-3" alt="XP" src="/xp.svg" onError={(e) => { e.target.src = "/xp.png"; }} loading="eager" decoding="async" width="12" height="12" />
                                                     </>
                                                 )}
                                             </div>
@@ -494,6 +498,8 @@ export const ProgressSection = ({
                                             alt="Leaf with Tick"
                                             loading="eager"
                                             decoding="async"
+                                            width="150"
+                                            height="80"
                                         />
                                         {/* Show tick mark for completed days */}
                                         {dayData.isCompleted && (

@@ -11,7 +11,6 @@ import {
 import { BannerSection } from "./BannerSection";
 import { ChallengeGroupSection } from "./ChallengeGroupSection";
 import { ChallengeModal } from "./ChallengeModal";
-import { useRouter } from "next/navigation";
 
 export const DailyChallenge = () => {
     // Redux state and dispatch
@@ -26,9 +25,6 @@ export const DailyChallenge = () => {
         modalOpen,
         error
     } = useSelector((state) => state.dailyChallenge || {});
-    const router = useRouter();
-
-    // Local state and hooks
 
     const [isMonthLoading, setIsMonthLoading] = useState(false);
     const [pendingCalendar, setPendingCalendar] = useState(null);
@@ -37,15 +33,7 @@ export const DailyChallenge = () => {
 
     // Fetch data on component mount (only if not already prefetched)
     useEffect(() => {
-        console.log("📱 [DAILY CHALLENGE COMPONENT] Component mounted/updated:", {
-            hasToken: !!token,
-            calendarStatus,
-            todayStatus,
-            timestamp: new Date().toISOString(),
-        });
-
         if (!token) {
-            console.warn("⚠️ [DAILY CHALLENGE COMPONENT] No authentication token available for daily challenge");
             return;
         }
 
@@ -53,20 +41,11 @@ export const DailyChallenge = () => {
         const year = now.getFullYear();
         const month = now.getMonth();
 
-        console.log("📱 [DAILY CHALLENGE COMPONENT] Preparing to fetch data:", {
-            year,
-            month,
-            calendarStatus,
-            todayStatus,
-        });
-
         // Avoid duplicate requests if prefetch already ran
         if (calendarStatus === "idle") {
-            console.log("📱 [DAILY CHALLENGE COMPONENT] Dispatching fetchCalendar");
             dispatch(fetchCalendar({ year, month, token }));
         }
         if (todayStatus === "idle") {
-            console.log("📱 [DAILY CHALLENGE COMPONENT] Dispatching fetchToday");
             dispatch(fetchToday({ token }));
         }
     }, [dispatch, token, calendarStatus, todayStatus]);
@@ -80,10 +59,6 @@ export const DailyChallenge = () => {
 
     // Keep local loading true during month navigation until calendar request settles
     useEffect(() => {
-        console.log("📅 [DAILY CHALLENGE COMPONENT] Calendar status changed:", {
-            calendarStatus,
-            timestamp: new Date().toISOString(),
-        });
         if (calendarStatus === "loading") {
             setIsMonthLoading(true);
         } else {
@@ -178,18 +153,10 @@ export const DailyChallenge = () => {
 
     // Handle month navigation
     const handlePreviousMonth = () => {
-        console.log("⬅️ [DAILY CHALLENGE COMPONENT] handlePreviousMonth called:", {
-            isMonthLoading,
-            calendarStatus,
-            currentYear: calendar?.year,
-            currentMonth: calendar?.month,
-        });
         if (isMonthLoading || calendarStatus === "loading") {
-            console.log("⬅️ [DAILY CHALLENGE COMPONENT] Navigation blocked (already loading)");
             return;
         }
         if (!token) {
-            console.warn("⬅️ [DAILY CHALLENGE COMPONENT] No token, navigation blocked");
             return;
         }
 
@@ -197,19 +164,10 @@ export const DailyChallenge = () => {
         const previousMonth = new Date(currentDate);
         previousMonth.setMonth(previousMonth.getMonth() - 1);
 
-        console.log("⬅️ [DAILY CHALLENGE COMPONENT] Navigating to previous month:", {
-            year: previousMonth.getFullYear(),
-            month: previousMonth.getMonth(),
-        });
-
         setIsMonthLoading(true);
         {
             const key = `${previousMonth.getFullYear()}-${previousMonth.getMonth()}`;
             const cached = calendarCacheRef.current[key];
-            console.log("⬅️ [DAILY CHALLENGE COMPONENT] Cache check:", {
-                key,
-                hasCached: !!cached,
-            });
             setPendingCalendar(cached || generateSkeletonCalendar(previousMonth.getFullYear(), previousMonth.getMonth()));
         }
         dispatch(fetchCalendar({
@@ -220,18 +178,10 @@ export const DailyChallenge = () => {
     };
 
     const handleNextMonth = () => {
-        console.log("➡️ [DAILY CHALLENGE COMPONENT] handleNextMonth called:", {
-            isMonthLoading,
-            calendarStatus,
-            currentYear: calendar?.year,
-            currentMonth: calendar?.month,
-        });
         if (isMonthLoading || calendarStatus === "loading") {
-            console.log("➡️ [DAILY CHALLENGE COMPONENT] Navigation blocked (already loading)");
             return;
         }
         if (!token) {
-            console.warn("➡️ [DAILY CHALLENGE COMPONENT] No token, navigation blocked");
             return;
         }
 
@@ -239,19 +189,10 @@ export const DailyChallenge = () => {
         const nextMonth = new Date(currentDate);
         nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-        console.log("➡️ [DAILY CHALLENGE COMPONENT] Navigating to next month:", {
-            year: nextMonth.getFullYear(),
-            month: nextMonth.getMonth(),
-        });
-
         setIsMonthLoading(true);
         {
             const key = `${nextMonth.getFullYear()}-${nextMonth.getMonth()}`;
             const cached = calendarCacheRef.current[key];
-            console.log("➡️ [DAILY CHALLENGE COMPONENT] Cache check:", {
-                key,
-                hasCached: !!cached,
-            });
             setPendingCalendar(cached || generateSkeletonCalendar(nextMonth.getFullYear(), nextMonth.getMonth()));
         }
         dispatch(fetchCalendar({
@@ -263,19 +204,7 @@ export const DailyChallenge = () => {
 
     // Handle today's challenge click
     const handleTodayClick = () => {
-        console.log("👆 [DAILY CHALLENGE COMPONENT] handleTodayClick called:", {
-            hasChallenge: today?.hasChallenge,
-            today: today,
-            timestamp: new Date().toISOString(),
-        });
-        if (today?.hasChallenge) {
-            console.log("👆 [DAILY CHALLENGE COMPONENT] Opening modal (has challenge)");
-            dispatch(setModalOpen(true));
-        } else {
-            console.log("👆 [DAILY CHALLENGE COMPONENT] Opening modal (no challenge)");
-            // Show modal with response data instead of alert
-            dispatch(setModalOpen(true));
-        }
+        dispatch(setModalOpen(true));
     };
 
     // Generate streak indicators dynamically based on streak data
@@ -393,13 +322,16 @@ export const DailyChallenge = () => {
             <header className="flex flex-col w-full max-w-[375px] items-start gap-2 px-5 py-3 mt-[36px]">
                 <nav className="items-center gap-4 self-stretch w-full rounded-[32px] flex relative flex-[0_0_auto]">
                     <button aria-label="Go back"
-                        onClick={() => router.back()}
-                        className="cursor-pointer"
-                    >
+                        onClick={() => router.back()}>
+
                         <img
                             className="relative w-6 h-6"
                             alt="Arrow back ios new"
                             src="https://c.animaapp.com/b23YVSTi/img/arrow-back-ios-new@2x.png"
+                            loading="eager"
+                            decoding="async"
+                            width="24"
+                            height="24"
                         />
                     </button>
 
