@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
 import { useRouter } from "next/navigation";
 import { handleGameDownload } from "@/lib/gameDownloadUtils";
+import { filterIosTitleGames } from "@/lib/utils/gameFilters";
 // Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 const GameCard = ({ onClose: onCloseProp }) => {
@@ -16,6 +17,11 @@ const GameCard = ({ onClose: onCloseProp }) => {
     const sectionName = "Swipe";
     const swipeGames = gamesBySection[sectionName] || [];
     const swipeStatus = gamesBySectionStatus[sectionName] || "idle";
+    // Only show games whose title contains "ios" (case-insensitive)
+    const iosSwipeGames = useMemo(() => {
+        return filterIosTitleGames(swipeGames);
+    }, [swipeGames]);
+
     const [showTooltip, setShowTooltip] = useState(false);
     const [currentGameIndex, setCurrentGameIndex] = useState(0);
     const [undoCount, setUndoCount] = useState(0);
@@ -125,10 +131,10 @@ const GameCard = ({ onClose: onCloseProp }) => {
 
     // OPTIMIZED: Memoize swipe handlers to prevent recreation
     const handleSwipeLeft = useCallback(() => {
-        const currentGame = swipeGames[currentGameIndex];
+        const currentGame = iosSwipeGames[currentGameIndex];
 
         // Check if this is the last card
-        if (currentGameIndex >= swipeGames.length - 1) {
+        if (currentGameIndex >= iosSwipeGames.length - 1) {
             // FIXED: Allow unlimited swiping - no undo limit check for swiping
             if (!isLoopMode) {
                 // Show friendly notification for first time reaching last card
@@ -162,11 +168,11 @@ const GameCard = ({ onClose: onCloseProp }) => {
         // SIMPLE LOGIC: No need to change user type during swiping
 
         setCurrentGameIndex(currentGameIndex + 1);
-    }, [currentGameIndex, swipeGames, isLoopMode, logSwipePreference]);
+    }, [currentGameIndex, iosSwipeGames, isLoopMode, logSwipePreference]);
 
 
     const handleSwipeRight = useCallback(() => {
-        const currentGame = swipeGames[currentGameIndex];
+        const currentGame = iosSwipeGames[currentGameIndex];
         if (currentGame) {
             // Log like for recommendation algorithm
             logSwipePreference(currentGame._id || currentGame.id, 'like', currentGame);
@@ -194,7 +200,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
             const gameId = currentGame.id || currentGame._id || currentGame.gameId;
             router.push(`/gamedetails?gameId=${gameId}&source=swipe`);
         }
-    }, [currentGameIndex, swipeGames, logSwipePreference, router]);
+    }, [currentGameIndex, iosSwipeGames, logSwipePreference, router]);
 
     const handleUndo = useCallback(() => {
         // SIMPLE LOGIC: Check if user can undo
@@ -230,7 +236,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
     }, [isFirstTimeUser, maxUndoLimit, undoCount, swipeHistory, isLastCardReached, currentGameIndex]);
 
     const handleDownload = useCallback(async () => {
-        const currentGame = swipeGames[currentGameIndex];
+        const currentGame = iosSwipeGames[currentGameIndex];
         if (currentGame) {
             try {
                 // Use besitosRawData URL if available
@@ -247,7 +253,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
                 }
             }
         }
-    }, [currentGameIndex, swipeGames, undoCount, swipeHistory.length, isFirstTimeUser]);
+    }, [currentGameIndex, iosSwipeGames, undoCount, swipeHistory.length, isFirstTimeUser]);
 
     const handleClose = useCallback(() => {
         // If in loop mode, go back to last game instead of closing
@@ -347,6 +353,17 @@ const GameCard = ({ onClose: onCloseProp }) => {
             limit: 10
         }));
     }, [dispatch, sectionName, userProfile]);
+
+    // Keep index in bounds when the filtered list changes (e.g. after fetch)
+    useEffect(() => {
+        if (!iosSwipeGames || iosSwipeGames.length === 0) {
+            if (currentGameIndex !== 0) setCurrentGameIndex(0);
+            return;
+        }
+        if (currentGameIndex > iosSwipeGames.length - 1) {
+            setCurrentGameIndex(0);
+        }
+    }, [iosSwipeGames, currentGameIndex]);
 
     // Refresh games in background after showing cached data (to get admin updates)
     // Do this in background without blocking UI - show cached data immediately
@@ -472,8 +489,8 @@ const GameCard = ({ onClose: onCloseProp }) => {
 
     // OPTIMIZED: Memoize current game data to prevent recalculation
     const currentGame = useMemo(() => {
-        return swipeGames[currentGameIndex];
-    }, [swipeGames, currentGameIndex]);
+        return iosSwipeGames[currentGameIndex];
+    }, [iosSwipeGames, currentGameIndex]);
 
     // Calculate coins and total XP for current game (same logic as TaskListSection and HighestEarningGame)
     const currentGameRewards = useMemo(() => {
@@ -563,9 +580,9 @@ const GameCard = ({ onClose: onCloseProp }) => {
 
     // OPTIMIZED: Preload next game image for smoother transitions
     useEffect(() => {
-        if (swipeGames && swipeGames.length > 1) {
-            const nextGameIndex = (currentGameIndex + 1) % swipeGames.length;
-            const nextGame = swipeGames[nextGameIndex];
+        if (iosSwipeGames && iosSwipeGames.length > 1) {
+            const nextGameIndex = (currentGameIndex + 1) % iosSwipeGames.length;
+            const nextGame = iosSwipeGames[nextGameIndex];
 
             if (nextGame) {
                 const nextImage = nextGame.images?.square_image || nextGame.images?.banner || nextGame.image;
@@ -575,7 +592,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
                 }
             }
         }
-    }, [currentGameIndex, swipeGames]);
+    }, [currentGameIndex, iosSwipeGames]);
 
     // OPTIMIZED: Reset image loading state when game changes
     useEffect(() => {
@@ -760,7 +777,7 @@ const GameCard = ({ onClose: onCloseProp }) => {
     }
 
     // Show empty state if no games available
-    if (!swipeGames || swipeGames.length === 0) {
+    if (!iosSwipeGames || iosSwipeGames.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center w-[335px] min-h-[549px] mx-auto mb-3 p-6">
                 <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-xl mb-2 text-center">

@@ -7,6 +7,7 @@ import { fetchUserData, fetchGamesBySection, loadUserDataFromCache } from "@/lib
 import { useAuth } from "@/contexts/AuthContext";
 import GameItemCard from "./GameItemCard";
 import WatchAdCard from "./WatchAdCard";
+import { filterIosTitleGames } from "@/lib/utils/gameFilters";
 // Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 // Static data for non-gaming offers carousel
@@ -355,16 +356,16 @@ export const GameListSection = ({ searchQuery = "", showSearch = false }) => {
   const gamesToShow = React.useMemo(() => {
     // First priority: New API games
     if (mostPlayedGames && mostPlayedGames.length > 0) {
-      return processNewApiGames(mostPlayedGames);
+      return processNewApiGames(filterIosTitleGames(mostPlayedGames));
     }
 
     // Second priority: Featured games from MostPlayedGames
     if (isFromFeatured && featuredGames) {
-      return processFeaturedGames(featuredGames);
+      return processFeaturedGames(filterIosTitleGames(featuredGames));
     }
 
     // Fallback: Downloaded games
-    return downloadedGames;
+    return filterIosTitleGames(downloadedGames);
   }, [mostPlayedGames, isFromFeatured, featuredGames, downloadedGames]);
 
   // Apply search filters to games

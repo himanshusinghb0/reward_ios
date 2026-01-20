@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { handleGameDownload } from "@/lib/gameDownloadUtils";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
+import { filterIosTitleGames } from "@/lib/utils/gameFilters";
 // Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 const SCALE_CONFIG = [
     { minWidth: 0, scaleClass: "scale-90" },
@@ -106,8 +107,11 @@ export const HighestEarningGame = () => {
         };
     }, [dispatch, sectionName, userProfile]);
 
+    // Only show games whose title contains "ios" (case-insensitive)
+    const iosHighestEarningGames = filterIosTitleGames(highestEarningGames);
+
     // Map the new API data to component format - using besitosRawData
-    const processedGames = highestEarningGames?.slice(0, 2).map((game) => {
+    const processedGames = iosHighestEarningGames?.slice(0, 2).map((game) => {
         // Use besitosRawData if available
         const rawData = game.besitosRawData || {};
 
@@ -278,7 +282,7 @@ export const HighestEarningGame = () => {
                         )) : (
                             <div className="w-full flex flex-col items-center justify-center py-6 px-4">
                                 <h3 className="[font-family:'Poppins',Helvetica] font-semibold text-white text-lg mb-2 text-center">
-                                    Gaming - Highest Earning
+                                    Highest Earning
                                 </h3>
                                 <p className="[font-family:'Poppins',Helvetica] font-normal text-gray-400 text-sm text-center">
                                     No games available

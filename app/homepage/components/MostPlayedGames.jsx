@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
+import { filterIosTitleGames } from "@/lib/utils/gameFilters";
 // Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 const MostPlayedGames = () => {
@@ -29,7 +30,10 @@ const MostPlayedGames = () => {
 
     // OPTIMIZED: Map games using besitosRawData for display
     const filteredGames = useMemo(() => {
-        return allGames.map(game => {
+        // Only show games whose title contains "ios" (case-insensitive)
+        const iosGames = filterIosTitleGames(allGames);
+
+        return iosGames.map(game => {
             // Use besitosRawData if available, otherwise fallback to existing structure
             const rawData = game.besitosRawData || {};
 
@@ -166,7 +170,7 @@ const MostPlayedGames = () => {
         <div className="flex flex-col items-start gap-4 relative w-full animate-fade-in">
             <div className="flex w-full items-center justify-between">
                 <div className="[font-family:'Poppins',Helvetica] font-semibold text-white text-base tracking-[0] leading-[normal]">
-                    Most Played Games
+                    Most Played iOS Games
                 </div>
                 <Link
                     href="/DownloadGame"

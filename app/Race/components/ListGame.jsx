@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { fetchGamesBySection } from "@/lib/redux/slice/gameSlice";
+import { filterIosTitleGames } from "@/lib/utils/gameFilters";
 // Removed getAgeGroupFromProfile and getGenderFromProfile - now passing user object directly
 
 const RecommendationCard = React.memo(({ card, onCardClick }) => {
@@ -236,8 +237,8 @@ export const ListGame = () => {
             allGames.push(...downloadedGames);
         }
 
-
-        return allGames;
+        // Only show games whose title contains "ios" (case-insensitive)
+        return filterIosTitleGames(allGames);
     }, [allSectionGames, inProgressGames, gamesBySection]);
 
     // Optimized: Memoized game click handler
