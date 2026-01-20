@@ -95,7 +95,6 @@ export function AuthProvider({ children }) {
       try {
         listener = App.addListener("appUrlOpen", (event) => {
           const urlString = event.url;
-          console.log("Deep link received:", urlString);
 
           let parsableUrl;
           let path;
@@ -216,30 +215,14 @@ export function AuthProvider({ children }) {
     const hasGamesData = gamesBySection && gamesBySection.length > 0;
     const hasBonusDaysData = bonusDaysData && bonusDaysStatus === "succeeded";
 
-    console.log("🔍 [AuthContext] Data availability check:", {
-      hasProfileData,
-      hasStatsData,
-      hasUserData,
-      hasWalletData,
-      hasGamesData,
-      hasBonusDaysData,
-      detailsStatus,
-      statsStatus,
-      userDataStatus,
-      walletScreenStatus,
-      dailyCalendarStatus,
-      dailyTodayStatus,
-      bonusDaysStatus,
-    });
+   
 
     // PRIORITY 1: Only fetch essential data if not already loaded and valid
     if (!hasProfileData && detailsStatus === "idle") {
-      console.log("🔑 [AuthContext] Fetching user profile (not cached)");
       dispatch(fetchUserProfile(token));
     }
 
     if (user && user._id && !hasUserData && userDataStatus === "idle") {
-      console.log("🎮 [AuthContext] Fetching games data (not cached)");
       dispatch(
         fetchUserData({
           userId: user._id,
@@ -254,7 +237,6 @@ export function AuthProvider({ children }) {
     const year = now.getFullYear();
     const month = now.getMonth();
     if (dailyCalendarStatus === "idle") {
-      console.log("📅 [AuthContext] Prefetching daily challenge calendar");
       dispatch(
         fetchDailyCalendar({
           year,
@@ -264,7 +246,6 @@ export function AuthProvider({ children }) {
       );
     }
     if (dailyTodayStatus === "idle") {
-      console.log("🗓️ [AuthContext] Prefetching today's challenge");
       dispatch(
         fetchDailyToday({
           token,
@@ -272,7 +253,6 @@ export function AuthProvider({ children }) {
       );
     }
     if (bonusDaysStatus === "idle") {
-      console.log("🎁 [AuthContext] Prefetching bonus days for progress bar");
       dispatch(fetchBonusDays({ token }));
     }
 
@@ -280,14 +260,12 @@ export function AuthProvider({ children }) {
     // Only fetch if not already loaded or loading
     if (!hasStatsData && statsStatus === "idle") {
       setTimeout(() => {
-        console.log("📊 [AuthContext] Fetching profile stats (not cached)");
         dispatch(fetchProfileStats(token));
       }, 100);
     }
 
     if (!hasStatsData && dashboardStatus === "idle") {
       setTimeout(() => {
-        console.log("🏠 [AuthContext] Fetching dashboard data (not cached)");
         dispatch(fetchHomeDashboard(token));
       }, 100);
     }
@@ -295,7 +273,6 @@ export function AuthProvider({ children }) {
     // PRIORITY 3: Load heavy data after a longer delay - only if not already loaded
     setTimeout(() => {
       if (!hasWalletData && walletScreenStatus === "idle") {
-        console.log("💰 [AuthContext] Fetching wallet data (not cached)");
         dispatch(fetchWalletScreen({ token }));
       }
 
@@ -329,9 +306,7 @@ export function AuthProvider({ children }) {
     if (!token) return;
 
     const handleFocus = () => {
-      console.log(
-        "🔄 [AuthContext] App focused - refreshing profile, wallet, and VIP to get admin updates"
-      );
+      
       dispatch(fetchUserProfile({ token, force: true }));
       dispatch(fetchVipStatus(token));
       // Also refresh wallet/balance/XP when app comes to foreground
@@ -439,10 +414,7 @@ export function AuthProvider({ children }) {
     if (typeof window !== "undefined" && window.Capacitor && App) {
       try {
         backButtonListener = App.addListener("backButton", ({ canGoBack }) => {
-          console.log("🔙 Hardware back button pressed", {
-            canGoBack,
-            pathname,
-          });
+         
 
           // Always check authentication from localStorage first (most reliable)
           const storedToken = localStorage.getItem("authToken");
@@ -451,7 +423,6 @@ export function AuthProvider({ children }) {
 
           if (!isAuthenticated) {
             // Not authenticated - allow default behavior (go to login)
-            console.log("🔙 Not authenticated, allowing default back behavior");
             App.exitApp();
             return;
           }
@@ -468,26 +439,20 @@ export function AuthProvider({ children }) {
 
           if (hasHistory && !isHomepage) {
             // Has history and not on homepage - navigate back
-            console.log("🔙 Navigating back in history");
             router.back();
           } else if (isHomepage) {
             // On homepage with no history or can't go back - exit app
-            console.log("🔙 On homepage, exiting app");
             App.exitApp();
           } else if (isProtectedRoute) {
             // On protected route with no history - go to homepage instead of login
-            console.log(
-              "🔙 On protected route with no history, navigating to homepage"
-            );
+            
             router.push("/homepage");
           } else {
             // On public route - navigate to homepage
-            console.log("🔙 On public route, navigating to homepage");
             router.push("/homepage");
           }
         });
 
-        console.log("✅ Hardware back button listener registered");
       } catch (error) {
         console.warn("⚠️ Hardware back button listener not available:", error);
       }
@@ -501,13 +466,11 @@ export function AuthProvider({ children }) {
             typeof backButtonListener.remove === "function"
           ) {
             backButtonListener.remove();
-            console.log("🧹 Hardware back button listener removed");
           } else if (
             backButtonListener.unsubscribe &&
             typeof backButtonListener.unsubscribe === "function"
           ) {
             backButtonListener.unsubscribe();
-            console.log("🧹 Hardware back button listener unsubscribed");
           }
         } catch (error) {
           console.warn("⚠️ Error cleaning up back button listener:", error);
@@ -553,7 +516,6 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   const handleAuthSuccess = (data) => {
-    console.log("🔑 handleAuthSuccess called with:", data);
     const { token, user } = data;
 
     setUser(user);
@@ -563,15 +525,7 @@ export function AuthProvider({ children }) {
     // This ensures age and gender are available immediately for game fetching
     // without waiting for the profile API call
     if (user && (user.age || user.ageRange || user.gender || user._id)) {
-      console.log(
-        "🔑 [AuthContext] Storing login user data in Redux profile:",
-        {
-          age: user.age,
-          ageRange: user.ageRange,
-          gender: user.gender,
-          _id: user._id,
-        }
-      );
+    
       dispatch({
         type: "profile/setUserFromLogin",
         payload: user,
@@ -580,7 +534,6 @@ export function AuthProvider({ children }) {
 
     // Preload games data immediately after successful login
     if (user && user._id) {
-      console.log("🎮 [AuthContext] Preloading games data after login");
       dispatch(
         fetchUserData({
           userId: user._id,
@@ -592,9 +545,7 @@ export function AuthProvider({ children }) {
     // Preload XP tier progress bar data immediately after successful login/signup
     // This pre-populates the cache so the homepage shows data instantly
     if (token) {
-      console.log(
-        "📊 [AuthContext] Preloading XP tier progress bar data after login/signup"
-      );
+      
       // Fetch in background without blocking - cache will be populated
       getXPTierProgressBar(token)
         .then((response) => {
@@ -607,9 +558,7 @@ export function AuthProvider({ children }) {
             };
             try {
               localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-              console.log(
-                "✅ [AuthContext] XP tier progress bar data cached successfully"
-              );
+             
             } catch (err) {
               console.warn(
                 "⚠️ [AuthContext] Failed to cache XP tier data:",
@@ -677,15 +626,7 @@ export function AuthProvider({ children }) {
               user: data.user,
             };
 
-            console.log(
-              "💾 [AuthContext] Attempting to save biometric credentials..."
-            );
-            console.log("💾 [AuthContext] Username:", emailOrMobile);
-            console.log(
-              "💾 [AuthContext] Token length:",
-              data.token?.length || 0
-            );
-            console.log("💾 [AuthContext] User ID:", data.user?._id);
+          
 
             const credentialResult = await setCredentials({
               username: emailOrMobile,
@@ -695,13 +636,7 @@ export function AuthProvider({ children }) {
             if (credentialResult.success) {
               // Enable biometric locally
               enableBiometricLocally(availability.biometryTypeName);
-              console.log(
-                "✅ [AuthContext] Biometric credentials saved successfully"
-              );
-              console.log(
-                "✅ [AuthContext] Biometric type:",
-                availability.biometryTypeName
-              );
+             
             } else {
               console.warn(
                 "⚠️ [AuthContext] Failed to save biometric credentials:",
@@ -770,7 +705,6 @@ export function AuthProvider({ children }) {
   // MODIFIED: signOut clears the profile state in the Redux store but KEEPS biometric credentials
   // Biometric credentials are preserved so users can login with biometric after signout
   const signOut = async () => {
-    console.log("🚪 signOut called. Clearing session...");
     dispatch(clearProfile()); // NEW: Dispatch action to reset the profile slice
     dispatch(clearGames()); // NEW: Clear games data when logging out
     dispatch(clearWalletTransactions());
@@ -780,10 +714,7 @@ export function AuthProvider({ children }) {
 
     // DON'T delete biometric credentials on signout
     // This allows users to use biometric login after signout without needing to login manually first
-    // Biometric credentials are stored in native secure storage and remain available
-    console.log(
-      "ℹ️ [AuthContext] Biometric credentials preserved for next login"
-    );
+   
 
     try {
       localStorage.removeItem("user");
@@ -818,7 +749,6 @@ export function AuthProvider({ children }) {
         }
       });
 
-      console.log("🧹 Cleared user + token from localStorage & Redux store");
     } catch (err) {
       console.error("❌ Failed to clear localStorage", err);
     }

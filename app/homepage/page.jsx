@@ -39,7 +39,6 @@ const Homepage = () => {
       console.error("🔔 [Homepage] Notification error:", notificationsError);
     }
     if (currentNotification) {
-      console.log("🔔 [Homepage] Showing notification:", currentNotification);
     }
   }, [currentNotification, notificationsError, notificationsLoading]);
 
